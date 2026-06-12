@@ -180,7 +180,6 @@ export default function PantryPal() {
   }
 
   async function doScan(body) {
-    alert('doScan called, user: ' + (user ? user.email : 'NULL') + ', base64 length: ' + (body.imageBase64 ? body.imageBase64.length : 'NULL'))
     if (!user) { showToast('Sign in to save receipts'); return }
     setScanLoading(true); setScanResult(null)
     try {
@@ -198,11 +197,11 @@ export default function PantryPal() {
       setReceiptText('')
       showToast(`${data.items.length} items added to pantry`)
     } catch (e) {
+      alert('SCAN ERROR: ' + e.message)
       setScanResult({ error: e.message || 'Could not parse receipt' })
     }
     setScanLoading(false)
   }
-
   // ── Receipt history ─────────────────────────────────────────────────────
   async function loadReceipts() {
     if (!user) return
@@ -384,10 +383,7 @@ export default function PantryPal() {
           {previewSrc && (
             <button className={`${styles.btn} ${styles.btnPrimary} ${styles.btnWide}`}
               disabled={scanLoading}
-              onClick={() => {
-                alert('Starting scan, base64 length: ' + (imgBase64 ? imgBase64.length : 'NULL'))
-                doScan({ imageBase64: imgBase64, imageMime })
-              }}>
+              onClick={() => doScan({ imageBase64: imgBase64, imageMime })}>
               {scanLoading ? <><Spinner small /> Scanning…</> : '✨ Read receipt with AI'}
             </button>
           )}
