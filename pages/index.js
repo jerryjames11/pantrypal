@@ -151,13 +151,25 @@ export default function PantryPal() {
     if (!file) return
     const reader = new FileReader()
     reader.onload = ev => {
-      const src = ev.target.result
-      const base64 = src.split(',')[1]
-      const mime = file.type || 'image/jpeg'
-      setPreviewSrc(src)
-      setImgBase64(base64)
-      setImgMime(mime)
-      console.log('Image loaded, base64 length:', base64?.length, 'mime:', mime)
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        const maxSize = 1200
+        let w = img.width, h = img.height
+        if (w > maxSize || h > maxSize) {
+          if (w > h) { h = h * maxSize / w; w = maxSize }
+          else { w = w * maxSize / h; h = maxSize }
+        }
+        canvas.width = w; canvas.height = h
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h)
+        const compressed = canvas.toDataURL('image/jpeg', 0.7)
+        const base64 = compressed.split(',')[1]
+        setPreviewSrc(compressed)
+        setImgBase64(base64)
+        setImgMime('image/jpeg')
+        console.log('Compressed size:', base64.length)
+      }
+      img.src = ev.target.result
     }
     reader.readAsDataURL(file)
   }
