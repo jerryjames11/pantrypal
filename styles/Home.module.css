@@ -57,6 +57,16 @@
 .iconBtn { background: none; border: none; cursor: pointer; color: #bbb; font-size: 13px; padding: 3px 5px; border-radius: 5px; font-family: inherit; }
 .iconBtn:hover { color: #333; background: #f5f5f5; }
 
+/* ── Scan button ─────────────────────────────────────────────────────── */
+.scanBtn { display: block; width: 100%; padding: 13px; background: #16a34a; color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; text-align: center; }
+.scanBtn:hover:not(:disabled) { background: #15803d; }
+.scanBtn:disabled { opacity: .55; cursor: not-allowed; }
+
+/* ── Upload buttons ──────────────────────────────────────────────────── */
+.uploadBtns { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.uploadLabel { flex: 1; min-width: 140px; padding: 13px; border: 1.5px dashed #ccc; border-radius: 10px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 600; font-family: inherit; background: #fff; }
+.uploadLabel:hover { border-color: #16a34a; background: #f0fdf4; }
+
 /* ── Upload ──────────────────────────────────────────────────────────── */
 .uploadZone { display: block; border: 2px dashed #ddd; border-radius: 14px; padding: 2.5rem 1rem; text-align: center; cursor: pointer; margin-bottom: 12px; transition: all .15s; }
 .uploadZone:hover { border-color: #22c55e; background: #f0fdf4; }
