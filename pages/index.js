@@ -342,7 +342,7 @@ export default function PantryPal() {
           <div className={styles.sectionLabel}>Upload a receipt photo</div>
           {!previewSrc ? (
             <label className={styles.uploadZone}>
-              <input ref={fileRef} type="file" accept="image/*" capture="environment"
+              <input ref={fileRef} type="file" accept="image/*"
                 onChange={e => loadFile(e.target.files[0])} hidden />
               <span className={styles.uploadIcon} aria-hidden="true">📷</span>
               <div className={styles.uploadTitle}>Tap to photograph or upload</div>
