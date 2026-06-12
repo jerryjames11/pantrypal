@@ -168,6 +168,7 @@ export default function PantryPal() {
   }
 
   async function doScan(body) {
+    alert('doScan called, user: ' + (user ? user.email : 'NULL') + ', base64 length: ' + (body.imageBase64 ? body.imageBase64.length : 'NULL'))
     if (!user) { showToast('Sign in to save receipts'); return }
     setScanLoading(true); setScanResult(null)
     try {
