@@ -1,0 +1,152 @@
+/* ── Base ─────────────────────────────────────────────────────────────── */
+.app { max-width: 660px; margin: 0 auto; padding: 1.5rem 1rem 4rem; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111; }
+.centered { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+
+/* ── Header ──────────────────────────────────────────────────────────── */
+.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 10px; }
+.logo { font-size: 28px; line-height: 1; }
+.appTitle { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
+.appSub { font-size: 12px; color: #888; margin-top: 1px; }
+.userArea { display: flex; align-items: center; gap: 8px; }
+.avatar { width: 28px; height: 28px; border-radius: 50%; border: 1px solid #eee; }
+.authBtn { padding: 6px 12px; border: 1px solid #ddd; border-radius: 7px; background: #fff; font-size: 12px; cursor: pointer; white-space: nowrap; }
+.authBtn:hover { background: #f5f5f5; }
+.googleBtn { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border: 1px solid #ddd; border-radius: 8px; background: #fff; font-size: 13px; cursor: pointer; font-family: inherit; white-space: nowrap; }
+.googleBtn:hover { background: #f8f8f8; }
+
+/* ── Banners ─────────────────────────────────────────────────────────── */
+.guestBanner { background: #f0f7ff; border: 1px solid #c8e0ff; border-radius: 9px; padding: 10px 14px; font-size: 13px; color: #1a5ca8; margin-bottom: 1rem; }
+.warnBanner  { background: #fffbea; border: 1px solid #ffe58f; border-radius: 9px; padding: 10px 14px; font-size: 13px; color: #7a5200; margin-bottom: 1rem; }
+
+/* ── Tabs ────────────────────────────────────────────────────────────── */
+.tabs { display: flex; gap: 3px; background: #f0f0f0; border-radius: 12px; padding: 4px; margin-bottom: 1.5rem; }
+.tabBtn { flex: 1; padding: 8px 4px; border: none; background: transparent; border-radius: 9px; font-size: 12px; color: #888; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; }
+.activeTab { background: #fff; color: #111; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+
+/* ── Stats ───────────────────────────────────────────────────────────── */
+.statsRow { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 1.25rem; }
+.statCard { background: #f7f7f7; border-radius: 10px; padding: 12px 14px; }
+.statVal { font-size: 26px; font-weight: 700; color: #111; }
+.statLbl { font-size: 11px; color: #999; margin-top: 1px; }
+
+/* ── Filters ─────────────────────────────────────────────────────────── */
+.sectionLabel { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: #999; margin-bottom: 8px; }
+.filterRow { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+.chip { font-size: 12px; padding: 5px 12px; border-radius: 20px; border: 1px solid #e0e0e0; background: #fff; color: #777; cursor: pointer; font-family: inherit; }
+.chipOn { background: #111; color: #fff; border-color: #111; font-weight: 500; }
+
+/* ── Input row ───────────────────────────────────────────────────────── */
+.inputRow { display: flex; gap: 7px; margin-bottom: 1rem; }
+.inputRow input, .inputRow select { flex: 1; padding: 9px 11px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px; font-family: inherit; background: #fff; min-width: 0; }
+.inputRow button { padding: 9px 14px; border: 1px solid #e0e0e0; border-radius: 8px; background: #fff; font-size: 13px; cursor: pointer; white-space: nowrap; font-family: inherit; }
+.inputRow button:hover { background: #f5f5f5; }
+
+/* ── Items grid ──────────────────────────────────────────────────────── */
+.itemsGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 8px; margin-bottom: 1rem; }
+.itemCard { background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 10px 11px; display: flex; flex-direction: column; gap: 3px; }
+.itemName { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.itemRow2 { display: flex; justify-content: space-between; align-items: center; }
+.itemQty { font-size: 11px; color: #aaa; }
+.itemPrice { font-size: 12px; color: #555; font-weight: 500; }
+.itemFoot { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
+.statusSel { border: none; font-size: 11px; font-weight: 600; cursor: pointer; padding: 3px 7px; border-radius: 20px; font-family: inherit; }
+.s_fresh { background: #e6f4ea; color: #1e7e34; }
+.s_low   { background: #fff3cd; color: #856404; }
+.s_out   { background: #fde8e8; color: #991b1b; }
+.iconBtn { background: none; border: none; cursor: pointer; color: #bbb; font-size: 13px; padding: 3px 5px; border-radius: 5px; font-family: inherit; }
+.iconBtn:hover { color: #333; background: #f5f5f5; }
+
+/* ── Upload ──────────────────────────────────────────────────────────── */
+.uploadZone { display: block; border: 2px dashed #ddd; border-radius: 14px; padding: 2.5rem 1rem; text-align: center; cursor: pointer; margin-bottom: 12px; transition: all .15s; }
+.uploadZone:hover { border-color: #22c55e; background: #f0fdf4; }
+.uploadIcon { font-size: 40px; display: block; margin-bottom: 8px; }
+.uploadTitle { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.uploadSub { font-size: 13px; color: #888; }
+.previewWrap { position: relative; margin-bottom: 12px; }
+.preview { width: 100%; max-height: 300px; object-fit: contain; border-radius: 10px; border: 1px solid #eee; background: #f7f7f7; display: block; }
+.previewClear { position: absolute; top: 8px; right: 8px; padding: 5px 10px; background: rgba(255,255,255,.9); border: 1px solid #ddd; border-radius: 6px; font-size: 12px; cursor: pointer; backdrop-filter: blur(4px); }
+
+.divider { display: flex; align-items: center; gap: 10px; margin: 18px 0; color: #bbb; font-size: 12px; }
+.divider::before,.divider::after { content:''; flex:1; height:1px; background:#eee; }
+.textarea { width: 100%; padding: 10px 12px; border: 1px solid #e0e0e0; border-radius: 9px; font-size: 14px; font-family: inherit; resize: vertical; }
+.textarea:focus { outline: none; border-color: #22c55e; }
+
+/* ── Buttons ─────────────────────────────────────────────────────────── */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 11px 16px; border: 1px solid #e0e0e0; border-radius: 10px; background: #fff; font-size: 14px; font-family: inherit; cursor: pointer; }
+.btnPrimary { background: #16a34a; border-color: #16a34a; color: #fff; font-weight: 600; }
+.btnPrimary:hover:not(:disabled) { background: #15803d; }
+.btnPrimary:disabled { opacity: .55; cursor: not-allowed; }
+.btnWide { width: 100%; }
+
+/* ── Loading ─────────────────────────────────────────────────────────── */
+.loadRow { display: flex; align-items: center; gap: 8px; color: #888; font-size: 14px; padding: 1rem 0; }
+.spinner { display: inline-block; width: 18px; height: 18px; border: 2.5px solid #ddd; border-top-color: #16a34a; border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
+.spinnerSm { display: inline-block; width: 13px; height: 13px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Scan result ─────────────────────────────────────────────────────── */
+.scanSuccess { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 12px 14px; margin-top: 12px; }
+.scanSuccessHead { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 600; color: #166534; margin-bottom: 10px; }
+.storeName { font-weight: 500; color: #555; font-size: 12px; }
+.scanItemList { display: flex; flex-direction: column; gap: 2px; max-height: 280px; overflow-y: auto; }
+.scanItem { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #dcfce7; font-size: 13px; }
+.scanItem:last-child { border-bottom: none; }
+.scanItemName { flex: 1; color: #111; }
+.scanItemRight { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.scanItemPrice { color: #555; font-weight: 500; font-size: 12px; }
+.errBox { background: #fef2f2; border: 1px solid #fecaca; border-radius: 9px; padding: 12px 14px; font-size: 13px; color: #991b1b; margin-top: 12px; }
+
+/* ── Price delta ─────────────────────────────────────────────────────── */
+.priceUp   { font-size: 11px; font-weight: 700; color: #b91c1c; background: #fef2f2; padding: 2px 6px; border-radius: 20px; white-space: nowrap; }
+.priceDown { font-size: 11px; font-weight: 700; color: #166534; background: #f0fdf4; padding: 2px 6px; border-radius: 20px; white-space: nowrap; }
+
+/* ── Receipt history ─────────────────────────────────────────────────── */
+.receiptCard { background: #fff; border: 1px solid #eee; border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+.receiptHeader { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; cursor: pointer; gap: 8px; }
+.receiptHeader:hover { background: #fafafa; }
+.receiptMeta { flex: 1; min-width: 0; }
+.receiptStore { font-size: 14px; font-weight: 600; }
+.receiptDate { font-size: 12px; color: #888; margin-top: 2px; }
+.receiptActions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.chevron { font-size: 11px; color: #aaa; }
+
+.receiptItems { border-top: 1px solid #f0f0f0; }
+.receiptItemsHead { display: grid; grid-template-columns: 1fr 80px 72px 80px; gap: 4px; padding: 8px 16px; font-size: 11px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: .05em; background: #fafafa; }
+.receiptItemRow { display: grid; grid-template-columns: 1fr 80px 72px 80px; gap: 4px; padding: 8px 16px; font-size: 13px; border-bottom: 1px solid #f5f5f5; align-items: center; }
+.receiptItemRow:last-child { border-bottom: none; }
+.riName  { color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.riQty   { color: #aaa; font-size: 12px; }
+.riPrice { color: #333; font-weight: 500; }
+.riDelta { }
+.receiptEmpty { padding: 14px 16px; font-size: 13px; color: #aaa; text-align: center; }
+
+/* ── Recipes ─────────────────────────────────────────────────────────── */
+.recipeCard { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 12px; }
+.recipeTop { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.recipeName { font-size: 15px; font-weight: 700; }
+.recipeTime { font-size: 12px; color: #888; margin-top: 2px; }
+.matchBadge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; background: #e6f4ea; color: #1e7e34; flex-shrink: 0; }
+.recipeDesc { font-size: 13px; color: #666; line-height: 1.55; margin-bottom: 10px; }
+.tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.tag { font-size: 11px; padding: 2px 8px; border-radius: 20px; }
+.tagHave { background: #f2f2f2; color: #333; }
+.tagNeed { background: #fde8e8; color: #991b1b; }
+.stepsToggle { font-size: 12px; color: #888; cursor: pointer; background: none; border: none; padding: 0; margin-top: 8px; font-family: inherit; }
+.stepsToggle:hover { color: #111; }
+.stepsBody { margin-top: 10px; border-top: 1px solid #f0f0f0; padding-top: 10px; }
+.step { display: flex; gap: 8px; font-size: 13px; color: #555; padding: 3px 0; line-height: 1.5; }
+.stepN { font-weight: 700; color: #111; flex-shrink: 0; width: 16px; }
+
+/* ── Empty / misc ────────────────────────────────────────────────────── */
+.empty { text-align: center; padding: 3rem 1rem; color: #bbb; font-size: 14px; }
+
+/* ── Toast ───────────────────────────────────────────────────────────── */
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #111; color: #fff; font-size: 13px; padding: 9px 20px; border-radius: 20px; z-index: 999; white-space: nowrap; box-shadow: 0 4px 16px rgba(0,0,0,.18); pointer-events: none; }
+
+/* ── Responsive ──────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .receiptItemsHead, .receiptItemRow { grid-template-columns: 1fr 60px 60px 72px; }
+  .tabBtn { font-size: 11px; }
+  .itemsGrid { grid-template-columns: repeat(2, 1fr); }
+}
