@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import styles from '../styles/Home.module.css'
 
@@ -23,6 +23,7 @@ export default function PantryPal() {
   const [user, setUser] = useState(null)
   const [authLoading, setAuthLoading] = useState(true)
 
+  // Pantry
   const [pantry, setPantry] = useState([])
   const [pantryLoading, setPantryLoading] = useState(false)
   const [pantryFilter, setPantryFilter] = useState('all')
@@ -31,6 +32,7 @@ export default function PantryPal() {
   const [manualCount, setManualCount] = useState('')
   const [manualDate, setManualDate] = useState('')
 
+  // Scan
   const [previewSrc, setPreviewSrc] = useState(null)
   const [imgBase64, setImgBase64] = useState(null)
   const [imgMime, setImgMime] = useState(null)
@@ -38,10 +40,12 @@ export default function PantryPal() {
   const [scanLoading, setScanLoading] = useState(false)
   const [scanResult, setScanResult] = useState(null)
 
+  // History
   const [receipts, setReceipts] = useState([])
   const [receiptsLoading, setReceiptsLoading] = useState(false)
   const [expandedReceipt, setExpandedReceipt] = useState(null)
 
+  // Recipes
   const [recipes, setRecipes] = useState([])
   const [recipeLoading, setRecipeLoading] = useState(false)
   const [openSteps, setOpenSteps] = useState({})
@@ -53,6 +57,7 @@ export default function PantryPal() {
     setTimeout(() => setToast(''), 2800)
   }, [])
 
+  // ── Auth ──────────────────────────────────────────────────────────────────
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setUser(data?.session?.user ?? null)
@@ -88,28 +93,42 @@ export default function PantryPal() {
     showToast('Signed out')
   }
 
+  // ── Pantry ────────────────────────────────────────────────────────────────
   async function loadPantry() {
     if (!user) return
     setPantryLoading(true)
-    const res = await fetch(`/api/pantry?user_id=${user.id}`)
-    const data = await res.json()
-    setPantry(data.items || [])
+    try {
+      const res = await fetch(`/api/pantry?user_id=${user.id}`)
+      const data = await res.json()
+      setPantry(data.items || [])
+    } catch (e) {
+      console.error('loadPantry error', e)
+    }
     setPantryLoading(false)
   }
 
   async function addManual() {
     const name = manualName.trim()
     if (!name || !user) return
-    await fetch(`/api/pantry?user_id=${user.id}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, status: manualStatus, qty: manualCount ? `x${manualCount}` : '', last_purchased: manualDate || null })
-    })
-    setManualName('')
-    setManualCount('')
-    setManualDate('')
-    showToast(`Added: ${name}`)
-    loadPantry()
+    try {
+      await fetch(`/api/pantry?user_id=${user.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          status: manualStatus,
+          qty: manualCount ? `x${manualCount}` : '',
+          last_purchased: manualDate || null
+        })
+      })
+      setManualName('')
+      setManualCount('')
+      setManualDate('')
+      showToast(`Added: ${name}`)
+      loadPantry()
+    } catch (e) {
+      console.error('addManual error', e)
+    }
   }
 
   async function updateStatus(id, status) {
@@ -131,6 +150,7 @@ export default function PantryPal() {
     showToast(`Removed: ${name}`)
   }
 
+  // ── Image handling ────────────────────────────────────────────────────────
   function loadFile(file) {
     if (!file) return
     const reader = new FileReader()
@@ -164,40 +184,47 @@ export default function PantryPal() {
     setImgMime(null)
   }
 
+  // ── Scan ──────────────────────────────────────────────────────────────────
   async function doScan(body) {
     if (!user) {
-      showToast('Sign in to scan receipts')
+      showToast('Please sign in to scan receipts')
       return
     }
     setScanLoading(true)
     setScanResult(null)
     try {
+      const payload = { ...body, userId: user.id }
       const res = await fetch('/api/parse-receipt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...body, userId: user.id })
+        body: JSON.stringify(payload)
       })
       const data = await res.json()
-alert('API response: ' + JSON.stringify(data).slice(0, 300))
-if (data.error) throw new Error(data.error)
-      setScanResult({ receipt: data.receipt, items: data.items })
+      if (data.error) throw new Error(data.error)
       clearImage()
       setReceiptText('')
+      setScanResult({ receipt: data.receipt, items: data.items })
       showToast(`${data.items.length} items added to pantry`)
       loadPantry()
       loadReceipts()
     } catch (e) {
-      setScanResult({ error: e.message || 'Could not parse receipt' })
+      console.error('doScan error', e)
+      setScanResult({ error: e.message || 'Could not parse receipt. Please try again.' })
     }
     setScanLoading(false)
   }
 
+  // ── Receipt history ───────────────────────────────────────────────────────
   async function loadReceipts() {
     if (!user) return
     setReceiptsLoading(true)
-    const res = await fetch(`/api/receipts?user_id=${user.id}`)
-    const data = await res.json()
-    setReceipts(data.receipts || [])
+    try {
+      const res = await fetch(`/api/receipts?user_id=${user.id}`)
+      const data = await res.json()
+      setReceipts(data.receipts || [])
+    } catch (e) {
+      console.error('loadReceipts error', e)
+    }
     setReceiptsLoading(false)
   }
 
@@ -211,9 +238,13 @@ if (data.error) throw new Error(data.error)
     showToast('Receipt deleted')
   }
 
+  // ── Recipes ───────────────────────────────────────────────────────────────
   async function getRecipes() {
     const avail = pantry.filter(i => i.status !== 'out').map(i => i.name)
-    if (avail.length < 2) return
+    if (avail.length < 2) {
+      showToast('Add at least 2 items to your pantry first')
+      return
+    }
     setRecipeLoading(true)
     setRecipes([])
     try {
@@ -223,13 +254,16 @@ if (data.error) throw new Error(data.error)
         body: JSON.stringify({ items: avail })
       })
       const data = await res.json()
+      if (data.error) throw new Error(data.error)
       setRecipes(data.recipes || [])
-    } catch {
-      setRecipes([])
+    } catch (e) {
+      console.error('getRecipes error', e)
+      showToast('Could not load recipes. Try again.')
     }
     setRecipeLoading(false)
   }
 
+  // ── Derived ───────────────────────────────────────────────────────────────
   const filtered = pantryFilter === 'all' ? pantry : pantry.filter(i => i.status === pantryFilter)
   const stats = {
     total: pantry.length,
@@ -238,16 +272,20 @@ if (data.error) throw new Error(data.error)
   }
 
   if (authLoading) {
-    return <div style={{display:'flex',justifyContent:'center',alignItems:'center',minHeight:'100vh'}}><Spinner /></div>
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <Spinner />
+      </div>
+    )
   }
 
   return (
     <div className={styles.app}>
 
-      {/* HEADER */}
+      {/* ── HEADER ── */}
       <header className={styles.header}>
         <div className={styles.brand}>
-          <span style={{fontSize:28}}>🧺</span>
+          <span style={{ fontSize: 28 }}>🧺</span>
           <div>
             <div className={styles.appTitle}>PantryPal</div>
             <div className={styles.appSub}>Track groceries · discover recipes</div>
@@ -263,11 +301,11 @@ if (data.error) throw new Error(data.error)
             </div>
           ) : (
             <button className={styles.googleBtn} onClick={signInWithGoogle}>
-              <svg width="16" height="16" viewBox="0 0 24 24" style={{flexShrink:0}}>
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+              <svg width="16" height="16" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
               </svg>
               Sign in with Google
             </button>
@@ -281,9 +319,9 @@ if (data.error) throw new Error(data.error)
         </div>
       )}
 
-      {/* TABS */}
+      {/* ── TABS ── */}
       <nav className={styles.tabs}>
-        {[['pantry','📋','Pantry'],['scan','📷','Scan'],['history','🧾','History'],['recipes','🍳','Recipes']].map(([id, icon, label]) => (
+        {[['pantry', '📋', 'Pantry'], ['scan', '📷', 'Scan'], ['history', '🧾', 'History'], ['recipes', '🍳', 'Recipes']].map(([id, icon, label]) => (
           <button key={id}
             className={tab === id ? `${styles.tabBtn} ${styles.activeTab}` : styles.tabBtn}
             onClick={() => setTab(id)}>
@@ -292,7 +330,7 @@ if (data.error) throw new Error(data.error)
         ))}
       </nav>
 
-      {/* ── PANTRY ── */}
+      {/* ══════════════════════ PANTRY ══════════════════════ */}
       {tab === 'pantry' && (
         <section>
           <div className={styles.statsRow}>
@@ -302,7 +340,7 @@ if (data.error) throw new Error(data.error)
           </div>
 
           <div className={styles.filterRow}>
-            {['all','fresh','low','out'].map(f => (
+            {['all', 'fresh', 'low', 'out'].map(f => (
               <button key={f}
                 className={pantryFilter === f ? `${styles.chip} ${styles.chipOn}` : styles.chip}
                 onClick={() => setPantryFilter(f)}>
@@ -316,11 +354,11 @@ if (data.error) throw new Error(data.error)
               <input type="text" value={manualName} placeholder="Item name…"
                 onChange={e => setManualName(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && addManual()}
-                style={{flex:2, minWidth:0}} />
+                style={{ flex: 2, minWidth: 0 }} />
               <input type="number" value={manualCount} placeholder="Qty"
                 onChange={e => setManualCount(e.target.value)}
-                min="0" style={{width:64}} />
-              <select value={manualStatus} onChange={e => setManualStatus(e.target.value)} style={{flex:1}}>
+                min="0" style={{ width: 64 }} />
+              <select value={manualStatus} onChange={e => setManualStatus(e.target.value)} style={{ flex: 1 }}>
                 <option value="fresh">In stock</option>
                 <option value="low">Low</option>
                 <option value="out">Out</option>
@@ -328,8 +366,7 @@ if (data.error) throw new Error(data.error)
             </div>
             <div className={styles.manualRow2}>
               <label className={styles.dateLabel}>Last purchased</label>
-              <input type="date" value={manualDate} onChange={e => setManualDate(e.target.value)}
-                className={styles.dateInput} />
+              <input type="date" value={manualDate} onChange={e => setManualDate(e.target.value)} className={styles.dateInput} />
               <button onClick={addManual} className={styles.addBtn}>+ Add item</button>
             </div>
           </div>
@@ -350,7 +387,9 @@ if (data.error) throw new Error(data.error)
                     {item.last_price != null && <span className={styles.itemPrice}>{fmt(item.last_price)}</span>}
                   </div>
                   {item.last_purchased && (
-                    <div className={styles.itemDate}>🗓 {new Date(item.last_purchased).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</div>
+                    <div className={styles.itemDate}>
+                      🗓 {new Date(item.last_purchased).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </div>
                   )}
                   <div className={styles.itemFoot}>
                     <select
@@ -370,7 +409,7 @@ if (data.error) throw new Error(data.error)
         </section>
       )}
 
-      {/* ── SCAN ── */}
+      {/* ══════════════════════ SCAN ══════════════════════ */}
       {tab === 'scan' && (
         <section>
           {!user && (
@@ -393,20 +432,22 @@ if (data.error) throw new Error(data.error)
           )}
 
           {previewSrc && (
-            <div style={{marginBottom:12}}>
-              <img src={previewSrc} alt="Receipt" style={{width:'100%',maxHeight:280,objectFit:'contain',borderRadius:10,border:'1px solid #eee',display:'block'}} />
-              <button onClick={clearImage} style={{marginTop:6,fontSize:12,padding:'4px 10px',cursor:'pointer'}}>✕ Clear</button>
+            <div style={{ marginBottom: 12 }}>
+              <img src={previewSrc} alt="Receipt" style={{ width: '100%', maxHeight: 280, objectFit: 'contain', borderRadius: 10, border: '1px solid #eee', display: 'block' }} />
+              <button onClick={clearImage} style={{ marginTop: 6, fontSize: 12, padding: '4px 10px', cursor: 'pointer' }}>✕ Clear</button>
             </div>
           )}
 
           {previewSrc && !scanLoading && (
-            <button className={styles.scanBtn} onClick={() => doScan({ imageBase64: imgBase64, imageMime })}>
+            <button
+              className={styles.scanBtn}
+              onClick={() => doScan({ imageBase64: imgBase64, imageMime: imgMime })}>
               ✨ Read receipt with AI
             </button>
           )}
 
           {scanLoading && (
-            <div className={styles.loadRow}><Spinner /> Scanning receipt…</div>
+            <div className={styles.loadRow}><Spinner /> Scanning receipt… this may take a few seconds</div>
           )}
 
           <div className={styles.divider}>or paste receipt text</div>
@@ -422,9 +463,10 @@ if (data.error) throw new Error(data.error)
           {!scanLoading && (
             <button
               className={styles.scanBtn}
-              style={{marginTop:8}}
-              disabled={!receiptText.trim()}
-              onClick={() => doScan({ text: receiptText })}>
+              style={{ marginTop: 8, opacity: !receiptText.trim() ? 0.5 : 1 }}
+              onClick={() => {
+                if (receiptText.trim()) doScan({ text: receiptText })
+              }}>
               ✓ Parse text with AI
             </button>
           )}
@@ -432,7 +474,7 @@ if (data.error) throw new Error(data.error)
           {scanResult && !scanResult.error && (
             <div className={styles.scanSuccess}>
               <div className={styles.scanSuccessHead}>
-                <span>✓ {scanResult.items.length} items added</span>
+                <span>✓ {scanResult.items.length} items added to pantry</span>
                 <span className={styles.storeName}>{scanResult.receipt?.store_name}</span>
               </div>
               <div className={styles.scanItemList}>
@@ -446,6 +488,12 @@ if (data.error) throw new Error(data.error)
                   </div>
                 ))}
               </div>
+              <button
+                className={styles.addBtn}
+                style={{ marginTop: 12, width: '100%' }}
+                onClick={() => setTab('pantry')}>
+                View pantry →
+              </button>
             </div>
           )}
 
@@ -455,7 +503,7 @@ if (data.error) throw new Error(data.error)
         </section>
       )}
 
-      {/* ── HISTORY ── */}
+      {/* ══════════════════════ HISTORY ══════════════════════ */}
       {tab === 'history' && (
         <section>
           {!user ? (
@@ -466,14 +514,14 @@ if (data.error) throw new Error(data.error)
             <div className={styles.empty}>No receipts yet — scan one from the Scan tab.</div>
           ) : receipts.map(r => (
             <div key={r.id} className={styles.receiptCard}>
-              <div className={styles.receiptHeader} onClick={() => setExpandedReceipt(expandedReceipt === r.id ? null : r.id)}>
+              <div className={styles.receiptHeader}
+                onClick={() => setExpandedReceipt(expandedReceipt === r.id ? null : r.id)}>
                 <div className={styles.receiptMeta}>
                   <div className={styles.receiptStore}>{r.store_name}</div>
                   <div className={styles.receiptDate}>
                     {r.receipt_date
-                      ? new Date(r.receipt_date).toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' })
-                      : new Date(r.created_at).toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' })
-                    }
+                      ? new Date(r.receipt_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+                      : new Date(r.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                     {' · '}{r.item_count} item{r.item_count !== 1 ? 's' : ''}
                     {r.total_amount != null && <> · <strong>{fmt(r.total_amount)}</strong></>}
                   </div>
@@ -484,7 +532,6 @@ if (data.error) throw new Error(data.error)
                   <span className={styles.chevron}>{expandedReceipt === r.id ? '▲' : '▼'}</span>
                 </div>
               </div>
-
               {expandedReceipt === r.id && (
                 <div className={styles.receiptItems}>
                   <div className={styles.receiptItemsHead}>
@@ -508,15 +555,23 @@ if (data.error) throw new Error(data.error)
         </section>
       )}
 
-      {/* ── RECIPES ── */}
+      {/* ══════════════════════ RECIPES ══════════════════════ */}
       {tab === 'recipes' && (
         <section>
-          <button className={styles.scanBtn} style={{marginBottom:16}} onClick={getRecipes} disabled={recipeLoading}>
+          <button
+            className={styles.scanBtn}
+            style={{ marginBottom: 16 }}
+            onClick={getRecipes}
+            disabled={recipeLoading}>
             {recipeLoading ? 'Finding matches…' : '✨ Suggest recipes from my pantry'}
           </button>
 
-          {pantry.filter(i => i.status !== 'out').length < 2 && !recipeLoading && recipes.length === 0 && (
-            <div className={styles.empty}>Add at least a couple of items to your pantry first.</div>
+          {recipeLoading && (
+            <div className={styles.loadRow}><Spinner /> Finding the best recipe matches…</div>
+          )}
+
+          {!recipeLoading && recipes.length === 0 && pantry.filter(i => i.status !== 'out').length < 2 && (
+            <div className={styles.empty}>Add at least 2 items to your pantry first.</div>
           )}
 
           {recipes.map((r, i) => (
