@@ -28,6 +28,8 @@ export default function PantryPal() {
   const [pantryFilter, setPantryFilter] = useState('all')
   const [manualName, setManualName] = useState('')
   const [manualStatus, setManualStatus] = useState('fresh')
+  const [manualCount, setManualCount] = useState('')
+  const [manualDate, setManualDate] = useState('')
 
   const [previewSrc, setPreviewSrc] = useState(null)
   const [imgBase64, setImgBase64] = useState(null)
@@ -101,9 +103,11 @@ export default function PantryPal() {
     await fetch(`/api/pantry?user_id=${user.id}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, status: manualStatus, qty: '' })
+      body: JSON.stringify({ name, status: manualStatus, qty: manualCount ? `x${manualCount}` : '', last_purchased: manualDate || null })
     })
     setManualName('')
+    setManualCount('')
+    setManualDate('')
     showToast(`Added: ${name}`)
     loadPantry()
   }
@@ -306,16 +310,27 @@ export default function PantryPal() {
             ))}
           </div>
 
-          <div className={styles.inputRow}>
-            <input type="text" value={manualName} placeholder="Add item manually…"
-              onChange={e => setManualName(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && addManual()} />
-            <select value={manualStatus} onChange={e => setManualStatus(e.target.value)}>
-              <option value="fresh">In stock</option>
-              <option value="low">Low</option>
-              <option value="out">Out</option>
-            </select>
-            <button onClick={addManual}>+ Add</button>
+          <div className={styles.manualAddBox}>
+            <div className={styles.manualRow1}>
+              <input type="text" value={manualName} placeholder="Item name…"
+                onChange={e => setManualName(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && addManual()}
+                style={{flex:2, minWidth:0}} />
+              <input type="number" value={manualCount} placeholder="Qty"
+                onChange={e => setManualCount(e.target.value)}
+                min="0" style={{width:64}} />
+              <select value={manualStatus} onChange={e => setManualStatus(e.target.value)} style={{flex:1}}>
+                <option value="fresh">In stock</option>
+                <option value="low">Low</option>
+                <option value="out">Out</option>
+              </select>
+            </div>
+            <div className={styles.manualRow2}>
+              <label className={styles.dateLabel}>Last purchased</label>
+              <input type="date" value={manualDate} onChange={e => setManualDate(e.target.value)}
+                className={styles.dateInput} />
+              <button onClick={addManual} className={styles.addBtn}>+ Add item</button>
+            </div>
           </div>
 
           {pantryLoading ? (
@@ -333,6 +348,9 @@ export default function PantryPal() {
                     <span className={styles.itemQty}>{item.qty || ''}</span>
                     {item.last_price != null && <span className={styles.itemPrice}>{fmt(item.last_price)}</span>}
                   </div>
+                  {item.last_purchased && (
+                    <div className={styles.itemDate}>🗓 {new Date(item.last_purchased).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</div>
+                  )}
                   <div className={styles.itemFoot}>
                     <select
                       className={`${styles.statusSel} ${styles['s_' + item.status]}`}

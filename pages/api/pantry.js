@@ -30,17 +30,17 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    const { name, qty, status } = req.body
+    const { name, qty, status, last_purchased } = req.body
     const { data: existing } = await sb
       .from('pantry_items').select('id')
       .eq('user_id', user_id).ilike('name', name).single()
     if (existing) {
       await sb.from('pantry_items')
-        .update({ status, qty: qty || '', updated_at: new Date().toISOString() })
+        .update({ status, qty: qty || '', last_purchased: last_purchased || null, updated_at: new Date().toISOString() })
         .eq('id', existing.id)
     } else {
       await sb.from('pantry_items')
-        .insert({ user_id, name, qty: qty || '', status })
+        .insert({ user_id, name, qty: qty || '', status, last_purchased: last_purchased || null })
     }
     return res.status(200).json({ ok: true })
   }

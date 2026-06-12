@@ -54,3 +54,7 @@ create index pantry_user_idx    on pantry_items(user_id);
 create index receipts_user_idx  on receipts(user_id);
 create index ri_receipt_idx     on receipt_items(receipt_id);
 create index ri_user_name_idx   on receipt_items(user_id, name);  -- fast prev-price lookup
+
+-- ── Run this if you already created the tables earlier ───────────────────
+-- Adds last_purchased date column to pantry_items
+alter table pantry_items add column if not exists last_purchased date;
