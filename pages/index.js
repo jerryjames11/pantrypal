@@ -148,13 +148,16 @@ export default function PantryPal() {
 
   // ── Receipt scanning ────────────────────────────────────────────────────
   function loadFile(file) {
-    if (!file || !file.type.startsWith('image/')) return
+    if (!file) return
     const reader = new FileReader()
     reader.onload = ev => {
       const src = ev.target.result
+      const base64 = src.split(',')[1]
+      const mime = file.type || 'image/jpeg'
       setPreviewSrc(src)
-      setImgBase64(src.split(',')[1])
-      setImgMime(file.type)
+      setImgBase64(base64)
+      setImgMime(mime)
+      console.log('Image loaded, base64 length:', base64?.length, 'mime:', mime)
     }
     reader.readAsDataURL(file)
   }
@@ -367,7 +370,7 @@ export default function PantryPal() {
 
           {previewSrc && (
             <button className={`${styles.btn} ${styles.btnPrimary} ${styles.btnWide}`}
-              disabled={scanLoading} onClick={() => doScan({ imageBase64: imgBase64, imageMime })}>
+              disabled={scanLoading} onClick={() => { console.log('scanning', !!imgBase64); doScan({ imageBase64: imgBase64, imageMime }); }}>
               {scanLoading ? <><Spinner small /> Scanning…</> : '✨ Read receipt with AI'}
             </button>
           )}
