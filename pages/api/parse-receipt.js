@@ -5,24 +5,23 @@ const sb = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
-async function callGemini(parts) {
-  const key = process.env.GEMINI_API_KEY
-  // Try Bearer token auth (for AQ. keys) first, fall back to query param (for AIza keys)
-  const url = key.startsWith('AIza')
-    ? `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`
-    : `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`
-
-  const headers = { 'Content-Type': 'application/json' }
-  if (!key.startsWith('AIza')) headers['Authorization'] = `Bearer ${key}`
-
-  const res = await fetch(url, {
+async function callAI(messages) {
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
-    headers,
-    body: JSON.stringify({ contents: [{ parts }] })
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+      'HTTP-Referer': 'https://pantrypal-green.vercel.app',
+      'X-Title': 'PantryPal'
+    },
+    body: JSON.stringify({
+      model: 'google/gemini-flash-1.5',
+      messages
+    })
   })
   const data = await res.json()
   if (!res.ok) throw new Error(JSON.stringify(data))
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  return data.choices?.[0]?.message?.content || ''
 }
 
 const PROMPT = `Extract every line item from this grocery receipt.
@@ -49,19 +48,22 @@ export default async function handler(req, res) {
   if (!userId) return res.status(401).json({ error: 'Not authenticated' })
 
   try {
-    let parts
+    let messages
     if (imageBase64) {
-      parts = [
-        { text: PROMPT },
-        { inline_data: { mime_type: imageMime || 'image/jpeg', data: imageBase64 } }
-      ]
+      messages = [{
+        role: 'user',
+        content: [
+          { type: 'text', text: PROMPT },
+          { type: 'image_url', image_url: { url: `data:${imageMime || 'image/jpeg'};base64,${imageBase64}` } }
+        ]
+      }]
     } else if (text) {
-      parts = [{ text: PROMPT + '\n\nReceipt text:\n' + text }]
+      messages = [{ role: 'user', content: PROMPT + '\n\nReceipt text:\n' + text }]
     } else {
       return res.status(400).json({ error: 'Provide text or imageBase64' })
     }
 
-    const raw = await callGemini(parts)
+    const raw = await callAI(messages)
     const cleaned = raw.replace(/```json|```/g, '').trim()
     const parsed = JSON.parse(cleaned)
     const items = parsed.items || []

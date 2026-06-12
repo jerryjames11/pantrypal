@@ -1,20 +1,20 @@
-async function callGemini(text) {
-  const key = process.env.GEMINI_API_KEY
-  const url = key.startsWith('AIza')
-    ? `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`
-    : `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`
-
-  const headers = { 'Content-Type': 'application/json' }
-  if (!key.startsWith('AIza')) headers['Authorization'] = `Bearer ${key}`
-
-  const res = await fetch(url, {
+async function callAI(content) {
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
-    headers,
-    body: JSON.stringify({ contents: [{ parts: [{ text }] }] })
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+      'HTTP-Referer': 'https://pantrypal-green.vercel.app',
+      'X-Title': 'PantryPal'
+    },
+    body: JSON.stringify({
+      model: 'google/gemini-flash-1.5',
+      messages: [{ role: 'user', content }]
+    })
   })
   const data = await res.json()
   if (!res.ok) throw new Error(JSON.stringify(data))
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  return data.choices?.[0]?.message?.content || ''
 }
 
 export default async function handler(req, res) {
@@ -23,7 +23,7 @@ export default async function handler(req, res) {
   if (!items || items.length < 2) return res.status(400).json({ error: 'Need at least 2 ingredients' })
 
   try {
-    const raw = await callGemini(`
+    const raw = await callAI(`
 Available ingredients: ${items.join(', ')}.
 Suggest 4 diverse recipes using these ingredients.
 Return ONLY a valid JSON array, no markdown. Schema:
