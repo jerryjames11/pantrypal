@@ -341,13 +341,23 @@ export default function PantryPal() {
 
           <div className={styles.sectionLabel}>Upload a receipt photo</div>
           {!previewSrc ? (
-            <label className={styles.uploadZone}>
-              <input ref={fileRef} type="file" accept="image/*"
-                onChange={e => loadFile(e.target.files[0])} hidden />
+            <div className={styles.uploadZone}>
               <span className={styles.uploadIcon} aria-hidden="true">📷</span>
-              <div className={styles.uploadTitle}>Tap to photograph or upload</div>
-              <div className={styles.uploadSub}>Receipt photo · grocery list · any image format</div>
-            </label>
+              <div className={styles.uploadTitle}>Add your receipt</div>
+              <div className={styles.uploadSub}>Choose an option below</div>
+              <div style={{display:'flex', gap:'8px', justifyContent:'center', marginTop:'14px', flexWrap:'wrap'}}>
+                <label style={{padding:'8px 18px',background:'#16a34a',color:'#fff',borderRadius:'8px',fontWeight:600,fontSize:'13px',cursor:'pointer'}}>
+                  📁 Choose from files
+                  <input ref={fileRef} type="file" accept="image/*"
+                    onChange={e => loadFile(e.target.files[0])} hidden />
+                </label>
+                <label style={{padding:'8px 18px',background:'#fff',border:'1px solid #ddd',borderRadius:'8px',fontWeight:600,fontSize:'13px',cursor:'pointer'}}>
+                  📷 Take a photo
+                  <input type="file" accept="image/*" capture="environment"
+                    onChange={e => loadFile(e.target.files[0])} hidden />
+                </label>
+              </div>
+            </div>
           ) : (
             <div className={styles.previewWrap}>
               <img src={previewSrc} alt="Receipt preview" className={styles.preview} />
