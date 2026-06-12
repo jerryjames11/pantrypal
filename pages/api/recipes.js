@@ -1,8 +1,15 @@
 async function callGemini(text) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`
+  const key = process.env.GEMINI_API_KEY
+  const url = key.startsWith('AIza')
+    ? `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`
+    : `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`
+
+  const headers = { 'Content-Type': 'application/json' }
+  if (!key.startsWith('AIza')) headers['Authorization'] = `Bearer ${key}`
+
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({ contents: [{ parts: [{ text }] }] })
   })
   const data = await res.json()
@@ -18,7 +25,6 @@ export default async function handler(req, res) {
   try {
     const raw = await callGemini(`
 Available ingredients: ${items.join(', ')}.
-
 Suggest 4 diverse recipes using these ingredients.
 Return ONLY a valid JSON array, no markdown. Schema:
 [{

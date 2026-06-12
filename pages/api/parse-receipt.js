@@ -6,10 +6,18 @@ const sb = createClient(
 )
 
 async function callGemini(parts) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`
+  const key = process.env.GEMINI_API_KEY
+  // Try Bearer token auth (for AQ. keys) first, fall back to query param (for AIza keys)
+  const url = key.startsWith('AIza')
+    ? `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`
+    : `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`
+
+  const headers = { 'Content-Type': 'application/json' }
+  if (!key.startsWith('AIza')) headers['Authorization'] = `Bearer ${key}`
+
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({ contents: [{ parts }] })
   })
   const data = await res.json()
