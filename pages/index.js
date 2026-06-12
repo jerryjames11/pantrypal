@@ -370,7 +370,11 @@ export default function PantryPal() {
 
           {previewSrc && (
             <button className={`${styles.btn} ${styles.btnPrimary} ${styles.btnWide}`}
-              disabled={scanLoading} onClick={() => { console.log('scanning', !!imgBase64); doScan({ imageBase64: imgBase64, imageMime }); }}>
+              disabled={scanLoading}
+              onClick={() => {
+                alert('Starting scan, base64 length: ' + (imgBase64 ? imgBase64.length : 'NULL'))
+                doScan({ imageBase64: imgBase64, imageMime })
+              }}>
               {scanLoading ? <><Spinner small /> Scanning…</> : '✨ Read receipt with AI'}
             </button>
           )}
