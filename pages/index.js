@@ -487,41 +487,44 @@ export default function PantryPal() {
                       )}
                     </div>
                   </div>
-                  <div className={styles.itemsGrid}>
-                    {items.map(item => (
-                      <div key={item.id} className={styles.itemCard} draggable onDragStart={() => onDragStart(item)}>
-                        {editingItem === item.id ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                            <input defaultValue={item.name} onBlur={e => updateItem(item.id, { name: e.target.value })} style={{ fontSize: 13, fontWeight: 600, padding: '3px 6px', border: '1px solid #16a34a', borderRadius: 5, width: '100%' }} autoFocus />
-                            <input defaultValue={item.qty} placeholder="Qty (e.g. x2, 500ml)" onBlur={e => updateItem(item.id, { qty: e.target.value })} style={{ fontSize: 12, padding: '3px 6px', border: '1px solid #e0e0e0', borderRadius: 5, width: '100%' }} />
-                            <button onClick={() => setEditingItem(null)} style={{ fontSize: 11, padding: '3px 0', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 5, cursor: 'pointer' }}>Done</button>
-                          </div>
-                        ) : (
-                          <>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                              <div className={styles.itemName} title={item.name}>{item.name}</div>
-                              <button className={styles.iconBtn} onClick={() => setEditingItem(item.id)} title="Edit">✏️</button>
+                  {items.length === 0 ? (
+                    <div className={styles.emptyCategory}>Drag items here</div>
+                  ) : (
+                    <div className={styles.itemsGrid}>
+                      {items.map(item => (
+                        <div key={item.id} className={styles.itemCard} draggable onDragStart={() => onDragStart(item)}>
+                          {editingItem === item.id ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                              <input defaultValue={item.name} onBlur={e => updateItem(item.id, { name: e.target.value })} style={{ fontSize: 13, fontWeight: 600, padding: '3px 6px', border: '1px solid #16a34a', borderRadius: 5, width: '100%' }} autoFocus />
+                              <input defaultValue={item.qty} placeholder="Qty (e.g. x2, 500ml)" onBlur={e => updateItem(item.id, { qty: e.target.value })} style={{ fontSize: 12, padding: '3px 6px', border: '1px solid #e0e0e0', borderRadius: 5, width: '100%' }} />
+                              <button onClick={() => setEditingItem(null)} style={{ fontSize: 11, padding: '3px 0', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 5, cursor: 'pointer' }}>Done</button>
                             </div>
-                            <div className={styles.itemRow2}>
-                              <span className={styles.itemQty}>{item.qty || ''}</span>
-                              {item.last_price != null && <span className={styles.itemPrice}>{fmt(item.last_price)}</span>}
-                            </div>
-                            {item.last_purchased && (
-                              <div className={styles.itemDate}>🗓 {new Date(item.last_purchased).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</div>
-                            )}
-                            <div className={styles.itemFoot}>
-                              <select className={`${styles.statusSel} ${styles['s_' + item.status]}`} value={item.status} onChange={e => updateItem(item.id, { status: e.target.value })}>
-                                <option value="fresh">✓ In stock</option>
-                                <option value="low">↓ Low</option>
-                                <option value="out">✕ Out</option>
-                              </select>
-                              <button className={styles.iconBtn} onClick={() => removeItem(item.id, item.name)}>✕</button>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                          ) : (
+                            <>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <div className={styles.itemName} title={item.name}>{item.name}</div>
+                                <button className={styles.iconBtn} onClick={() => setEditingItem(item.id)} title="Edit">✏️</button>
+                              </div>
+                              <div className={styles.itemRow2}>
+                                <span className={styles.itemQty}>{item.qty || ''}</span>
+                                {item.last_price != null && <span className={styles.itemPrice}>{fmt(item.last_price)}</span>}
+                              </div>
+                              {item.last_purchased && (
+                                <div className={styles.itemDate}>🗓 {new Date(item.last_purchased).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                              )}
+                              <div className={styles.itemFoot}>
+                                <select className={`${styles.statusSel} ${styles['s_' + item.status]}`} value={item.status} onChange={e => updateItem(item.id, { status: e.target.value })}>
+                                  <option value="fresh">✓ In stock</option>
+                                  <option value="low">↓ Low</option>
+                                  <option value="out">✕ Out</option>
+                                </select>
+                                <button className={styles.iconBtn} onClick={() => removeItem(item.id, item.name)}>✕</button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
               )
