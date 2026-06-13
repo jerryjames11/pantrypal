@@ -416,17 +416,17 @@ export default function PantryPal() {
 
       {/* HEADER */}
       <header className={styles.header}>
-        <div className={styles.brand}>
+        <button className={styles.brandBtn} onClick={() => setTab('pantry')}>
           <span style={{fontSize:28}}>🧺</span>
           <div>
             <div className={styles.appTitle}>PantryPal</div>
             <div className={styles.appSub}>My Pantry</div>
           </div>
-        </div>
+        </button>
 
-        {/* NAV TABS — left side */}
+        {/* NAV TABS — left side, no Pantry (logo is the pantry button) */}
         <nav className={styles.headerNav}>
-          {[['cart','🛒','Cart'],['history','🧾','History'],['scan','📷','Scan'],['recipes','🍳','Recipes'],['pantry','📋','Pantry']].map(([id, icon, label]) => (
+          {[['cart','🛒','Cart'],['history','🧾','History'],['scan','📷','Scan'],['recipes','🍳','Recipes']].map(([id, icon, label]) => (
             <button key={id}
               className={tab === id ? `${styles.headerTab} ${styles.headerTabActive}` : styles.headerTab}
               onClick={() => setTab(id)}>
@@ -436,8 +436,8 @@ export default function PantryPal() {
           ))}
         </nav>
 
-        {/* SIGN OUT — right side */}
-        <div className={styles.userArea}>
+        {/* SIGN OUT — right side, flex-shrink:0 prevents wrapping */}
+        <div className={styles.userArea} style={{flexShrink:0}}>
           {user.user_metadata?.avatar_url && <img src={user.user_metadata.avatar_url} alt="" className={styles.avatar} />}
           <button className={styles.authBtn} onClick={signOut}>Sign out</button>
         </div>
