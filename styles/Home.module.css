@@ -45,7 +45,7 @@
 
 /* ── Items grid ──────────────────────────────────────────────────────── */
 .itemsGrid { display: flex; flex-direction: column; gap: 5px; padding: 8px; }
-.itemCard { background: #fdf8f0; border: 1px solid #e8d8c0; border-left: 3px solid #3cb87a; border-radius: 0 8px 8px 0; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.itemCard { background: #fdf8f0; border: 1px solid #e8d8c0; border-left: 3px solid #3cb87a; border-radius: 0 8px 8px 0; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; position: relative; }
 .itemName { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .itemRow2 { display: flex; justify-content: space-between; align-items: center; }
 .itemQty { font-size: 11px; color: #aaa; }
@@ -176,7 +176,7 @@
 .itemDate { font-size: 10px; color: #aaa; margin-top: 2px; }
 
 /* ── Category groups ─────────────────────────────────────────────────── */
-.categoryGroup { margin-bottom: 20px; border: 1.5px solid #e8d8c0; border-radius: 12px; overflow: hidden; transition: border-color .15s; background: #fdf8f0; }
+.categoryGroup { margin-bottom: 20px; border: 1.5px solid #e8d8c0; border-radius: 12px; overflow: visible; transition: border-color .15s; background: #fdf8f0; }
 .categoryGroup.dragOver { border-color: #3cb87a; background: #e8faf3; }
 .categoryHeader { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: #f0e6d0; font-size: 13px; font-weight: 600; color: #3d2b0e; border-bottom: 1px solid #e8d8c0; }
 .categoryCount { margin-left: auto; background: #e5e7eb; color: #555; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 20px; }
@@ -214,7 +214,7 @@
 .confirmYes:hover { background: #b91c1c; }
 
 /* ── Move category dropdown ──────────────────────────────────────────── */
-.moveCatBox { background: #fff; border: 1px solid #a0eecb; border-radius: 10px; padding: 6px; display: flex; flex-direction: column; gap: 2px; position: absolute; right: 0; top: 100%; z-index: 100; min-width: 180px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); margin-top: 4px; }
+.moveCatBox { background: #fff; border: 1px solid #a0eecb; border-radius: 10px; padding: 6px; display: flex; flex-direction: column; gap: 2px; position: absolute; right: 0; top: calc(100% + 4px); z-index: 999; min-width: 180px; box-shadow: 0 4px 20px rgba(0,0,0,0.18); }
 .moveCatLabel { font-size: 10px; font-weight: 700; color: #25905c; text-transform: uppercase; letter-spacing: .06em; padding: 2px 4px; margin-bottom: 2px; }
 .moveCatBtn { text-align: left; padding: 5px 8px; border: none; background: #fff; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: inherit; color: #111; transition: background .1s; }
 .moveCatBtn:hover { background: #c8f5e0; color: #1c7549; font-weight: 500; }
