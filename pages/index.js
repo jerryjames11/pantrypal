@@ -23,6 +23,7 @@ export default function PantryPal() {
   const [pantryFilter, setPantryFilter] = useState('all')
   const [pantryView, setPantryView] = useState('category') // 'category' | 'list'
   const [editingItem, setEditingItem] = useState(null) // item being edited
+  const [movingItem, setMovingItem] = useState(null) // item id showing category move dropdown
   const [manualName, setManualName] = useState('')
   const [manualStatus, setManualStatus] = useState('fresh')
   const [manualCount, setManualCount] = useState('')
@@ -503,8 +504,26 @@ export default function PantryPal() {
                             <>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                 <div className={styles.itemName} title={item.name}>{item.name}</div>
-                                <button className={styles.iconBtn} onClick={() => setEditingItem(item.id)} title="Edit">✏️</button>
+                                <div style={{ display: 'flex', gap: 2 }}>
+                                  <button className={styles.iconBtn} onClick={() => setMovingItem(movingItem === item.id ? null : item.id)} title="Move to category">📂</button>
+                                  <button className={styles.iconBtn} onClick={() => setEditingItem(item.id)} title="Edit">✏️</button>
+                                </div>
                               </div>
+                              {movingItem === item.id && (
+                                <div className={styles.moveCatBox}>
+                                  <div className={styles.moveCatLabel}>Move to:</div>
+                                  {categories.map(c => (
+                                    <button key={c.id} className={styles.moveCatBtn}
+                                      onClick={() => { updateItem(item.id, { category: c.name }); setMovingItem(null); showToast(`Moved to ${c.name}`) }}>
+                                      {c.emoji} {c.name}
+                                    </button>
+                                  ))}
+                                  <button className={styles.moveCatBtn}
+                                    onClick={() => { updateItem(item.id, { category: 'Uncategorized' }); setMovingItem(null); showToast('Moved to Uncategorized') }}>
+                                    📦 Uncategorized
+                                  </button>
+                                </div>
+                              )}
                               <div className={styles.itemRow2}>
                                 <span className={styles.itemQty}>{item.qty || ''}</span>
                                 {item.last_price != null && <span className={styles.itemPrice}>{fmt(item.last_price)}</span>}
