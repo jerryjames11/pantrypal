@@ -408,8 +408,8 @@ export default function PantryPal() {
 
   // ── Derived ───────────────────────────────────────────────────────────────
   const filtered = pantryFilter === 'all' ? pantry : pantry.filter(i => i.status === pantryFilter)
-  const stats = { total: pantry.length, fresh: pantry.filter(i => i.status === 'fresh').length, low: pantry.filter(i => i.status === 'low').length }
-  const catNames = [...categories.map(c => c.name), 'Uncategorized']
+  const stats = { total: pantry.length, fresh: pantry.filter(i => i.status === 'fresh').length, low: pantry.filter(i => i.status === 'low').length, out: pantry.filter(i => i.status === 'out').length }
+  const catNames = ['Uncategorized', ...categories.map(c => c.name)]
   const groupedPantry = catNames.reduce((acc, cat) => {
     acc[cat] = filtered.filter(i => (i.category || 'Uncategorized') === cat)
     return acc
@@ -434,15 +434,29 @@ export default function PantryPal() {
       <header className={styles.header}>
         <button className={styles.brandBtn} onClick={() => setTab('pantry')}>
           <img src="/logo.png" alt="PantryPal logo" className={styles.headerLogo} />
-          <div>
-            <div className={styles.appTitle}>PantryPal</div>
-          </div>
+          <span className={styles.appTitle}>PantryPal</span>
         </button>
 
-          {/* SIGN OUT — right side */}
-        <div className={styles.userArea}>
-          {user.user_metadata?.avatar_url && <img src={user.user_metadata.avatar_url} alt="" className={styles.avatar} />}
-          <button className={styles.authBtn} onClick={signOut}>Sign out</button>
+        <div className={styles.profileArea} data-profile>
+          <button className={styles.avatarBtn} onClick={() => setProfileOpen(o => !o)}>
+            {user.user_metadata?.avatar_url
+              ? <img src={user.user_metadata.avatar_url} alt="Profile" className={styles.avatarImg} />
+              : <div className={styles.avatarFallback}>👤</div>}
+          </button>
+          {profileOpen && (
+            <div className={styles.profileMenu}>
+              <div className={styles.profileMenuName}>
+                {user.user_metadata?.full_name || user.email}
+              </div>
+              <div className={styles.profileMenuDivider} />
+              <button className={styles.profileMenuItem} onClick={() => { setTab('pantry'); setProfileOpen(false) }}>
+                📋 My Pantry
+              </button>
+              <button className={styles.profileMenuItemDanger} onClick={() => { signOut(); setProfileOpen(false) }}>
+                🚪 Sign out
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
@@ -452,9 +466,9 @@ export default function PantryPal() {
       {tab === 'pantry' && (
         <section>
           <div className={styles.statsRow}>
-            <div className={styles.statCard}><div className={styles.statVal}>{stats.total}</div><div className={styles.statLbl}>Tracked</div></div>
             <div className={styles.statCard}><div className={styles.statVal}>{stats.fresh}</div><div className={styles.statLbl}>In stock</div></div>
             <div className={styles.statCard}><div className={styles.statVal}>{stats.low}</div><div className={styles.statLbl}>Running low</div></div>
+            <div className={styles.statCard}><div className={styles.statVal}>{stats.out}</div><div className={styles.statLbl}>Out of stock</div></div>
           </div>
 
           <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:10,flexWrap:'nowrap'}}>
@@ -565,15 +579,15 @@ export default function PantryPal() {
                                   <button className={styles.iconBtn} onClick={()=>removeItem(item.id,item.name)}>✕</button>
                                 </div>
                                 {movingItem===item.id&&(
-                                  <div className={styles.moveCatBox} style={{position:'absolute',right:8,top:36,zIndex:20}}>
+                                  <div className={styles.moveCatBox}>
                                     <div className={styles.moveCatLabel}>Move to:</div>
+                                    <button className={styles.moveCatBtn} onClick={()=>{updateItem(item.id,{category:'Uncategorized'});setMovingItem(null);showToast('Moved to Uncategorized')}}>📦 Uncategorized</button>
                                     {categories.map(c=>(
                                       <button key={c.id} className={styles.moveCatBtn}
                                         onClick={()=>{updateItem(item.id,{category:c.name});setMovingItem(null);showToast(`Moved to ${c.name}`)}}>
                                         {c.emoji} {c.name}
                                       </button>
                                     ))}
-                                    <button className={styles.moveCatBtn} onClick={()=>{updateItem(item.id,{category:'Uncategorized'});setMovingItem(null);showToast('Moved to Uncategorized')}}>📦 Uncategorized</button>
                                   </div>
                                 )}
                               </>

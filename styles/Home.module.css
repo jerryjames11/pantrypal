@@ -5,7 +5,7 @@
 /* ── Header ──────────────────────────────────────────────────────────── */
 .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0; gap: 12px; background: linear-gradient(135deg, #f5f0e8 0%, #e8dcc8 100%); padding: 14px 16px; border-radius: 0; box-shadow: 0 2px 8px rgba(180,150,100,0.2); }
 .brand { display: flex; align-items: center; gap: 10px; }
-.brandBtn { display: flex; align-items: center; gap: 7px; background: none; border: none; cursor: pointer; padding: 3px 6px; border-radius: 8px; flex-shrink: 0; }
+.brandBtn { display: flex; align-items: center; gap: 7px; background: none; border: none; cursor: pointer; padding: 2px 4px; border-radius: 8px; flex-shrink: 0; }
 .brandBtn:hover { background: rgba(255,255,255,0.15); }
 .logo { font-size: 28px; line-height: 1; }
 .appTitle { font-size: 17px; font-weight: 700; letter-spacing: -.3px; color: #fff; font-family: inherit; }
@@ -214,7 +214,7 @@
 .confirmYes:hover { background: #b91c1c; }
 
 /* ── Move category dropdown ──────────────────────────────────────────── */
-.moveCatBox { background: #e8faf3; border: 1px solid #a0eecb; border-radius: 8px; padding: 6px; margin: 4px 0; display: flex; flex-direction: column; gap: 2px; }
+.moveCatBox { background: #fff; border: 1px solid #a0eecb; border-radius: 10px; padding: 6px; display: flex; flex-direction: column; gap: 2px; position: absolute; right: 0; top: 100%; z-index: 100; min-width: 180px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); margin-top: 4px; }
 .moveCatLabel { font-size: 10px; font-weight: 700; color: #25905c; text-transform: uppercase; letter-spacing: .06em; padding: 2px 4px; margin-bottom: 2px; }
 .moveCatBtn { text-align: left; padding: 5px 8px; border: none; background: #fff; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: inherit; color: #111; transition: background .1s; }
 .moveCatBtn:hover { background: #c8f5e0; color: #1c7549; font-weight: 500; }
@@ -293,12 +293,12 @@
 .headerStatLbl { font-size: 10px; color: rgba(255,255,255,0.8); margin-top: 1px; }
 
 /* ── Avatar button ───────────────────────────────────────────────────── */
-.avatarBtn { background: none; border: 2px solid rgba(255,255,255,0.6); border-radius: 50%; padding: 0; cursor: pointer; width: 34px; height: 34px; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.avatarBtn { background: none; border: 2px solid rgba(255,255,255,0.6); border-radius: 50%; padding: 0; cursor: pointer; width: 36px; height: 36px; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 .avatarImg { width: 100%; height: 100%; object-fit: cover; display: block; }
 .avatarFallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 18px; background: rgba(255,255,255,0.2); }
 
 /* ── Profile slide-out menu ──────────────────────────────────────────── */
-.profileMenu { position: fixed; right: 12px; top: 56px; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.2); min-width: 200px; overflow: hidden; z-index: 500; border: 1px solid #e8d8c0; }
+.profileMenu { position: fixed; right: 10px; top: 58px; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.2); min-width: 200px; overflow: hidden; z-index: 500; border: 1px solid #e8d8c0; }
 .profileMenuName { padding: 12px 16px; font-size: 13px; font-weight: 600; color: #3d2b0e; background: #f5ede0; }
 .profileMenuDivider { height: 1px; background: #e8d8c0; }
 .profileMenuItem { display: block; width: 100%; text-align: left; padding: 11px 16px; border: none; background: none; font-size: 13px; font-family: inherit; cursor: pointer; color: #111; }
