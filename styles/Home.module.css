@@ -1,5 +1,5 @@
 /* ── Base ─────────────────────────────────────────────────────────────── */
-.app { max-width: 660px; margin: 0 auto; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111; }
+.app { max-width: 660px; margin: 0 auto; padding: 0; background: #fdf8f0; min-height: 100vh; box-shadow: 0 0 60px rgba(0,0,0,0.15); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111; }
 .centered { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
 
 /* ── Header ──────────────────────────────────────────────────────────── */
@@ -24,9 +24,9 @@
 
 /* ── Stats ───────────────────────────────────────────────────────────── */
 .statsRow { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 1.25rem; }
-.statCard { background: linear-gradient(135deg, #3cb87a 0%, #25905c 100%); border-radius: 12px; padding: 14px 16px; box-shadow: 0 2px 8px rgba(60,184,122,0.25); }
-.statVal { font-size: 28px; font-weight: 800; color: #fff; }
-.statLbl { font-size: 11px; color: rgba(255,255,255,0.8); margin-top: 2px; font-weight: 500; }
+.statCard { background: #f5ede0; border-radius: 12px; padding: 14px 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); border: 1px solid #e8d8c0; }
+.statVal { font-size: 28px; font-weight: 800; color: #25905c; }
+.statLbl { font-size: 11px; color: #7a6a52; margin-top: 2px; font-weight: 500; }
 
 /* ── Filters ─────────────────────────────────────────────────────────── */
 .sectionLabel { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: #999; margin-bottom: 8px; }
@@ -42,7 +42,7 @@
 
 /* ── Items grid ──────────────────────────────────────────────────────── */
 .itemsGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 8px; margin-bottom: 1rem; }
-.itemCard { background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 10px 11px; display: flex; flex-direction: column; gap: 3px; }
+.itemCard { background: #fdf8f0; border: 1px solid #e8d8c0; border-radius: 10px; padding: 10px 11px; display: flex; flex-direction: column; gap: 3px; }
 .itemName { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .itemRow2 { display: flex; justify-content: space-between; align-items: center; }
 .itemQty { font-size: 11px; color: #aaa; }
@@ -94,7 +94,7 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── Scan result ─────────────────────────────────────────────────────── */
-.scanSuccess { background: #e8faf3; border: 1px solid #a0eecb; border-radius: 10px; padding: 12px 14px; margin-top: 12px; }
+.scanSuccess { background: #f5ede0; border: 1px solid #e8d8c0; border-radius: 10px; padding: 12px 14px; margin-top: 12px; }
 .scanSuccessHead { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 600; color: #1a7a52; margin-bottom: 10px; }
 .storeName { font-weight: 500; color: #555; font-size: 12px; }
 .scanItemList { display: flex; flex-direction: column; gap: 2px; max-height: 280px; overflow-y: auto; }
@@ -110,7 +110,7 @@
 .priceDown { font-size: 11px; font-weight: 700; color: #1a7a52; background: #e8faf3; padding: 2px 6px; border-radius: 20px; white-space: nowrap; }
 
 /* ── Receipt history ─────────────────────────────────────────────────── */
-.receiptCard { background: #fff; border: 1px solid #eee; border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+.receiptCard { background: #fdf8f0; border: 1px solid #e8d8c0; border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
 .receiptHeader { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; cursor: pointer; gap: 8px; }
 .receiptHeader:hover { background: #fafafa; }
 .receiptMeta { flex: 1; min-width: 0; }
@@ -120,7 +120,7 @@
 .chevron { font-size: 11px; color: #aaa; }
 
 .receiptItems { border-top: 1px solid #f0f0f0; }
-.receiptItemsHead { display: grid; grid-template-columns: 1fr 80px 72px 80px; gap: 4px; padding: 8px 16px; font-size: 11px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: .05em; background: #fafafa; }
+.receiptItemsHead { display: grid; grid-template-columns: 1fr 80px 72px 80px; gap: 4px; padding: 8px 16px; font-size: 11px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: .05em; background: #f0e6d0; }
 .receiptItemRow { display: grid; grid-template-columns: 1fr 80px 72px 80px; gap: 4px; padding: 8px 16px; font-size: 13px; border-bottom: 1px solid #f5f5f5; align-items: center; }
 .receiptItemRow:last-child { border-bottom: none; }
 .riName  { color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -130,7 +130,7 @@
 .receiptEmpty { padding: 14px 16px; font-size: 13px; color: #aaa; text-align: center; }
 
 /* ── Recipes ─────────────────────────────────────────────────────────── */
-.recipeCard { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 12px; }
+.recipeCard { background: #fdf8f0; border: 1px solid #e8d8c0; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 12px; }
 .recipeTop { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
 .recipeName { font-size: 15px; font-weight: 700; }
 .recipeTime { font-size: 12px; color: #888; margin-top: 2px; }
@@ -160,7 +160,7 @@
 }
 
 /* ── Manual add expanded form ──────────────────────────────────────── */
-.manualAddBox { background: #f9fffe; border: 1px solid #d1fae5; border-radius: 10px; padding: 12px; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 8px; }
+.manualAddBox { background: #f5ede0; border: 1px solid #e8d8c0; border-radius: 10px; padding: 12px; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 8px; }
 .manualRow1 { display: flex; gap: 7px; }
 .manualRow1 input, .manualRow1 select { padding: 9px 11px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px; font-family: inherit; background: #fff; min-width: 0; }
 .manualRow2 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -173,14 +173,14 @@
 .itemDate { font-size: 10px; color: #aaa; margin-top: 2px; }
 
 /* ── Category groups ─────────────────────────────────────────────────── */
-.categoryGroup { margin-bottom: 20px; border: 1.5px solid #eee; border-radius: 12px; overflow: hidden; transition: border-color .15s; }
+.categoryGroup { margin-bottom: 20px; border: 1.5px solid #e8d8c0; border-radius: 12px; overflow: hidden; transition: border-color .15s; background: #fdf8f0; }
 .categoryGroup.dragOver { border-color: #3cb87a; background: #e8faf3; }
-.categoryHeader { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: #f7f7f7; font-size: 13px; font-weight: 600; color: #333; border-bottom: 1px solid #eee; }
+.categoryHeader { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: #f0e6d0; font-size: 13px; font-weight: 600; color: #3d2b0e; border-bottom: 1px solid #e8d8c0; }
 .categoryCount { margin-left: auto; background: #e5e7eb; color: #555; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 20px; }
 .categoryGroup .itemsGrid { padding: 10px; border-radius: 0; }
 
 /* ── Cart ────────────────────────────────────────────────────────────── */
-.cartItem { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #fff; border: 1px solid #eee; border-radius: 9px; transition: opacity .15s; }
+.cartItem { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #fdf8f0; border: 1px solid #e8d8c0; border-radius: 9px; transition: opacity .15s; }
 .cartItemChecked { opacity: 0.45; }
 .cartItemChecked .cartItemName { text-decoration: line-through; }
 .cartCheck { width: 17px; height: 17px; cursor: pointer; accent-color: #3cb87a; flex-shrink: 0; }
@@ -202,7 +202,7 @@
 
 /* ── Confirm dialog ──────────────────────────────────────────────────── */
 .confirmOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; }
-.confirmBox { background: #fff; border-radius: 16px; padding: 24px 20px; max-width: 320px; width: 100%; box-shadow: 0 8px 32px rgba(0,0,0,0.18); }
+.confirmBox { background: #fdf8f0; border-radius: 16px; padding: 24px 20px; max-width: 320px; width: 100%; box-shadow: 0 8px 32px rgba(0,0,0,0.25); border: 1px solid #e8d8c0; }
 .confirmMsg { font-size: 15px; font-weight: 500; color: #111; margin-bottom: 20px; line-height: 1.5; text-align: center; }
 .confirmBtns { display: flex; gap: 10px; }
 .confirmNo { flex: 1; padding: 11px; border: 1px solid #e0e0e0; border-radius: 10px; background: #fff; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit; }
@@ -218,7 +218,7 @@
 
 /* ── New header layout ───────────────────────────────────────────────── */
 .header { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: linear-gradient(135deg, #3cb87a 0%, #25905c 100%); border-radius: 14px 14px 0 0; box-shadow: 0 2px 8px rgba(60,184,122,0.25); flex-wrap: wrap; }
-.content { padding: 1.25rem 1rem 4rem; }
+.content { padding: 1.25rem 1rem 4rem; background: #fdf8f0; }
 .headerNav { display: flex; gap: 3px; flex: 1; }
 .headerTab { padding: 7px 10px; border: none; background: transparent; border-radius: 9px; font-size: 12px; color: rgba(255,255,255,0.7); cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 4px; white-space: nowrap; }
 .headerTab:hover { background: rgba(255,255,255,0.15); color: #fff; }
@@ -235,8 +235,8 @@
 .splashSpinner .spinner { border-color: rgba(255,255,255,0.3); border-top-color: #fff; width: 24px; height: 24px; }
 
 /* ── Landing page ────────────────────────────────────────────────────── */
-.landing { min-height: 100vh; background: linear-gradient(160deg, #e8faf3 0%, #f5f0e8 60%, #fff 100%); display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
-.landingCard { background: #fff; border-radius: 20px; padding: 2.5rem 2rem; max-width: 420px; width: 100%; box-shadow: 0 8px 40px rgba(60,184,122,0.15); text-align: center; }
+.landing { min-height: 100vh; background: linear-gradient(160deg, #25905c 0%, #1c7549 100%); display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
+.landingCard { background: #fdf8f0; border-radius: 20px; padding: 2.5rem 2rem; max-width: 420px; width: 100%; box-shadow: 0 8px 40px rgba(0,0,0,0.2); text-align: center; }
 .landingIcon { font-size: 64px; margin-bottom: 12px; }
 .landingTitle { font-size: 32px; font-weight: 800; color: #1a7a52; margin-bottom: 8px; letter-spacing: -1px; }
 .landingSub { font-size: 15px; color: #666; line-height: 1.6; margin-bottom: 24px; }

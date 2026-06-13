@@ -59,6 +59,7 @@ export default function PantryPal() {
   const [tab, setTab] = useState('pantry')
   const [user, setUser] = useState(null)
   const [authLoading, setAuthLoading] = useState(true)
+  const [showSplash, setShowSplash] = useState(true)
 
   // Pantry
   const [pantry, setPantry] = useState([])
@@ -117,6 +118,8 @@ export default function PantryPal() {
 
   // ── Auth ──────────────────────────────────────────────────────────────────
   useEffect(() => {
+    // Show splash for at least 2 seconds
+    setTimeout(() => setShowSplash(false), 2000)
     supabase.auth.getSession().then(({ data }) => {
       setUser(data?.session?.user ?? null)
       setAuthLoading(false)
@@ -402,7 +405,7 @@ export default function PantryPal() {
   const cartCheckedCount = cart.filter(i => i.checked).length
 
   // ── Render: splash ────────────────────────────────────────────────────────
-  if (authLoading) return <SplashScreen />
+  if (authLoading || showSplash) return <SplashScreen />
 
   // ── Render: landing ───────────────────────────────────────────────────────
   if (!user) return <LandingPage onSignIn={signInWithGoogle} />
