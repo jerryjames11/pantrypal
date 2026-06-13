@@ -3,17 +3,17 @@
 .centered { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
 
 /* ── Header ──────────────────────────────────────────────────────────── */
-.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0; gap: 12px; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); padding: 14px 16px; border-radius: 14px 14px 0 0; box-shadow: 0 2px 8px rgba(22,163,74,0.25); }
+.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0; gap: 12px; background: linear-gradient(135deg, #f5f0e8 0%, #e8dcc8 100%); padding: 14px 16px; border-radius: 14px 14px 0 0; box-shadow: 0 2px 8px rgba(180,150,100,0.2); }
 .brand { display: flex; align-items: center; gap: 10px; }
 .logo { font-size: 28px; line-height: 1; }
-.appTitle { font-size: 20px; font-weight: 700; letter-spacing: -.3px; color: #fff; }
-.appSub { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 1px; }
+.appTitle { font-size: 20px; font-weight: 700; letter-spacing: -.3px; color: #3d2b0e; }
+.appSub { font-size: 12px; color: #7a5c2e; margin-top: 1px; }
 .userArea { display: flex; align-items: center; gap: 8px; }
 .avatar { width: 28px; height: 28px; border-radius: 50%; border: 1px solid #eee; }
-.authBtn { padding: 6px 12px; border: 1px solid rgba(255,255,255,0.4); border-radius: 7px; background: rgba(255,255,255,0.15); color: #fff; font-size: 12px; cursor: pointer; white-space: nowrap; }
-.authBtn:hover { background: rgba(255,255,255,0.25); }
-.googleBtn { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; background: rgba(255,255,255,0.15); color: #fff; font-size: 13px; cursor: pointer; font-family: inherit; white-space: nowrap; }
-.googleBtn:hover { background: rgba(255,255,255,0.25); }
+.authBtn { padding: 6px 12px; border: 1px solid #c9a96e; border-radius: 7px; background: rgba(255,255,255,0.5); color: #3d2b0e; font-size: 12px; cursor: pointer; white-space: nowrap; }
+.authBtn:hover { background: rgba(255,255,255,0.8); }
+.googleBtn { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border: 1px solid #c9a96e; border-radius: 8px; background: rgba(255,255,255,0.5); color: #3d2b0e; font-size: 13px; cursor: pointer; font-family: inherit; white-space: nowrap; }
+.googleBtn:hover { background: rgba(255,255,255,0.8); }
 
 /* ── Banners ─────────────────────────────────────────────────────────── */
 .guestBanner { background: #f0f7ff; border: 1px solid #c8e0ff; border-radius: 9px; padding: 10px 14px; font-size: 13px; color: #1a5ca8; margin-bottom: 1rem; }
@@ -22,7 +22,7 @@
 /* ── Tabs ────────────────────────────────────────────────────────────── */
 .tabs { display: flex; gap: 3px; background: linear-gradient(135deg, #15803d 0%, #14532d 100%); border-radius: 0 0 14px 14px; padding: 6px 8px 8px; margin-bottom: 1.5rem; box-shadow: 0 4px 10px rgba(22,163,74,0.2); }
 .tabBtn { flex: 1; padding: 8px 4px; border: none; background: transparent; border-radius: 9px; font-size: 12px; color: rgba(255,255,255,0.65); cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; }
-.activeTab { background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #fff; font-weight: 700; box-shadow: 0 2px 8px rgba(22,163,74,0.4); border: 1px solid rgba(255,255,255,0.25); }
+.activeTab { background: linear-gradient(135deg, #f5f0e8 0%, #e8dcc8 100%); color: #3d2b0e; font-weight: 700; box-shadow: 0 2px 6px rgba(180,150,100,0.3); border: 1px solid rgba(255,255,255,0.5); }
 
 /* ── Stats ───────────────────────────────────────────────────────────── */
 .statsRow { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 1.25rem; }
