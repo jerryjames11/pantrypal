@@ -30,9 +30,7 @@ function LandingPage({ onSignIn }) {
   return (
     <div className={styles.landing}>
       <div className={styles.landingCard}>
-        <div className={styles.landingLogoWrap}>
-          <img src="/logo.png" alt="PantryPal" className={styles.landingLogo} />
-        </div>
+        <img src="/logo.png" alt="PantryPal" className={styles.landingLogo} />
         <p className={styles.landingSub}>Track your groceries, scan receipts, get recipe ideas, and never forget what you need at the store.</p>
         <div className={styles.landingFeatures}>
           <div className={styles.landingFeature}><span>📷</span> Scan receipts with AI</div>
