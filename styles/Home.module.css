@@ -1,9 +1,9 @@
 /* ── Base ─────────────────────────────────────────────────────────────── */
-.app { max-width: 660px; margin: 0 auto; padding: 0; background: #fdf8f0; min-height: 100vh; box-shadow: 0 0 60px rgba(0,0,0,0.15); position: relative; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111; }
+.app { max-width: 660px; margin: 0 auto; padding: 0; background: #fdf8f0; min-height: 100vh; box-shadow: 0 0 40px rgba(0,0,0,0.12); position: relative; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111; }
 .centered { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
 
 /* ── Header ──────────────────────────────────────────────────────────── */
-.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0; gap: 12px; background: linear-gradient(135deg, #f5f0e8 0%, #e8dcc8 100%); padding: 14px 16px; border-radius: 14px 14px 0 0; box-shadow: 0 2px 8px rgba(180,150,100,0.2); }
+.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0; gap: 12px; background: linear-gradient(135deg, #f5f0e8 0%, #e8dcc8 100%); padding: 14px 16px; border-radius: 0; box-shadow: 0 2px 8px rgba(180,150,100,0.2); }
 .brand { display: flex; align-items: center; gap: 10px; }
 .brandBtn { display: flex; align-items: center; gap: 10px; background: none; border: none; cursor: pointer; padding: 4px 8px; border-radius: 10px; flex-shrink: 0; }
 .brandBtn:hover { background: rgba(255,255,255,0.15); }
@@ -219,7 +219,7 @@
 .moveCatBtn:hover { background: #c8f5e0; color: #1c7549; font-weight: 500; }
 
 /* ── New header layout ───────────────────────────────────────────────── */
-.header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; background: linear-gradient(135deg, #3cb87a 0%, #25905c 100%); border-radius: 14px 14px 0 0; box-shadow: 0 2px 8px rgba(60,184,122,0.25); flex-wrap: nowrap; }
+.header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; background: linear-gradient(135deg, #3cb87a 0%, #25905c 100%); border-radius: 0; box-shadow: 0 2px 8px rgba(60,184,122,0.25); flex-wrap: nowrap; }
 .content { padding: 1.25rem 1rem 5.5rem; background: #fdf8f0; }
 /* header nav removed — moved to bottom */
 
@@ -259,3 +259,10 @@
 /* Landing logo sits on white circle so white bg blends in */
 .landingLogoWrap { width: 180px; height: 180px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
 .landingLogo { width: 150px; height: 150px; object-fit: contain; mix-blend-mode: normal; }
+
+/* ── Actions dropdown ────────────────────────────────────────────────── */
+.actionsDropdown { position: absolute; right: 0; top: calc(100% + 6px); background: #fff; border: 1px solid #e8d8c0; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.12); z-index: 50; min-width: 190px; overflow: hidden; }
+.actionItem { display: block; width: 100%; text-align: left; padding: 11px 14px; border: none; background: none; font-size: 13px; font-family: inherit; cursor: pointer; color: #111; }
+.actionItem:hover { background: #f5ede0; }
+.actionDanger { color: #991b1b; }
+.actionDanger:hover { background: #fef2f2; }

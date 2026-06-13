@@ -112,6 +112,14 @@ export default function PantryPal() {
 
   const showToast = useCallback((msg) => { setToast(msg); setTimeout(() => setToast(''), 2800) }, [])
 
+  useEffect(() => {
+    function handleClick(e) {
+      if (!e.target.closest('[data-actions]')) setShowActions(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
   function confirm(message, onConfirm) { setConfirmDialog({ message, onConfirm }) }
   function confirmYes() { if (confirmDialog?.onConfirm) confirmDialog.onConfirm(); setConfirmDialog(null) }
   function confirmNo() { setConfirmDialog(null) }
@@ -420,7 +428,6 @@ export default function PantryPal() {
           <img src="/logo.png" alt="PantryPal logo" className={styles.headerLogo} />
           <div>
             <div className={styles.appTitle}>PantryPal</div>
-            <div className={styles.appSub}>My Pantry</div>
           </div>
         </button>
 
@@ -442,17 +449,22 @@ export default function PantryPal() {
             <div className={styles.statCard}><div className={styles.statVal}>{stats.low}</div><div className={styles.statLbl}>Running low</div></div>
           </div>
 
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10,flexWrap:'wrap',gap:6}}>
-            <div className={styles.filterRow} style={{marginBottom:0}}>
+          <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:10,flexWrap:'nowrap'}}>
+            <div style={{display:'flex',gap:4,flex:1,flexWrap:'nowrap'}}>
               {['all','fresh','low','out'].map(f => (
-                <button key={f} className={pantryFilter===f?`${styles.chip} ${styles.chipOn}`:styles.chip} onClick={()=>setPantryFilter(f)}>
+                <button key={f} className={pantryFilter===f?`${styles.chip} ${styles.chipOn}`:styles.chip} onClick={()=>setPantryFilter(f)} style={{padding:'5px 9px',fontSize:11}}>
                   {f==='all'?'All':f==='fresh'?'✓ Stock':f==='low'?'↓ Low':'✕ Out'}
                 </button>
               ))}
             </div>
-            <div style={{display:'flex',gap:6}}>
-              <button className={styles.chip} onClick={addLowItemsToCart}>🛒 Add low to cart</button>
-              <button className={styles.chipDanger} onClick={()=>confirm('Clear your entire pantry? This cannot be undone.',clearPantry)}>🗑 Clear pantry</button>
+            <div style={{position:'relative',flexShrink:0}} data-actions>
+              <button className={styles.chip} onClick={()=>setShowActions(a=>!a)} style={{fontSize:11}}>⚙ Actions</button>
+              {showActions && (
+                <div className={styles.actionsDropdown}>
+                  <button className={styles.actionItem} onClick={()=>{addLowItemsToCart();setShowActions(false)}}>🛒 Add low/out to cart</button>
+                  <button className={`${styles.actionItem} ${styles.actionDanger}`} onClick={()=>{setShowActions(false);confirm('Clear your entire pantry? This cannot be undone.',clearPantry)}}>🗑 Clear entire pantry</button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -765,7 +777,7 @@ export default function PantryPal() {
 
       {/* BOTTOM NAV */}
       <nav className={styles.bottomNav}>
-        {[['pantry','📋','Pantry'],['cart','🛒','Cart'],['scan','📷','Scan'],['history','🧾','History'],['recipes','🍳','Recipes']].map(([id, icon, label]) => (
+        {[['pantry','📋','My Pantry'],['cart','🛒','Cart'],['scan','📷','Scan'],['history','🧾','History'],['recipes','🍳','Recipes']].map(([id, icon, label]) => (
           <button key={id}
             className={tab === id ? `${styles.bottomNavItem} ${styles.bottomNavActive}` : styles.bottomNavItem}
             onClick={() => setTab(id)}>
