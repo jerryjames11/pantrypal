@@ -3,7 +3,7 @@
 .centered { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
 
 /* ── Header ──────────────────────────────────────────────────────────── */
-.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0; gap: 12px; background: #2d6a4f; padding: 14px 16px; border-radius: 14px 14px 0 0; }
+.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0; gap: 12px; background: #16a34a; padding: 14px 16px; border-radius: 14px 14px 0 0; }
 .brand { display: flex; align-items: center; gap: 10px; }
 .logo { font-size: 28px; line-height: 1; }
 .appTitle { font-size: 20px; font-weight: 700; letter-spacing: -.3px; color: #fff; }
@@ -20,15 +20,15 @@
 .warnBanner  { background: #fffbea; border: 1px solid #ffe58f; border-radius: 9px; padding: 10px 14px; font-size: 13px; color: #7a5200; margin-bottom: 1rem; }
 
 /* ── Tabs ────────────────────────────────────────────────────────────── */
-.tabs { display: flex; gap: 3px; background: #1b4332; border-radius: 0 0 14px 14px; padding: 6px 8px 8px; margin-bottom: 1.5rem; }
+.tabs { display: flex; gap: 3px; background: #14532d; border-radius: 0 0 14px 14px; padding: 6px 8px 8px; margin-bottom: 1.5rem; }
 .tabBtn { flex: 1; padding: 8px 4px; border: none; background: transparent; border-radius: 9px; font-size: 12px; color: rgba(255,255,255,0.65); cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; }
 .activeTab { background: rgba(255,255,255,0.18); color: #fff; font-weight: 600; }
 
 /* ── Stats ───────────────────────────────────────────────────────────── */
 .statsRow { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 1.25rem; }
-.statCard { background: #f7f7f7; border-radius: 10px; padding: 12px 14px; }
-.statVal { font-size: 26px; font-weight: 700; color: #111; }
-.statLbl { font-size: 11px; color: #999; margin-top: 1px; }
+.statCard { background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); border-radius: 12px; padding: 14px 16px; box-shadow: 0 2px 8px rgba(22,163,74,0.25); }
+.statVal { font-size: 28px; font-weight: 800; color: #fff; }
+.statLbl { font-size: 11px; color: rgba(255,255,255,0.8); margin-top: 2px; font-weight: 500; }
 
 /* ── Filters ─────────────────────────────────────────────────────────── */
 .sectionLabel { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: #999; margin-bottom: 8px; }
@@ -189,3 +189,7 @@
 .cartItemName { flex: 1; font-size: 14px; color: #111; }
 .cartItemQty { font-size: 12px; color: #888; background: #f2f2f2; padding: 2px 7px; border-radius: 20px; }
 .cartBadge { background: #16a34a; color: #fff; font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 20px; margin-left: 3px; }
+
+/* ── Empty category drop zone ────────────────────────────────────────── */
+.emptyCategory { padding: 20px; text-align: center; font-size: 13px; color: #bbb; border: 2px dashed #e5e7eb; border-radius: 8px; margin: 10px; transition: all .15s; }
+.categoryGroup.dragOver .emptyCategory { border-color: #16a34a; color: #16a34a; background: #f0fdf4; }

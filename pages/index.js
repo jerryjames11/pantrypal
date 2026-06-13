@@ -105,11 +105,21 @@ export default function PantryPal() {
     showToast(`Category added: ${newCatName}`)
   }
 
-  async function deleteCategory(id) {
+  async function deleteCategory(id, catName) {
+    // Move any items in this category to Uncategorized first
+    const itemsInCat = pantry.filter(i => i.category === catName)
+    for (const item of itemsInCat) {
+      await fetch(`/api/pantry?user_id=${user.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: item.id, category: 'Uncategorized' })
+      })
+    }
     setCategories(c => c.filter(x => x.id !== id))
+    setPantry(p => p.map(i => i.category === catName ? { ...i, category: 'Uncategorized' } : i))
     await fetch(`/api/categories?user_id=${user.id}`, {
       method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id })
     })
+    showToast(`Category deleted`)
   }
 
   // ── Drag & drop ───────────────────────────────────────────────────────────
@@ -314,14 +324,16 @@ export default function PantryPal() {
   // ── Derived ───────────────────────────────────────────────────────────────
   const filtered = pantryFilter === 'all' ? pantry : pantry.filter(i => i.status === pantryFilter)
   const stats = { total: pantry.length, fresh: pantry.filter(i => i.status === 'fresh').length, low: pantry.filter(i => i.status === 'low').length }
-  const catNames = [...new Set(['Uncategorized', ...categories.map(c => c.name)])]
+  const catNames = [...categories.map(c => c.name), 'Uncategorized']
+  // Always show all categories as drop zones, even if empty
   const groupedPantry = catNames.reduce((acc, cat) => {
-    const items = filtered.filter(i => (i.category || 'Uncategorized') === cat)
-    if (items.length) acc[cat] = items
+    acc[cat] = filtered.filter(i => (i.category || 'Uncategorized') === cat)
     return acc
   }, {})
-  const uncategorizedItems = filtered.filter(i => !catNames.includes(i.category || 'Uncategorized') || (i.category || 'Uncategorized') === 'Uncategorized')
-  if (uncategorizedItems.length) groupedPantry['Uncategorized'] = uncategorizedItems
+  // Catch items whose category was deleted
+  const knownCats = new Set(catNames)
+  const orphans = filtered.filter(i => !knownCats.has(i.category || 'Uncategorized'))
+  if (orphans.length) groupedPantry['Uncategorized'] = [...(groupedPantry['Uncategorized'] || []), ...orphans]
   const savedIds = new Set(savedRecipes.map(r => r.title))
   const cartCheckedCount = cart.filter(i => i.checked).length
 
@@ -435,7 +447,7 @@ export default function PantryPal() {
                     <span>{emoji} {catName}</span>
                     <span className={styles.categoryCount}>{items.length}</span>
                     {catName !== 'Uncategorized' && catObj && (
-                      <button className={styles.iconBtn} onClick={() => deleteCategory(catObj.id)} title="Delete category">✕</button>
+                      <button className={styles.iconBtn} onClick={() => deleteCategory(catObj.id, catName)} title="Delete category">✕</button>
                     )}
                   </div>
                   <div className={styles.itemsGrid}>
@@ -473,6 +485,7 @@ export default function PantryPal() {
                       </div>
                     ))}
                   </div>
+                  )}
                 </div>
               )
             })
