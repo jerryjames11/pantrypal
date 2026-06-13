@@ -17,8 +17,7 @@ function SplashScreen() {
   return (
     <div className={styles.splash}>
       <div className={styles.splashInner}>
-        <div className={styles.splashIcon}>🧺</div>
-        <div className={styles.splashTitle}>PantryPal</div>
+        <img src="/logo.png" alt="PantryPal" className={styles.splashLogo} />
         <div className={styles.splashSub}>Track groceries · discover recipes</div>
         <div className={styles.splashSpinner}><Spinner /></div>
       </div>
@@ -31,8 +30,7 @@ function LandingPage({ onSignIn }) {
   return (
     <div className={styles.landing}>
       <div className={styles.landingCard}>
-        <div className={styles.landingIcon}>🧺</div>
-        <h1 className={styles.landingTitle}>PantryPal</h1>
+        <img src="/logo.png" alt="PantryPal" className={styles.landingLogo} />
         <p className={styles.landingSub}>Track your groceries, scan receipts, get recipe ideas, and never forget what you need at the store.</p>
         <div className={styles.landingFeatures}>
           <div className={styles.landingFeature}><span>📷</span> Scan receipts with AI</div>
@@ -417,27 +415,15 @@ export default function PantryPal() {
       {/* HEADER */}
       <header className={styles.header}>
         <button className={styles.brandBtn} onClick={() => setTab('pantry')}>
-          <span style={{fontSize:28}}>🧺</span>
+          <img src="/logo.png" alt="PantryPal logo" className={styles.headerLogo} />
           <div>
             <div className={styles.appTitle}>PantryPal</div>
             <div className={styles.appSub}>My Pantry</div>
           </div>
         </button>
 
-        {/* NAV TABS — left side, no Pantry (logo is the pantry button) */}
-        <nav className={styles.headerNav}>
-          {[['cart','🛒','Cart'],['history','🧾','History'],['scan','📷','Scan'],['recipes','🍳','Recipes']].map(([id, icon, label]) => (
-            <button key={id}
-              className={tab === id ? `${styles.headerTab} ${styles.headerTabActive}` : styles.headerTab}
-              onClick={() => setTab(id)}>
-              {icon} {label}
-              {id === 'cart' && cart.length > 0 && <span className={styles.cartBadge}>{cart.length}</span>}
-            </button>
-          ))}
-        </nav>
-
-        {/* SIGN OUT — right side, flex-shrink:0 prevents wrapping */}
-        <div className={styles.userArea} style={{flexShrink:0}}>
+          {/* SIGN OUT — right side */}
+        <div className={styles.userArea}>
           {user.user_metadata?.avatar_url && <img src={user.user_metadata.avatar_url} alt="" className={styles.avatar} />}
           <button className={styles.authBtn} onClick={signOut}>Sign out</button>
         </div>
@@ -774,6 +760,19 @@ export default function PantryPal() {
       </div>
 
       {toast&&<div className={styles.toast}>{toast}</div>}
+
+      {/* BOTTOM NAV */}
+      <nav className={styles.bottomNav}>
+        {[['pantry','📋','Pantry'],['cart','🛒','Cart'],['scan','📷','Scan'],['history','🧾','History'],['recipes','🍳','Recipes']].map(([id, icon, label]) => (
+          <button key={id}
+            className={tab === id ? `${styles.bottomNavItem} ${styles.bottomNavActive}` : styles.bottomNavItem}
+            onClick={() => setTab(id)}>
+            <span className={styles.bottomNavIcon}>{icon}</span>
+            <span className={styles.bottomNavLabel}>{label}</span>
+            {id === 'cart' && cart.length > 0 && <span className={styles.cartBadge}>{cart.length}</span>}
+          </button>
+        ))}
+      </nav>
 
       {confirmDialog&&(
         <div className={styles.confirmOverlay}>
