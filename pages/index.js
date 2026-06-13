@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
 import { supabase } from '../lib/supabase'
 import styles from '../styles/Home.module.css'
 
@@ -48,6 +49,7 @@ function LandingPage({ onSignIn }) {
           Sign in with Google to access your pantry
         </button>
         <p className={styles.landingNote}>Free · No subscription · Your data stays private</p>
+        <Link href="/privacy" className={styles.landingPrivacy}>Privacy Policy</Link>
       </div>
     </div>
   )
@@ -67,6 +69,7 @@ export default function PantryPal() {
   const [movingItem, setMovingItem] = useState(null)
   const [showActions, setShowActions] = useState(false)
   const [collapsedCats, setCollapsedCats] = useState({})
+  const [profileOpen, setProfileOpen] = useState(false)
   const [manualName, setManualName] = useState('')
   const [manualStatus, setManualStatus] = useState('fresh')
   const [manualCount, setManualCount] = useState('')
@@ -115,6 +118,7 @@ export default function PantryPal() {
   useEffect(() => {
     function handleClick(e) {
       if (!e.target.closest('[data-actions]')) setShowActions(false)
+      if (!e.target.closest('[data-profile]')) setProfileOpen(false)
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
