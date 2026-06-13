@@ -5,12 +5,13 @@
 /* ── Header ──────────────────────────────────────────────────────────── */
 .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0; gap: 12px; background: linear-gradient(135deg, #f5f0e8 0%, #e8dcc8 100%); padding: 14px 16px; border-radius: 0; box-shadow: 0 2px 8px rgba(180,150,100,0.2); }
 .brand { display: flex; align-items: center; gap: 10px; }
-.brandBtn { display: flex; align-items: center; gap: 10px; background: none; border: none; cursor: pointer; padding: 4px 8px; border-radius: 10px; flex-shrink: 0; }
+.brandBtn { display: flex; align-items: center; gap: 7px; background: none; border: none; cursor: pointer; padding: 3px 6px; border-radius: 8px; flex-shrink: 0; }
 .brandBtn:hover { background: rgba(255,255,255,0.15); }
 .logo { font-size: 28px; line-height: 1; }
-.appTitle { font-size: 16px; font-weight: 700; letter-spacing: -.3px; color: #3d2b0e; }
+.appTitle { font-size: 17px; font-weight: 700; letter-spacing: -.3px; color: #fff; font-family: inherit; }
 .appSub { font-size: 12px; color: #7a5c2e; margin-top: 1px; }
 .userArea { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.profileArea { position: relative; flex-shrink: 0; }
 .avatar { width: 28px; height: 28px; border-radius: 50%; border: 1px solid #eee; }
 .authBtn { padding: 6px 12px; border: 1px solid #c9a96e; border-radius: 7px; background: rgba(255,255,255,0.5); color: #3d2b0e; font-size: 12px; cursor: pointer; white-space: nowrap; }
 .authBtn:hover { background: rgba(255,255,255,0.8); }
@@ -219,7 +220,7 @@
 .moveCatBtn:hover { background: #c8f5e0; color: #1c7549; font-weight: 500; }
 
 /* ── New header layout ───────────────────────────────────────────────── */
-.header { display: flex; flex-direction: column; padding: 0; background: linear-gradient(135deg, #3cb87a 0%, #25905c 100%); border-radius: 0; box-shadow: 0 2px 8px rgba(60,184,122,0.25); }
+.header { display: flex; flex-direction: row; align-items: center; justify-content: space-between; padding: 6px 12px; background: linear-gradient(135deg, #3cb87a 0%, #25905c 100%); border-radius: 0; box-shadow: 0 2px 8px rgba(60,184,122,0.25); gap: 8px; }
 .content { padding: 1.25rem 1rem 5.5rem; background: #fdf8f0; }
 /* header nav removed — moved to bottom */
 
@@ -242,9 +243,9 @@
 .landingNote { font-size: 12px; color: #aaa; }
 
 /* ── Logo images ─────────────────────────────────────────────────────── */
-.headerLogo { width: 48px; height: 48px; object-fit: contain; filter: brightness(0) invert(1); }
+.headerLogo { width: 52px; height: 52px; object-fit: contain; filter: brightness(0) invert(1); }
 .splashLogo { width: 300px; height: 300px; object-fit: contain; margin-bottom: 16px; animation: splashBounce 1s ease infinite alternate; filter: brightness(0) invert(1); }
-.landingLogo { width: 220px; height: 220px; object-fit: contain; }
+.landingLogo { width: 500px; height: 500px; object-fit: contain; max-width: 90vw; }
 
 /* ── Bottom navigation bar ───────────────────────────────────────────── */
 .bottomNav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 660px; background: linear-gradient(135deg, #25905c 0%, #1c7549 100%); display: flex; align-items: center; justify-content: space-around; padding: 8px 6px env(safe-area-inset-bottom, 12px); border-top: 1px solid rgba(255,255,255,0.15); z-index: 100; }
@@ -292,12 +293,12 @@
 .headerStatLbl { font-size: 10px; color: rgba(255,255,255,0.8); margin-top: 1px; }
 
 /* ── Avatar button ───────────────────────────────────────────────────── */
-.avatarBtn { background: none; border: 2px solid rgba(255,255,255,0.5); border-radius: 50%; padding: 0; cursor: pointer; width: 36px; height: 36px; overflow: hidden; flex-shrink: 0; }
+.avatarBtn { background: none; border: 2px solid rgba(255,255,255,0.6); border-radius: 50%; padding: 0; cursor: pointer; width: 34px; height: 34px; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 .avatarImg { width: 100%; height: 100%; object-fit: cover; display: block; }
 .avatarFallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 18px; background: rgba(255,255,255,0.2); }
 
 /* ── Profile slide-out menu ──────────────────────────────────────────── */
-.profileMenu { position: absolute; right: 0; top: calc(100% + 8px); background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.15); min-width: 200px; overflow: hidden; z-index: 200; border: 1px solid #e8d8c0; }
+.profileMenu { position: fixed; right: 12px; top: 56px; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.2); min-width: 200px; overflow: hidden; z-index: 500; border: 1px solid #e8d8c0; }
 .profileMenuName { padding: 12px 16px; font-size: 13px; font-weight: 600; color: #3d2b0e; background: #f5ede0; }
 .profileMenuDivider { height: 1px; background: #e8d8c0; }
 .profileMenuItem { display: block; width: 100%; text-align: left; padding: 11px 16px; border: none; background: none; font-size: 13px; font-family: inherit; cursor: pointer; color: #111; }
