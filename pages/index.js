@@ -66,6 +66,7 @@ export default function PantryPal() {
   const [editingItem, setEditingItem] = useState(null)
   const [movingItem, setMovingItem] = useState(null)
   const [showActions, setShowActions] = useState(false)
+  const [collapsedCats, setCollapsedCats] = useState({})
   const [manualName, setManualName] = useState('')
   const [manualStatus, setManualStatus] = useState('fresh')
   const [manualCount, setManualCount] = useState('')
@@ -181,6 +182,10 @@ export default function PantryPal() {
       method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id })
     })
     showToast('Category deleted')
+  }
+
+  function toggleCat(catName) {
+    setCollapsedCats(c => ({ ...c, [catName]: !c[catName] }))
   }
 
   // ── Drag & drop ───────────────────────────────────────────────────────────
@@ -508,10 +513,10 @@ export default function PantryPal() {
               return (
                 <div key={catName} className={`${styles.categoryGroup} ${dragOverCat===catName?styles.dragOver:''}`}
                   onDragOver={e=>onDragOver(e,catName)} onDrop={()=>onDrop(catName)} onDragLeave={()=>setDragOverCat(null)}>
-                  <div className={styles.categoryHeader}>
+                  <div className={styles.categoryHeader} onClick={()=>toggleCat(catName)}>
                     <span>{emoji} {catName}</span>
                     <span className={styles.categoryCount}>{items.length}</span>
-                    <div style={{marginLeft:'auto',display:'flex',gap:4,alignItems:'center'}}>
+                    <div style={{display:'flex',gap:4,alignItems:'center',marginLeft:'auto'}} onClick={e=>e.stopPropagation()}>
                       {items.length>0&&(
                         <button className={styles.catClearBtn} onClick={()=>confirm(`Clear all ${items.length} item${items.length!==1?'s':''} in "${catName}"?`,()=>clearCategory(catName))}>Clear</button>
                       )}
@@ -519,60 +524,60 @@ export default function PantryPal() {
                         <button className={styles.iconBtn} onClick={()=>deleteCategory(catObj.id,catName)}>✕</button>
                       )}
                     </div>
+                    <span className={`${styles.categoryChevron} ${!collapsedCats[catName]?styles.categoryChevronOpen:''}`}>▼</span>
                   </div>
-                  {items.length===0 ? (
-                    <div className={styles.emptyCategory}>Drag items here</div>
-                  ) : (
-                    <div className={styles.itemsGrid}>
-                      {items.map(item=>(
-                        <div key={item.id} className={styles.itemCard} draggable onDragStart={()=>onDragStart(item)}>
-                          {editingItem===item.id ? (
-                            <div style={{display:'flex',flexDirection:'column',gap:4}}>
-                              <input defaultValue={item.name} onBlur={e=>updateItem(item.id,{name:e.target.value})} style={{fontSize:13,fontWeight:600,padding:'3px 6px',border:'1px solid #3cb87a',borderRadius:5,width:'100%'}} autoFocus />
-                              <input defaultValue={item.qty} placeholder="Qty (e.g. x2, 500ml)" onBlur={e=>updateItem(item.id,{qty:e.target.value})} style={{fontSize:12,padding:'3px 6px',border:'1px solid #e0e0e0',borderRadius:5,width:'100%'}} />
-                              <button onClick={()=>setEditingItem(null)} style={{fontSize:11,padding:'3px 0',background:'#3cb87a',color:'#fff',border:'none',borderRadius:5,cursor:'pointer'}}>Done</button>
-                            </div>
-                          ) : (
-                            <>
-                              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
-                                <div className={styles.itemName} title={item.name}>{item.name}</div>
-                                <div style={{display:'flex',gap:2}}>
-                                  <button className={styles.iconBtn} onClick={()=>setMovingItem(movingItem===item.id?null:item.id)} title="Move to category">📂</button>
+                  {!collapsedCats[catName] && (
+                    items.length===0 ? (
+                      <div className={styles.emptyCategory}>Drag items here</div>
+                    ) : (
+                      <div className={styles.itemsGrid}>
+                        {items.map(item=>(
+                          <div key={item.id} className={styles.itemCard}
+                            draggable onDragStart={()=>onDragStart(item)}
+                            style={{borderLeftColor: item.status==='low'?'#f59e0b':item.status==='out'?'#ef4444':'#3cb87a'}}>
+                            {editingItem===item.id ? (
+                              <div style={{display:'flex',flexDirection:'column',gap:4,flex:1}}>
+                                <input defaultValue={item.name} onBlur={e=>updateItem(item.id,{name:e.target.value})} style={{fontSize:13,fontWeight:600,padding:'3px 6px',border:'1px solid #3cb87a',borderRadius:5,width:'100%'}} autoFocus />
+                                <input defaultValue={item.qty} placeholder="Qty (e.g. x2, 500ml)" onBlur={e=>updateItem(item.id,{qty:e.target.value})} style={{fontSize:12,padding:'3px 6px',border:'1px solid #e0e0e0',borderRadius:5,width:'100%'}} />
+                                <button onClick={()=>setEditingItem(null)} style={{fontSize:11,padding:'3px 0',background:'#3cb87a',color:'#fff',border:'none',borderRadius:5,cursor:'pointer'}}>Done</button>
+                              </div>
+                            ) : (
+                              <>
+                                <div className={styles.itemMain}>
+                                  <div className={styles.itemName} title={item.name}>{item.name}</div>
+                                  <div className={styles.itemSub}>
+                                    {item.qty||''}{item.qty&&item.last_price!=null?' · ':''}{item.last_price!=null?fmt(item.last_price):''}
+                                    {item.last_purchased?` · 🗓 ${new Date(item.last_purchased).toLocaleDateString(undefined,{month:'short',day:'numeric'})}`:''}
+                                  </div>
+                                </div>
+                                <div className={styles.itemRight}>
+                                  <select className={`${styles.statusSel} ${styles['s_'+item.status]}`} value={item.status} onChange={e=>updateItem(item.id,{status:e.target.value})}>
+                                    <option value="fresh">✓ Stock</option>
+                                    <option value="low">↓ Low</option>
+                                    <option value="out">✕ Out</option>
+                                  </select>
+                                  <button className={styles.iconBtn} onClick={()=>setMovingItem(movingItem===item.id?null:item.id)} title="Move">📂</button>
                                   <button className={styles.iconBtn} onClick={()=>setEditingItem(item.id)} title="Edit">✏️</button>
+                                  <button className={styles.iconBtn} onClick={()=>removeItem(item.id,item.name)}>✕</button>
                                 </div>
-                              </div>
-                              {movingItem===item.id&&(
-                                <div className={styles.moveCatBox}>
-                                  <div className={styles.moveCatLabel}>Move to:</div>
-                                  {categories.map(c=>(
-                                    <button key={c.id} className={styles.moveCatBtn}
-                                      onClick={()=>{updateItem(item.id,{category:c.name});setMovingItem(null);showToast(`Moved to ${c.name}`)}}>
-                                      {c.emoji} {c.name}
-                                    </button>
-                                  ))}
-                                  <button className={styles.moveCatBtn} onClick={()=>{updateItem(item.id,{category:'Uncategorized'});setMovingItem(null);showToast('Moved to Uncategorized')}}>📦 Uncategorized</button>
-                                </div>
-                              )}
-                              <div className={styles.itemRow2}>
-                                <span className={styles.itemQty}>{item.qty||''}</span>
-                                {item.last_price!=null&&<span className={styles.itemPrice}>{fmt(item.last_price)}</span>}
-                              </div>
-                              {item.last_purchased&&(
-                                <div className={styles.itemDate}>🗓 {new Date(item.last_purchased).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</div>
-                              )}
-                              <div className={styles.itemFoot}>
-                                <select className={`${styles.statusSel} ${styles['s_'+item.status]}`} value={item.status} onChange={e=>updateItem(item.id,{status:e.target.value})}>
-                                  <option value="fresh">✓ In stock</option>
-                                  <option value="low">↓ Low</option>
-                                  <option value="out">✕ Out</option>
-                                </select>
-                                <button className={styles.iconBtn} onClick={()=>removeItem(item.id,item.name)}>✕</button>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                                {movingItem===item.id&&(
+                                  <div className={styles.moveCatBox} style={{position:'absolute',right:8,top:36,zIndex:20}}>
+                                    <div className={styles.moveCatLabel}>Move to:</div>
+                                    {categories.map(c=>(
+                                      <button key={c.id} className={styles.moveCatBtn}
+                                        onClick={()=>{updateItem(item.id,{category:c.name});setMovingItem(null);showToast(`Moved to ${c.name}`)}}>
+                                        {c.emoji} {c.name}
+                                      </button>
+                                    ))}
+                                    <button className={styles.moveCatBtn} onClick={()=>{updateItem(item.id,{category:'Uncategorized'});setMovingItem(null);showToast('Moved to Uncategorized')}}>📦 Uncategorized</button>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )
                   )}
                 </div>
               )
