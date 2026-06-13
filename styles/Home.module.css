@@ -242,8 +242,8 @@
 .landingNote { font-size: 12px; color: #aaa; }
 
 /* ── Logo images ─────────────────────────────────────────────────────── */
-.headerLogo { width: 80px; height: 80px; object-fit: contain; }
-.splashLogo { width: 300px; height: 300px; object-fit: contain; margin-bottom: 16px; animation: splashBounce 1s ease infinite alternate; }
+.headerLogo { width: 80px; height: 80px; object-fit: contain; filter: brightness(0) invert(1); }
+.splashLogo { width: 300px; height: 300px; object-fit: contain; margin-bottom: 16px; animation: splashBounce 1s ease infinite alternate; filter: brightness(0) invert(1); }
 .landingLogo { width: 160px; height: 160px; object-fit: contain; }
 
 /* ── Bottom navigation bar ───────────────────────────────────────────── */
