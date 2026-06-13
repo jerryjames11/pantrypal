@@ -1,5 +1,5 @@
 /* ── Base ─────────────────────────────────────────────────────────────── */
-.app { max-width: 660px; margin: 0 auto; padding: 1.5rem 1rem 4rem; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111; }
+.app { max-width: 660px; margin: 0 auto; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111; }
 .centered { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
 
 /* ── Header ──────────────────────────────────────────────────────────── */
@@ -20,13 +20,11 @@
 .warnBanner  { background: #fffbea; border: 1px solid #ffe58f; border-radius: 9px; padding: 10px 14px; font-size: 13px; color: #7a5200; margin-bottom: 1rem; }
 
 /* ── Tabs ────────────────────────────────────────────────────────────── */
-.tabs { display: flex; gap: 3px; background: linear-gradient(135deg, #15803d 0%, #14532d 100%); border-radius: 0 0 14px 14px; padding: 6px 8px 8px; margin-bottom: 1.5rem; box-shadow: 0 4px 10px rgba(22,163,74,0.2); }
-.tabBtn { flex: 1; padding: 8px 4px; border: none; background: transparent; border-radius: 9px; font-size: 12px; color: rgba(255,255,255,0.65); cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; }
-.activeTab { background: linear-gradient(135deg, #f5f0e8 0%, #e8dcc8 100%); color: #3d2b0e; font-weight: 700; box-shadow: 0 2px 6px rgba(180,150,100,0.3); border: 1px solid rgba(255,255,255,0.5); }
+/* tabs moved to header nav */
 
 /* ── Stats ───────────────────────────────────────────────────────────── */
 .statsRow { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 1.25rem; }
-.statCard { background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); border-radius: 12px; padding: 14px 16px; box-shadow: 0 2px 8px rgba(22,163,74,0.25); }
+.statCard { background: linear-gradient(135deg, #3cb87a 0%, #25905c 100%); border-radius: 12px; padding: 14px 16px; box-shadow: 0 2px 8px rgba(60,184,122,0.25); }
 .statVal { font-size: 28px; font-weight: 800; color: #fff; }
 .statLbl { font-size: 11px; color: rgba(255,255,255,0.8); margin-top: 2px; font-weight: 500; }
 
@@ -51,25 +49,25 @@
 .itemPrice { font-size: 12px; color: #555; font-weight: 500; }
 .itemFoot { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
 .statusSel { border: none; font-size: 11px; font-weight: 600; cursor: pointer; padding: 3px 7px; border-radius: 20px; font-family: inherit; }
-.s_fresh { background: #e6f4ea; color: #1e7e34; }
+.s_fresh { background: #d4f5e5; color: #1a7a52; }
 .s_low   { background: #fff3cd; color: #856404; }
 .s_out   { background: #fde8e8; color: #991b1b; }
 .iconBtn { background: none; border: none; cursor: pointer; color: #bbb; font-size: 13px; padding: 3px 5px; border-radius: 5px; font-family: inherit; }
 .iconBtn:hover { color: #333; background: #f5f5f5; }
 
 /* ── Scan button ─────────────────────────────────────────────────────── */
-.scanBtn { display: block; width: 100%; padding: 13px; background: #16a34a; color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; text-align: center; }
-.scanBtn:hover:not(:disabled) { background: #15803d; }
+.scanBtn { display: block; width: 100%; padding: 13px; background: #3cb87a; color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; text-align: center; }
+.scanBtn:hover:not(:disabled) { background: #25905c; }
 .scanBtn:disabled { opacity: .55; cursor: not-allowed; }
 
 /* ── Upload buttons ──────────────────────────────────────────────────── */
 .uploadBtns { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
 .uploadLabel { flex: 1; min-width: 140px; padding: 13px; border: 1.5px dashed #ccc; border-radius: 10px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 600; font-family: inherit; background: #fff; }
-.uploadLabel:hover { border-color: #16a34a; background: #f0fdf4; }
+.uploadLabel:hover { border-color: #3cb87a; background: #e8faf3; }
 
 /* ── Upload ──────────────────────────────────────────────────────────── */
 .uploadZone { display: block; border: 2px dashed #ddd; border-radius: 14px; padding: 2.5rem 1rem; text-align: center; cursor: pointer; margin-bottom: 12px; transition: all .15s; }
-.uploadZone:hover { border-color: #22c55e; background: #f0fdf4; }
+.uploadZone:hover { border-color: #3cb87a; background: #e8faf3; }
 .uploadIcon { font-size: 40px; display: block; margin-bottom: 8px; }
 .uploadTitle { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
 .uploadSub { font-size: 13px; color: #888; }
@@ -80,24 +78,24 @@
 .divider { display: flex; align-items: center; gap: 10px; margin: 18px 0; color: #bbb; font-size: 12px; }
 .divider::before,.divider::after { content:''; flex:1; height:1px; background:#eee; }
 .textarea { width: 100%; padding: 10px 12px; border: 1px solid #e0e0e0; border-radius: 9px; font-size: 14px; font-family: inherit; resize: vertical; }
-.textarea:focus { outline: none; border-color: #22c55e; }
+.textarea:focus { outline: none; border-color: #3cb87a; }
 
 /* ── Buttons ─────────────────────────────────────────────────────────── */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 11px 16px; border: 1px solid #e0e0e0; border-radius: 10px; background: #fff; font-size: 14px; font-family: inherit; cursor: pointer; }
-.btnPrimary { background: #16a34a; border-color: #16a34a; color: #fff; font-weight: 600; }
-.btnPrimary:hover:not(:disabled) { background: #15803d; }
+.btnPrimary { background: #3cb87a; border-color: #3cb87a; color: #fff; font-weight: 600; }
+.btnPrimary:hover:not(:disabled) { background: #25905c; }
 .btnPrimary:disabled { opacity: .55; cursor: not-allowed; }
 .btnWide { width: 100%; }
 
 /* ── Loading ─────────────────────────────────────────────────────────── */
 .loadRow { display: flex; align-items: center; gap: 8px; color: #888; font-size: 14px; padding: 1rem 0; }
-.spinner { display: inline-block; width: 18px; height: 18px; border: 2.5px solid #ddd; border-top-color: #16a34a; border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
+.spinner { display: inline-block; width: 18px; height: 18px; border: 2.5px solid #ddd; border-top-color: #3cb87a; border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
 .spinnerSm { display: inline-block; width: 13px; height: 13px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── Scan result ─────────────────────────────────────────────────────── */
-.scanSuccess { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 12px 14px; margin-top: 12px; }
-.scanSuccessHead { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 600; color: #166534; margin-bottom: 10px; }
+.scanSuccess { background: #e8faf3; border: 1px solid #a0eecb; border-radius: 10px; padding: 12px 14px; margin-top: 12px; }
+.scanSuccessHead { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 600; color: #1a7a52; margin-bottom: 10px; }
 .storeName { font-weight: 500; color: #555; font-size: 12px; }
 .scanItemList { display: flex; flex-direction: column; gap: 2px; max-height: 280px; overflow-y: auto; }
 .scanItem { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #dcfce7; font-size: 13px; }
@@ -109,7 +107,7 @@
 
 /* ── Price delta ─────────────────────────────────────────────────────── */
 .priceUp   { font-size: 11px; font-weight: 700; color: #b91c1c; background: #fef2f2; padding: 2px 6px; border-radius: 20px; white-space: nowrap; }
-.priceDown { font-size: 11px; font-weight: 700; color: #166534; background: #f0fdf4; padding: 2px 6px; border-radius: 20px; white-space: nowrap; }
+.priceDown { font-size: 11px; font-weight: 700; color: #1a7a52; background: #e8faf3; padding: 2px 6px; border-radius: 20px; white-space: nowrap; }
 
 /* ── Receipt history ─────────────────────────────────────────────────── */
 .receiptCard { background: #fff; border: 1px solid #eee; border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
@@ -136,11 +134,11 @@
 .recipeTop { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
 .recipeName { font-size: 15px; font-weight: 700; }
 .recipeTime { font-size: 12px; color: #888; margin-top: 2px; }
-.matchBadge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; background: #e6f4ea; color: #1e7e34; flex-shrink: 0; }
+.matchBadge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; background: #d4f5e5; color: #1a7a52; flex-shrink: 0; }
 .recipeDesc { font-size: 13px; color: #666; line-height: 1.55; margin-bottom: 10px; }
 .tags { display: flex; flex-wrap: wrap; gap: 4px; }
 .tag { font-size: 11px; padding: 2px 8px; border-radius: 20px; }
-.tagHave { background: #f2f2f2; color: #333; }
+.tagHave { background: #d4f5e5; color: #1a7a52; }
 .tagNeed { background: #fde8e8; color: #991b1b; }
 .stepsToggle { font-size: 12px; color: #888; cursor: pointer; background: none; border: none; padding: 0; margin-top: 8px; font-family: inherit; }
 .stepsToggle:hover { color: #111; }
@@ -152,7 +150,7 @@
 .empty { text-align: center; padding: 3rem 1rem; color: #bbb; font-size: 14px; }
 
 /* ── Toast ───────────────────────────────────────────────────────────── */
-.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #111; color: #fff; font-size: 13px; padding: 9px 20px; border-radius: 20px; z-index: 999; white-space: nowrap; box-shadow: 0 4px 16px rgba(0,0,0,.18); pointer-events: none; }
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #25905c; color: #fff; font-size: 13px; padding: 9px 20px; border-radius: 20px; z-index: 999; white-space: nowrap; box-shadow: 0 4px 16px rgba(0,0,0,.18); pointer-events: none; }
 
 /* ── Responsive ──────────────────────────────────────────────────────── */
 @media (max-width: 480px) {
@@ -168,15 +166,15 @@
 .manualRow2 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .dateLabel { font-size: 12px; color: #555; white-space: nowrap; }
 .dateInput { padding: 7px 10px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: inherit; background: #fff; flex: 1; min-width: 140px; }
-.addBtn { padding: 8px 16px; background: #16a34a; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; font-family: inherit; }
-.addBtn:hover { background: #15803d; }
+.addBtn { padding: 8px 16px; background: #3cb87a; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; font-family: inherit; }
+.addBtn:hover { background: #25905c; }
 
 /* ── Item date ───────────────────────────────────────────────────── */
 .itemDate { font-size: 10px; color: #aaa; margin-top: 2px; }
 
 /* ── Category groups ─────────────────────────────────────────────────── */
 .categoryGroup { margin-bottom: 20px; border: 1.5px solid #eee; border-radius: 12px; overflow: hidden; transition: border-color .15s; }
-.categoryGroup.dragOver { border-color: #16a34a; background: #f0fdf4; }
+.categoryGroup.dragOver { border-color: #3cb87a; background: #e8faf3; }
 .categoryHeader { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: #f7f7f7; font-size: 13px; font-weight: 600; color: #333; border-bottom: 1px solid #eee; }
 .categoryCount { margin-left: auto; background: #e5e7eb; color: #555; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 20px; }
 .categoryGroup .itemsGrid { padding: 10px; border-radius: 0; }
@@ -185,14 +183,14 @@
 .cartItem { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #fff; border: 1px solid #eee; border-radius: 9px; transition: opacity .15s; }
 .cartItemChecked { opacity: 0.45; }
 .cartItemChecked .cartItemName { text-decoration: line-through; }
-.cartCheck { width: 17px; height: 17px; cursor: pointer; accent-color: #16a34a; flex-shrink: 0; }
+.cartCheck { width: 17px; height: 17px; cursor: pointer; accent-color: #3cb87a; flex-shrink: 0; }
 .cartItemName { flex: 1; font-size: 14px; color: #111; }
 .cartItemQty { font-size: 12px; color: #888; background: #f2f2f2; padding: 2px 7px; border-radius: 20px; }
-.cartBadge { background: #16a34a; color: #fff; font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 20px; margin-left: 3px; }
+.cartBadge { background: #3cb87a; color: #fff; font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 20px; margin-left: 3px; }
 
 /* ── Empty category drop zone ────────────────────────────────────────── */
 .emptyCategory { padding: 20px; text-align: center; font-size: 13px; color: #bbb; border: 2px dashed #e5e7eb; border-radius: 8px; margin: 10px; transition: all .15s; }
-.categoryGroup.dragOver .emptyCategory { border-color: #16a34a; color: #16a34a; background: #f0fdf4; }
+.categoryGroup.dragOver .emptyCategory { border-color: #3cb87a; color: #25905c; background: #e8faf3; }
 
 /* ── Danger chip ─────────────────────────────────────────────────────── */
 .chipDanger { font-size: 12px; padding: 5px 12px; border-radius: 20px; border: 1px solid #fecaca; background: #fef2f2; color: #991b1b; cursor: pointer; font-family: inherit; }
@@ -213,7 +211,37 @@
 .confirmYes:hover { background: #b91c1c; }
 
 /* ── Move category dropdown ──────────────────────────────────────────── */
-.moveCatBox { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 6px; margin: 4px 0; display: flex; flex-direction: column; gap: 2px; }
-.moveCatLabel { font-size: 10px; font-weight: 700; color: #16a34a; text-transform: uppercase; letter-spacing: .06em; padding: 2px 4px; margin-bottom: 2px; }
+.moveCatBox { background: #e8faf3; border: 1px solid #a0eecb; border-radius: 8px; padding: 6px; margin: 4px 0; display: flex; flex-direction: column; gap: 2px; }
+.moveCatLabel { font-size: 10px; font-weight: 700; color: #25905c; text-transform: uppercase; letter-spacing: .06em; padding: 2px 4px; margin-bottom: 2px; }
 .moveCatBtn { text-align: left; padding: 5px 8px; border: none; background: #fff; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: inherit; color: #111; transition: background .1s; }
-.moveCatBtn:hover { background: #dcfce7; color: #15803d; font-weight: 500; }
+.moveCatBtn:hover { background: #c8f5e0; color: #1c7549; font-weight: 500; }
+
+/* ── New header layout ───────────────────────────────────────────────── */
+.header { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: linear-gradient(135deg, #3cb87a 0%, #25905c 100%); border-radius: 14px 14px 0 0; box-shadow: 0 2px 8px rgba(60,184,122,0.25); flex-wrap: wrap; }
+.content { padding: 1.25rem 1rem 4rem; }
+.headerNav { display: flex; gap: 3px; flex: 1; }
+.headerTab { padding: 7px 10px; border: none; background: transparent; border-radius: 9px; font-size: 12px; color: rgba(255,255,255,0.7); cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+.headerTab:hover { background: rgba(255,255,255,0.15); color: #fff; }
+.headerTabActive { background: linear-gradient(135deg, #f5f0e8 0%, #e8dcc8 100%) !important; color: #3d2b0e !important; font-weight: 700; box-shadow: 0 2px 6px rgba(180,150,100,0.3); }
+
+/* ── Splash screen ───────────────────────────────────────────────────── */
+.splash { position: fixed; inset: 0; background: linear-gradient(135deg, #3cb87a 0%, #1c7549 100%); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+.splashInner { text-align: center; }
+.splashIcon { font-size: 72px; margin-bottom: 16px; animation: splashBounce 1s ease infinite alternate; }
+@keyframes splashBounce { from { transform: translateY(0); } to { transform: translateY(-10px); } }
+.splashTitle { font-size: 36px; font-weight: 800; color: #fff; letter-spacing: -1px; margin-bottom: 6px; }
+.splashSub { font-size: 15px; color: rgba(255,255,255,0.8); margin-bottom: 28px; }
+.splashSpinner { display: flex; justify-content: center; }
+.splashSpinner .spinner { border-color: rgba(255,255,255,0.3); border-top-color: #fff; width: 24px; height: 24px; }
+
+/* ── Landing page ────────────────────────────────────────────────────── */
+.landing { min-height: 100vh; background: linear-gradient(160deg, #e8faf3 0%, #f5f0e8 60%, #fff 100%); display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
+.landingCard { background: #fff; border-radius: 20px; padding: 2.5rem 2rem; max-width: 420px; width: 100%; box-shadow: 0 8px 40px rgba(60,184,122,0.15); text-align: center; }
+.landingIcon { font-size: 64px; margin-bottom: 12px; }
+.landingTitle { font-size: 32px; font-weight: 800; color: #1a7a52; margin-bottom: 8px; letter-spacing: -1px; }
+.landingSub { font-size: 15px; color: #666; line-height: 1.6; margin-bottom: 24px; }
+.landingFeatures { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 28px; }
+.landingFeature { background: #e8faf3; border-radius: 10px; padding: 10px 12px; font-size: 13px; color: #1a7a52; font-weight: 500; text-align: left; }
+.landingSignIn { width: 100%; padding: 14px 20px; background: linear-gradient(135deg, #3cb87a 0%, #25905c 100%); color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 12px; box-shadow: 0 4px 14px rgba(60,184,122,0.35); }
+.landingSignIn:hover { background: linear-gradient(135deg, #25905c 0%, #1c7549 100%); }
+.landingNote { font-size: 12px; color: #aaa; }
