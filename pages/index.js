@@ -67,6 +67,7 @@ export default function PantryPal() {
   const [pantryFilter, setPantryFilter] = useState('all')
   const [editingItem, setEditingItem] = useState(null)
   const [movingItem, setMovingItem] = useState(null)
+  const [showActions, setShowActions] = useState(false)
   const [manualName, setManualName] = useState('')
   const [manualStatus, setManualStatus] = useState('fresh')
   const [manualCount, setManualCount] = useState('')
