@@ -64,6 +64,17 @@ export default function PantryPal() {
   const [cartItemQty, setCartItemQty] = useState('')
 
   const [toast, setToast] = useState('')
+  const [confirmDialog, setConfirmDialog] = useState(null) // { message, onConfirm }
+
+  function confirm(message, onConfirm) {
+    setConfirmDialog({ message, onConfirm })
+  }
+  function confirmYes() {
+    if (confirmDialog?.onConfirm) confirmDialog.onConfirm()
+    setConfirmDialog(null)
+  }
+  function confirmNo() { setConfirmDialog(null) }
+
   const showToast = useCallback((msg) => { setToast(msg); setTimeout(() => setToast(''), 2800) }, [])
 
   // ── Auth ──────────────────────────────────────────────────────────────────
@@ -169,6 +180,24 @@ export default function PantryPal() {
       method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id })
     })
     showToast(`Removed: ${name}`)
+  }
+
+  async function clearPantry() {
+    setPantry([])
+    await fetch(`/api/pantry?user_id=${user.id}`, {
+      method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clearAll: true })
+    })
+    showToast('Pantry cleared')
+  }
+
+  async function clearCategory(catName) {
+    setPantry(p => p.filter(i => (i.category || 'Uncategorized') !== catName))
+    await fetch(`/api/pantry?user_id=${user.id}`, {
+      method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clearCategory: catName })
+    })
+    showToast(`${catName} cleared`)
   }
 
   async function addLowItemsToCart() {
@@ -387,7 +416,7 @@ export default function PantryPal() {
             <div className={styles.statCard}><div className={styles.statVal}>{stats.low}</div><div className={styles.statLbl}>Running low</div></div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 6 }}>
             <div className={styles.filterRow} style={{ marginBottom: 0 }}>
               {['all', 'fresh', 'low', 'out'].map(f => (
                 <button key={f} className={pantryFilter === f ? `${styles.chip} ${styles.chipOn}` : styles.chip} onClick={() => setPantryFilter(f)}>
@@ -395,7 +424,10 @@ export default function PantryPal() {
                 </button>
               ))}
             </div>
-            <button className={styles.chip} onClick={addLowItemsToCart} title="Add low/out items to cart">🛒 Add low to cart</button>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button className={styles.chip} onClick={addLowItemsToCart} title="Add low/out items to cart">🛒 Add low to cart</button>
+              <button className={styles.chipDanger} onClick={() => confirm('Clear your entire pantry? This cannot be undone.', clearPantry)} title="Clear entire pantry">🗑 Clear pantry</button>
+            </div>
           </div>
 
           {/* Add item form */}
@@ -446,9 +478,14 @@ export default function PantryPal() {
                   <div className={styles.categoryHeader}>
                     <span>{emoji} {catName}</span>
                     <span className={styles.categoryCount}>{items.length}</span>
-                    {catName !== 'Uncategorized' && catObj && (
-                      <button className={styles.iconBtn} onClick={() => deleteCategory(catObj.id, catName)} title="Delete category">✕</button>
-                    )}
+                    <div style={{ marginLeft: 'auto', display: 'flex', gap: 4, alignItems: 'center' }}>
+                      {items.length > 0 && (
+                        <button className={styles.catClearBtn} onClick={() => confirm(`Clear all ${items.length} item${items.length !== 1 ? 's' : ''} in "${catName}"?`, () => clearCategory(catName))} title="Clear all items in category">Clear</button>
+                      )}
+                      {catName !== 'Uncategorized' && catObj && (
+                        <button className={styles.iconBtn} onClick={() => deleteCategory(catObj.id, catName)} title="Delete category">✕</button>
+                      )}
+                    </div>
                   </div>
                   <div className={styles.itemsGrid}>
                     {items.map(item => (
@@ -700,6 +737,18 @@ export default function PantryPal() {
       )}
 
       {toast && <div className={styles.toast}>{toast}</div>}
+
+      {confirmDialog && (
+        <div className={styles.confirmOverlay}>
+          <div className={styles.confirmBox}>
+            <div className={styles.confirmMsg}>{confirmDialog.message}</div>
+            <div className={styles.confirmBtns}>
+              <button className={styles.confirmNo} onClick={confirmNo}>Cancel</button>
+              <button className={styles.confirmYes} onClick={confirmYes}>Yes, clear</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

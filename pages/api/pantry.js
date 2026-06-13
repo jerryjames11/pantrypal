@@ -34,8 +34,14 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'DELETE') {
-    const { id } = req.body
-    await sb.from('pantry_items').delete().eq('id', id).eq('user_id', user_id)
+    const { id, clearAll, clearCategory } = req.body
+    if (clearAll) {
+      await sb.from('pantry_items').delete().eq('user_id', user_id)
+    } else if (clearCategory) {
+      await sb.from('pantry_items').delete().eq('user_id', user_id).eq('category', clearCategory)
+    } else {
+      await sb.from('pantry_items').delete().eq('id', id).eq('user_id', user_id)
+    }
     return res.status(200).json({ ok: true })
   }
 
