@@ -67,7 +67,6 @@ export default function PantryPal() {
   const [movingItem, setMovingItem] = useState(null)
   const [showActions, setShowActions] = useState(false)
   const [collapsedCats, setCollapsedCats] = useState({})
-  const [profileOpen, setProfileOpen] = useState(false)
   const [manualName, setManualName] = useState('')
   const [manualStatus, setManualStatus] = useState('fresh')
   const [manualCount, setManualCount] = useState('')
@@ -116,7 +115,6 @@ export default function PantryPal() {
   useEffect(() => {
     function handleClick(e) {
       if (!e.target.closest('[data-actions]')) setShowActions(false)
-      if (!e.target.closest('[data-profile]')) setProfileOpen(false)
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
