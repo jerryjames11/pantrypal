@@ -163,12 +163,12 @@
 }
 
 /* ── Manual add expanded form ──────────────────────────────────────── */
-.manualAddBox { background: #f5ede0; border: 1px solid #e8d8c0; border-radius: 10px; padding: 12px; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 8px; }
+.manualAddBox { background: linear-gradient(135deg, #3cb87a 0%, #25905c 100%); border: none; border-radius: 10px; padding: 12px; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 2px 8px rgba(60,184,122,0.25); }
 .manualRow1 { display: flex; gap: 7px; }
-.manualRow1 input, .manualRow1 select { padding: 9px 11px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px; font-family: inherit; background: #fff; min-width: 0; }
+.manualRow1 input, .manualRow1 select { padding: 9px 11px; border: 1px solid rgba(255,255,255,0.4); border-radius: 8px; font-size: 14px; font-family: inherit; background: rgba(255,255,255,0.92); min-width: 0; color: #111; }
 .manualRow2 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.dateLabel { font-size: 12px; color: #555; white-space: nowrap; }
-.dateInput { padding: 7px 10px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-family: inherit; background: #fff; flex: 1; min-width: 140px; }
+.dateLabel { font-size: 12px; color: rgba(255,255,255,0.9); white-space: nowrap; font-weight: 500; }
+.dateInput { padding: 7px 10px; border: 1px solid rgba(255,255,255,0.4); border-radius: 8px; font-size: 13px; font-family: inherit; background: rgba(255,255,255,0.92); flex: 1; min-width: 140px; color: #111; }
 .addBtn { padding: 8px 16px; background: #3cb87a; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; font-family: inherit; }
 .addBtn:hover { background: #25905c; }
 

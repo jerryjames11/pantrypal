@@ -168,6 +168,7 @@ export default function PantryPal() {
     })
     const data = await res.json()
     setCategories(c => [...c, data.category])
+    setCollapsedCats(c => ({ ...c, [newCatName.trim()]: true }))
     setNewCatName(''); setNewCatEmoji('📦'); setShowAddCat(false)
     showToast(`Category added: ${newCatName}`)
   }
@@ -210,7 +211,17 @@ export default function PantryPal() {
   async function loadPantry() {
     if (!user) return
     setPantryLoading(true)
-    try { const res = await fetch(`/api/pantry?user_id=${user.id}`); const data = await res.json(); setPantry(data.items || []) } catch (e) { console.error(e) }
+    try {
+      const res = await fetch(`/api/pantry?user_id=${user.id}`)
+      const data = await res.json()
+      const items = data.items || []
+      setPantry(items)
+      // Collapse all categories by default on load
+      const cats = ['Uncategorized', ...new Set(items.map(i => i.category || 'Uncategorized'))]
+      const collapsed = {}
+      cats.forEach(c => { collapsed[c] = true })
+      setCollapsedCats(collapsed)
+    } catch (e) { console.error(e) }
     setPantryLoading(false)
   }
 
