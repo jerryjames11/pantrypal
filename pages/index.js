@@ -1141,20 +1141,21 @@ export default function PantryPal() {
                     {openSteps[i]?'▲ Hide steps':'▼ Show steps'}
                   </button>
                   {r.need?.length>0&&<button className={styles.chip} onClick={()=>addRecipeIngredientsToCart(r)}>🛒 Add missing to cart</button>}
-                  {acceptedFriends.length>0&&(
-                    <div style={{position:'relative'}} data-actions>
-                      <button className={styles.chip} onClick={()=>setShowActions(a=>a===`share-${i}`?false:`share-${i}`)}>📤 Share</button>
-                      {showActions===`share-${i}`&&(
-                        <div className={styles.actionsDropdown}>
-                          {acceptedFriends.map(f=>{
-                            const friend = f.addressee||f.requester
-                            const fid = f.addressee_id||f.requester_id
-                            return <button key={fid} className={styles.actionItem} onClick={()=>{shareRecipeWithFriend(r,fid);setShowActions(false)}}>{friend?.display_name||friend?.username}</button>
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  <div style={{position:'relative'}} data-actions>
+                    <button className={styles.chip} onClick={()=>setShowActions(a=>a===`share-${i}`?false:`share-${i}`)}>📤 Share</button>
+                    {showActions===`share-${i}`&&(
+                      <div className={styles.actionsDropdown}>
+                        {acceptedFriends.length===0
+                          ? <div className={styles.actionItem} style={{color:'#888',cursor:'default'}}>Add friends first to share</div>
+                          : acceptedFriends.map(f=>{
+                              const friend = f.addressee||f.requester
+                              const fid = f.addressee_id||f.requester_id
+                              return <button key={fid} className={styles.actionItem} onClick={()=>{shareRecipeWithFriend(r,fid);setShowActions(false)}}>{friend?.display_name||friend?.username}</button>
+                            })
+                        }
+                      </div>
+                    )}
+                  </div>
                 </div>
                 {openSteps[i]&&(
                   <div className={styles.stepsBody}>
@@ -1174,20 +1175,21 @@ export default function PantryPal() {
             <div className={styles.sectionLabel} style={{margin:0}}>Shopping cart — {cart.length} item{cart.length!==1?'s':''}</div>
             <div style={{display:'flex',gap:6}}>
               {cartCheckedCount>0&&<button className={styles.chip} onClick={clearCheckedCart}>🗑 Remove checked ({cartCheckedCount})</button>}
-              {acceptedFriends.length>0&&(
-                <div style={{position:'relative'}} data-actions>
-                  <button className={styles.chip} onClick={()=>setShowActions(a=>a==='share-cart'?false:'share-cart')}>📤 Share cart</button>
-                  {showActions==='share-cart'&&(
-                    <div className={styles.actionsDropdown}>
-                      {acceptedFriends.map(f=>{
-                        const friend=f.addressee||f.requester
-                        const fid=f.addressee_id||f.requester_id
-                        return <button key={fid} className={styles.actionItem} onClick={()=>{shareCartWithFriend(fid);setShowActions(false)}}>{friend?.display_name||friend?.username}</button>
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
+              <div style={{position:'relative'}} data-actions>
+                <button className={styles.chip} onClick={()=>setShowActions(a=>a==='share-cart'?false:'share-cart')}>📤 Share cart</button>
+                {showActions==='share-cart'&&(
+                  <div className={styles.actionsDropdown}>
+                    {acceptedFriends.length===0
+                      ? <div className={styles.actionItem} style={{color:'#888',cursor:'default'}}>Add friends first to share</div>
+                      : acceptedFriends.map(f=>{
+                          const friend=f.addressee||f.requester
+                          const fid=f.addressee_id||f.requester_id
+                          return <button key={fid} className={styles.actionItem} onClick={()=>{shareCartWithFriend(fid);setShowActions(false)}}>{friend?.display_name||friend?.username}</button>
+                        })
+                    }
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           <div style={{display:'flex',gap:8,marginBottom:16}}>
