@@ -367,7 +367,14 @@ export default function PantryPal() {
     if (!user) return
     const res = await fetch(`/api/categories?user_id=${user.id}`)
     const data = await res.json()
-    setCategories(data.categories || [])
+    const cats = data.categories || []
+    setCategories(cats)
+    // Collapse all categories including empty ones
+    setCollapsedCats(prev => {
+      const collapsed = { ...prev, 'Uncategorized': true }
+      cats.forEach(c => { collapsed[c.name] = true })
+      return collapsed
+    })
   }
 
   async function addCategory() {
