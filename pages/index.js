@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { track, identify, reset } from '../lib/posthog'
 import Link from 'next/link'
 import { supabase } from '../lib/supabase'
 import styles from '../styles/Home.module.css'
@@ -130,6 +131,7 @@ export default function PantryPal() {
 
   const [toast, setToast] = useState('')
   const [confirmDialog, setConfirmDialog] = useState(null)
+  const [showTutorial, setShowTutorial] = useState(false)
 
   const showToast = useCallback((msg) => { setToast(msg); setTimeout(() => setToast(''), 2800) }, [])
   function confirm(message, onConfirm) { setConfirmDialog({ message, onConfirm }) }
@@ -161,6 +163,10 @@ export default function PantryPal() {
       loadFriends()
       loadHousehold()
       loadShares()
+      // Identify user in PostHog
+      identify(user.id, { email: user.email, name: user.user_metadata?.full_name })
+      // Check if tutorial has been seen
+      checkTutorial()
     } else if (!authLoading) {
       setPantry([]); setReceipts([]); setCart([]); setSavedRecipes([])
     }
@@ -183,7 +189,24 @@ export default function PantryPal() {
     await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } })
   }
   async function signOut() {
-    await supabase.auth.signOut(); setPantry([]); setReceipts([]); setCart([]); showToast('Signed out')
+    await supabase.auth.signOut(); setPantry([]); setReceipts([]); setCart([]); reset(); showToast('Signed out')
+  }
+
+  // ── Tutorial ─────────────────────────────────────────────────────────────────
+  async function checkTutorial() {
+    if (!user) return
+    const res = await fetch(`/api/profile?user_id=${user.id}`)
+    const data = await res.json()
+    if (!data.profile?.tutorial_completed) setShowTutorial(true)
+  }
+
+  async function completeTutorial() {
+    setShowTutorial(false)
+    track('tutorial_completed')
+    await fetch(`/api/profile?user_id=${user.id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tutorial_completed: true })
+    })
   }
 
   // ── Profile ───────────────────────────────────────────────────────────────
@@ -314,6 +337,7 @@ export default function PantryPal() {
     setHousehold(data.household)
     setPantryView('household')
     setHouseholdName('')
+    track('household_created')
     showToast(`"${data.household.name}" created!`)
     loadHousehold()
   }
@@ -531,6 +555,7 @@ export default function PantryPal() {
       clearImage(); setReceiptText('')
       setScanResult({ receipt: data.receipt, items: data.items })
       showToast(`${data.items.length} items added to pantry`)
+      track('receipt_scanned', { item_count: data.items.length, store: data.receipt?.store_name })
       loadPantry(); loadReceipts()
     } catch (e) { setScanResult({ error: e.message || 'Could not parse receipt.' }) }
     setScanLoading(false)
@@ -559,6 +584,7 @@ export default function PantryPal() {
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       setRecipes(data.recipes || [])
+      track('recipes_suggested', { item_count: avail.length })
     } catch(e) { showToast('Could not load recipes. Try again.') }
     setRecipeLoading(false)
   }
@@ -575,6 +601,7 @@ export default function PantryPal() {
     await fetch(`/api/saved-recipes?user_id=${user.id}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ recipe })
     })
+    track('recipe_saved', { title: recipe.title })
     showToast(`Saved: ${recipe.title}`); loadSavedRecipes()
   }
 
@@ -1242,6 +1269,26 @@ export default function PantryPal() {
       </nav>
 
       {toast&&<div className={styles.toast}>{toast}</div>}
+
+      {showTutorial && (
+        <div className={styles.confirmOverlay}>
+          <div className={styles.tutorialBox}>
+            <div className={styles.tutorialLogo}>
+              <img src="/logo.png" alt="PantryPal" style={{width:80,height:80,objectFit:'contain'}} />
+            </div>
+            <h2 className={styles.tutorialTitle}>Welcome to PantryPal! 🎉</h2>
+            <p className={styles.tutorialSub}>Here's what you can do:</p>
+            <div className={styles.tutorialSteps}>
+              <div className={styles.tutorialStep}><span className={styles.tutorialIcon}>📋</span><div><strong>My Pantry</strong><p>Track everything in your home. Add items manually or scan a receipt.</p></div></div>
+              <div className={styles.tutorialStep}><span className={styles.tutorialIcon}>📷</span><div><strong>Scan</strong><p>Photograph or paste a receipt — AI reads it and adds items to your pantry automatically.</p></div></div>
+              <div className={styles.tutorialStep}><span className={styles.tutorialIcon}>🛒</span><div><strong>Cart</strong><p>Build your shopping list. Low or out-of-stock items can be pulled in automatically.</p></div></div>
+              <div className={styles.tutorialStep}><span className={styles.tutorialIcon}>🍳</span><div><strong>Recipes</strong><p>Get AI recipe suggestions based on what's in your pantry. Save favorites and share with friends.</p></div></div>
+              <div className={styles.tutorialStep}><span className={styles.tutorialIcon}>👤</span><div><strong>Profile</strong><p>Add friends, create a household to share your pantry, and manage notifications.</p></div></div>
+            </div>
+            <button className={styles.tutorialBtn} onClick={completeTutorial}>Got it, let's go! →</button>
+          </div>
+        </div>
+      )}
 
       {confirmDialog&&(
         <div className={styles.confirmOverlay}>

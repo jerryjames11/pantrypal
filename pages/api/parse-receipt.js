@@ -32,14 +32,17 @@ Schema:
   "receipt_date": "YYYY-MM-DD or null",
   "total_amount": number or null,
   "items": [
-    { "name": string, "qty": string, "price": number or null }
+    { "name": string, "qty": string, "price": number or null, "category": string }
   ]
 }
 Rules:
-- name should be clean and human-readable
-- qty is size/pack info if shown, else empty string
+- name should be clean and human-readable (e.g. "Whole Milk" not "WHL MLK 1GAL $3.99")
+- qty is size/pack info if shown (e.g. "1 gal", "12 ct"), else empty string
 - price is the unit price as a number, null if not found
-- total_amount is the grand total, null if not shown`
+- total_amount is the grand total, null if not shown
+- category must be one of: "Produce", "Meat & Seafood", "Dairy & Eggs", "Bakery", "Pantry & Dry Goods", "Frozen", "Toiletries", "Household", "Pet Supplies", "Uncategorized"
+- Only assign a category if you are confident. If unsure, use "Uncategorized"
+- Common examples: milk/cheese/eggs/yogurt → "Dairy & Eggs", chicken/beef/fish → "Meat & Seafood", bread/muffins → "Bakery", detergent/paper towels → "Household", shampoo/toothpaste → "Toiletries", frozen pizza/ice cream → "Frozen", fruits/vegetables → "Produce"`
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
@@ -67,6 +70,7 @@ export default async function handler(req, res) {
     const cleaned = raw.replace(/```json|```/g, '').trim()
     const parsed = JSON.parse(cleaned)
     const items = parsed.items || []
+    const receiptDate = parsed.receipt_date || null
 
     // Look up previous prices
     const names = items.map(i => i.name)
@@ -84,6 +88,7 @@ export default async function handler(req, res) {
 
     const enrichedItems = items.map(item => ({
       ...item,
+      category: item.category || 'Uncategorized',
       prev_price: prevMap[item.name] ?? null,
       price_delta: item.price != null && prevMap[item.name] != null
         ? parseFloat((item.price - prevMap[item.name]).toFixed(2))
@@ -96,7 +101,7 @@ export default async function handler(req, res) {
       .insert({
         user_id: userId,
         store_name: parsed.store_name || 'Unknown store',
-        receipt_date: parsed.receipt_date || null,
+        receipt_date: receiptDate,
         total_amount: parsed.total_amount || null,
         item_count: enrichedItems.length
       })
@@ -119,7 +124,7 @@ export default async function handler(req, res) {
       await sb.from('receipt_items').insert(rows)
     }
 
-    // Upsert pantry items
+    // Upsert pantry items — with AI category and last_purchased from receipt date
     for (const item of enrichedItems) {
       const { data: existing } = await sb
         .from('pantry_items')
@@ -128,13 +133,27 @@ export default async function handler(req, res) {
         .ilike('name', item.name)
         .single()
 
+      const pantryData = {
+        status: 'fresh',
+        qty: item.qty || '',
+        last_price: item.price,
+        updated_at: new Date().toISOString(),
+        ...(item.category && item.category !== 'Uncategorized' && { category: item.category }),
+        ...(receiptDate && { last_purchased: receiptDate })
+      }
+
       if (existing) {
-        await sb.from('pantry_items')
-          .update({ status: 'fresh', qty: item.qty || '', last_price: item.price, updated_at: new Date().toISOString() })
-          .eq('id', existing.id)
+        await sb.from('pantry_items').update(pantryData).eq('id', existing.id)
       } else {
-        await sb.from('pantry_items')
-          .insert({ user_id: userId, name: item.name, qty: item.qty || '', status: 'fresh', last_price: item.price })
+        await sb.from('pantry_items').insert({
+          user_id: userId,
+          name: item.name,
+          qty: item.qty || '',
+          status: 'fresh',
+          last_price: item.price,
+          category: item.category || 'Uncategorized',
+          last_purchased: receiptDate
+        })
       }
     }
 

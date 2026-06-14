@@ -367,3 +367,16 @@
 .viewTab { flex: 1; padding: 10px 8px; text-align: center; font-size: 13px; font-weight: 600; color: #7a6a52; border: none; background: none; cursor: pointer; font-family: inherit; border-bottom: 3px solid transparent; margin-bottom: -2px; }
 .viewTab:hover { color: #25905c; }
 .viewTabOn { color: #25905c; border-bottom-color: #25905c; }
+
+/* ── Tutorial modal ──────────────────────────────────────────────────── */
+.tutorialBox { background: #fdf8f0; border-radius: 20px; padding: 1.5rem; max-width: 380px; width: 100%; box-shadow: 0 8px 40px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
+.tutorialLogo { text-align: center; margin-bottom: 10px; }
+.tutorialTitle { font-size: 20px; font-weight: 800; color: #1a7a52; text-align: center; margin-bottom: 4px; }
+.tutorialSub { font-size: 13px; color: #888; text-align: center; margin-bottom: 16px; }
+.tutorialSteps { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+.tutorialStep { display: flex; align-items: flex-start; gap: 12px; background: #f5ede0; border-radius: 10px; padding: 10px 12px; }
+.tutorialIcon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+.tutorialStep strong { font-size: 13px; font-weight: 700; color: #3d2b0e; display: block; margin-bottom: 2px; }
+.tutorialStep p { font-size: 12px; color: #7a6a52; line-height: 1.4; margin: 0; }
+.tutorialBtn { width: 100%; padding: 13px; background: linear-gradient(135deg, #3cb87a, #25905c); color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
+.tutorialBtn:hover { background: linear-gradient(135deg, #25905c, #1c7549); }

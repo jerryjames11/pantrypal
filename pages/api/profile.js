@@ -11,14 +11,16 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'PATCH') {
-    const { username, display_name } = req.body
+    const { username, display_name, tutorial_completed } = req.body
     if (username) {
       const { data: existing } = await sb.from('profiles').select('id').eq('username', username).neq('id', user_id).single()
       if (existing) return res.status(400).json({ error: 'Username already taken' })
     }
-    const { data, error } = await sb.from('profiles')
-      .upsert({ id: user_id, username, display_name, updated_at: new Date().toISOString() })
-      .select().single()
+    const update = { updated_at: new Date().toISOString() }
+    if (username !== undefined) update.username = username
+    if (display_name !== undefined) update.display_name = display_name
+    if (tutorial_completed !== undefined) update.tutorial_completed = tutorial_completed
+    const { data, error } = await sb.from('profiles').upsert({ id: user_id, ...update }).select().single()
     if (error) return res.status(500).json({ error: error.message })
     return res.status(200).json({ profile: data })
   }
