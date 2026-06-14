@@ -31,7 +31,7 @@ function LandingPage({ onSignIn }) {
         <img src="/logo.png" alt="PantryPal" className={styles.landingLogo} />
         <p className={styles.landingSub}>Track your groceries, scan receipts, get recipe ideas, and never forget what you need at the store.</p>
         <div className={styles.landingFeatures}>
-          <div className={styles.landingFeature}><span>📷</span> Scan receipts with AI</div>
+          <div className={styles.landingFeature}><span>📷</span> Scan and log receipts</div>
           <div className={styles.landingFeature}><span>🧺</span> Track your pantry</div>
           <div className={styles.landingFeature}><span>🍳</span> Get recipe suggestions</div>
           <div className={styles.landingFeature}><span>🛒</span> Smart shopping cart</div>
@@ -65,6 +65,7 @@ export default function PantryPal() {
   const [editingItem, setEditingItem] = useState(null)
   const [movingItem, setMovingItem] = useState(null)
   const [showActions, setShowActions] = useState(false)
+  const [showAddItem, setShowAddItem] = useState(false)
   const [collapsedCats, setCollapsedCats] = useState({})
   const [manualName, setManualName] = useState('')
   const [manualStatus, setManualStatus] = useState('fresh')
@@ -921,7 +922,9 @@ export default function PantryPal() {
                 </button>
               ))}
             </div>
-            <div style={{position:'relative',flexShrink:0}} data-actions>
+            <div style={{display:'flex',gap:6,flexShrink:0}}>
+            <button className={styles.chip} onClick={()=>setShowAddItem(a=>!a)} style={{fontSize:11}}>+ Add item</button>
+            <div style={{position:'relative'}} data-actions>
               <button className={styles.chip} onClick={()=>setShowActions(a=>!a)} style={{fontSize:11}}>⚙ Actions</button>
               {showActions && (
                 <div className={styles.actionsDropdown}>
@@ -932,23 +935,26 @@ export default function PantryPal() {
             </div>
           </div>
 
-          <div className={styles.manualAddBox}>
-            <div className={styles.manualRow1}>
-              <input type="text" value={manualName} placeholder="Item name…" onChange={e=>setManualName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&addManual()} style={{flex:2,minWidth:0}} />
-              <input type="number" value={manualCount} placeholder="Qty" onChange={e=>setManualCount(e.target.value)} min="0" style={{width:60}} />
-              <select value={manualStatus} onChange={e=>setManualStatus(e.target.value)} style={{flex:1}}>
-                <option value="fresh">In stock</option><option value="low">Low</option><option value="out">Out</option>
-              </select>
+          {showAddItem && (
+            <div className={styles.manualAddBox}>
+              <div className={styles.manualRow1}>
+                <input type="text" value={manualName} placeholder="Item name…" onChange={e=>setManualName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&addManual()} style={{flex:2,minWidth:0}} autoFocus />
+                <input type="number" value={manualCount} placeholder="Qty" onChange={e=>setManualCount(e.target.value)} min="0" style={{width:60}} />
+                <select value={manualStatus} onChange={e=>setManualStatus(e.target.value)} style={{flex:1}}>
+                  <option value="fresh">In stock</option><option value="low">Low</option><option value="out">Out</option>
+                </select>
+              </div>
+              <div className={styles.manualRow2}>
+                <select value={manualCategory} onChange={e=>setManualCategory(e.target.value)} style={{flex:1,padding:'7px 10px',border:'1px solid rgba(255,255,255,0.4)',borderRadius:8,fontSize:13,fontFamily:'inherit',background:'rgba(255,255,255,0.92)'}}>
+                  {categories.map(c=><option key={c.id} value={c.name}>{c.emoji} {c.name}</option>)}
+                  <option value="Other">📦 Other</option>
+                </select>
+                <input type="date" value={manualDate} onChange={e=>setManualDate(e.target.value)} className={styles.dateInput} />
+                <button onClick={()=>{addManual();setShowAddItem(false)}} className={styles.addBtn}>+ Add</button>
+                <button onClick={()=>setShowAddItem(false)} className={styles.iconBtn} style={{color:'#fff'}}>✕</button>
+              </div>
             </div>
-            <div className={styles.manualRow2}>
-              <select value={manualCategory} onChange={e=>setManualCategory(e.target.value)} style={{flex:1,padding:'7px 10px',border:'1px solid rgba(255,255,255,0.4)',borderRadius:8,fontSize:13,fontFamily:'inherit',background:'rgba(255,255,255,0.92)'}}>
-                {categories.map(c=><option key={c.id} value={c.name}>{c.emoji} {c.name}</option>)}
-                <option value="Other">📦 Other</option>
-              </select>
-              <input type="date" value={manualDate} onChange={e=>setManualDate(e.target.value)} className={styles.dateInput} />
-              <button onClick={addManual} className={styles.addBtn}>+ Add</button>
-            </div>
-          </div>
+          )}
 
           <div style={{marginBottom:12}}>
             <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
