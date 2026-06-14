@@ -152,8 +152,7 @@ export default function PantryPal() {
 
   useEffect(() => {
     if (user) {
-      loadPantry()
-      loadCategories()
+      loadCategoriesThenPantry()
       loadReceipts()
       loadCart()
       loadSavedRecipes()
@@ -363,6 +362,11 @@ export default function PantryPal() {
   }
 
   // ── Categories ────────────────────────────────────────────────────────────
+  async function loadCategoriesThenPantry() {
+    await loadCategories()
+    await loadPantry()
+  }
+
   async function loadCategories() {
     if (!user) return
     const res = await fetch(`/api/categories?user_id=${user.id}`)
