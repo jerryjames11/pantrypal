@@ -543,17 +543,17 @@ export default function PantryPal() {
                 <div key={catName} className={`${styles.categoryGroup} ${dragOverCat===catName?styles.dragOver:''}`}
                   onDragOver={e=>onDragOver(e,catName)} onDrop={()=>onDrop(catName)} onDragLeave={()=>setDragOverCat(null)}>
                   <div className={styles.categoryHeader} onClick={()=>toggleCat(catName)}>
-                    <span>{emoji} {catName}</span>
-                    <span className={styles.categoryCount}>{items.length}</span>
-                    <div style={{display:'flex',gap:4,alignItems:'center',marginLeft:'auto'}} onClick={e=>e.stopPropagation()}>
+                    <span className={styles.catName}>{emoji} {catName}</span>
+                    <div className={styles.catRight} onClick={e=>e.stopPropagation()}>
+                      <span className={styles.catItemCount}>Items: {items.length}</span>
                       {items.length>0&&(
                         <button className={styles.catClearBtn} onClick={()=>confirm(`Clear all ${items.length} item${items.length!==1?'s':''} in "${catName}"?`,()=>clearCategory(catName))}>Clear</button>
                       )}
                       {catName!=='Uncategorized'&&catObj&&(
-                        <button className={styles.iconBtn} onClick={()=>deleteCategory(catObj.id,catName)}>✕</button>
+                        <button className={styles.catDeleteBtn} onClick={()=>deleteCategory(catObj.id,catName)} title="Delete category">🗑</button>
                       )}
+                      <span className={`${styles.categoryChevron} ${!collapsedCats[catName]?styles.categoryChevronOpen:''}`}>▼</span>
                     </div>
-                    <span className={`${styles.categoryChevron} ${!collapsedCats[catName]?styles.categoryChevronOpen:''}`}>▼</span>
                   </div>
                   {!collapsedCats[catName] && (
                     items.length===0 ? (

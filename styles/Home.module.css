@@ -179,7 +179,7 @@
 .categoryGroup { margin-bottom: 20px; border: 1.5px solid #e8d8c0; border-radius: 12px; overflow: visible; transition: border-color .15s; background: #fdf8f0; }
 .categoryGroup.dragOver { border-color: #3cb87a; background: #e8faf3; }
 .categoryHeader { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: #f0e6d0; font-size: 13px; font-weight: 600; color: #3d2b0e; border-bottom: 1px solid #e8d8c0; }
-.categoryCount { margin-left: auto; background: #e5e7eb; color: #555; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 20px; }
+.categoryCount { display: none; }
 .categoryGroup .itemsGrid { padding: 10px; border-radius: 0; }
 
 /* ── Cart ────────────────────────────────────────────────────────────── */
@@ -269,7 +269,7 @@
 .actionDanger:hover { background: #fef2f2; }
 
 /* ── Collapsible categories ──────────────────────────────────────────── */
-.categoryHeader { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: #f0e6d0; font-size: 13px; font-weight: 600; color: #3d2b0e; border-bottom: 1px solid #e8d8c0; cursor: pointer; user-select: none; }
+.categoryHeader { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 14px; background: #f0e6d0; border-bottom: 1px solid #e8d8c0; cursor: pointer; user-select: none; border-radius: 10px 10px 0 0; }
 .categoryHeader:hover { background: #e8d8c0; }
 .categoryChevron { margin-left: auto; font-size: 11px; color: #7a6a52; transition: transform .2s; }
 .categoryChevronOpen { transform: rotate(180deg); }
@@ -311,3 +311,10 @@
 .landingPrivacy:hover { text-decoration: underline; }
 
 /* ── Landing logo size fix ───────────────────────────────────────────── */
+
+/* ── Category header redesign ────────────────────────────────────────── */
+.catName { font-size: 14px; font-weight: 700; color: #3d2b0e; flex: 1; }
+.catRight { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.catItemCount { font-size: 12px; color: #7a6a52; font-weight: 500; white-space: nowrap; }
+.catDeleteBtn { background: none; border: none; cursor: pointer; font-size: 15px; padding: 2px 4px; border-radius: 5px; line-height: 1; }
+.catDeleteBtn:hover { background: #fef2f2; }
