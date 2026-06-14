@@ -380,3 +380,7 @@
 .tutorialStep p { font-size: 12px; color: #7a6a52; line-height: 1.4; margin: 0; }
 .tutorialBtn { width: 100%; padding: 13px; background: linear-gradient(135deg, #3cb87a, #25905c); color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
 .tutorialBtn:hover { background: linear-gradient(135deg, #25905c, #1c7549); }
+
+/* ── Coach mark button ───────────────────────────────────────────────── */
+.coachMarkBtn { width: 26px; height: 26px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.7); background: rgba(255,255,255,0.2); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-family: inherit; transition: background .15s; }
+.coachMarkBtn:hover { background: rgba(255,255,255,0.35); }

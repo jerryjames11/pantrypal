@@ -1,0 +1,23 @@
+.overlay { position: fixed; inset: 0; z-index: 1000; cursor: pointer; }
+
+.tooltip { background: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.25); border: 1px solid #e8d8c0; }
+
+.stepCount { font-size: 11px; font-weight: 600; color: #3cb87a; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+
+.stepTitle { font-size: 15px; font-weight: 700; color: #1a7a52; margin-bottom: 6px; }
+
+.stepBody { font-size: 13px; color: #555; line-height: 1.55; margin-bottom: 14px; }
+
+.btnRow { display: flex; align-items: center; justify-content: space-between; }
+
+.skipBtn { background: none; border: none; font-size: 12px; color: #aaa; cursor: pointer; font-family: inherit; padding: 0; }
+.skipBtn:hover { color: #666; }
+
+.prevBtn { padding: 6px 12px; border: 1px solid #e0e0e0; border-radius: 8px; background: #fff; font-size: 12px; cursor: pointer; font-family: inherit; }
+.prevBtn:hover { background: #f5f5f5; }
+
+.nextBtn { padding: 6px 14px; border: none; border-radius: 8px; background: linear-gradient(135deg, #3cb87a, #25905c); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.nextBtn:hover { background: linear-gradient(135deg, #25905c, #1c7549); }
+
+/* Highlight effect on tour target elements */
+[data-tour-highlight] { position: relative; z-index: 1001; }

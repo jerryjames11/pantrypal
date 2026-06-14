@@ -133,6 +133,8 @@ export default function PantryPal() {
   const [toast, setToast] = useState('')
   const [confirmDialog, setConfirmDialog] = useState(null)
   const [showTutorial, setShowTutorial] = useState(false)
+  const [activeTour, setActiveTour] = useState(null) // steps array
+  const [seenTours, setSeenTours] = useState({})
 
   const showToast = useCallback((msg) => { setToast(msg); setTimeout(() => setToast(''), 2800) }, [])
   function confirm(message, onConfirm) { setConfirmDialog({ message, onConfirm }) }
@@ -178,6 +180,14 @@ export default function PantryPal() {
   }, [pantryView, household])
 
   useEffect(() => {
+    if (!user || !tab) return
+    const tourKey = `tour_${tab}`
+    if (!seenTours[tourKey] && TOURS[tab]) {
+      setTimeout(() => startTour(tab), 600)
+    }
+  }, [tab, user])
+
+  useEffect(() => {
     function handleClick(e) {
       if (!e.target.closest('[data-actions]')) setShowActions(false)
       if (!e.target.closest('[data-profile]')) { setProfileOpen(false); }
@@ -210,6 +220,30 @@ export default function PantryPal() {
     })
   }
 
+  // ── Tour ─────────────────────────────────────────────────────────────────────
+  function startTour(tabName) {
+    const steps = TOURS[tabName]
+    if (!steps) return
+    setActiveTour(steps)
+  }
+
+  function completeTour() {
+    const tourKey = `tour_${tab}`
+    setSeenTours(s => ({ ...s, [tourKey]: true }))
+    setActiveTour(null)
+    // Persist to profile
+    fetch(`/api/profile?user_id=${user.id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ [tourKey]: true })
+    })
+  }
+
+  function skipTour() {
+    const tourKey = `tour_${tab}`
+    setSeenTours(s => ({ ...s, [tourKey]: true }))
+    setActiveTour(null)
+  }
+
   // ── Profile ───────────────────────────────────────────────────────────────
   async function loadProfile() {
     if (!user) return
@@ -218,6 +252,14 @@ export default function PantryPal() {
     setProfile(data.profile)
     setEditUsername(data.profile?.username || '')
     setEditDisplayName(data.profile?.display_name || '')
+    // Load seen tours
+    if (data.profile) {
+      const seen = {}
+      Object.keys(TOURS).forEach(t => {
+        if (data.profile[`tour_${t}`]) seen[`tour_${t}`] = true
+      })
+      setSeenTours(seen)
+    }
   }
 
   async function saveProfile() {
@@ -684,6 +726,8 @@ export default function PantryPal() {
           <img src="/logo.png" alt="PantryPal logo" className={styles.headerLogo} />
           <span className={styles.appTitle}>PantryPal</span>
         </button>
+        <div style={{display:'flex',alignItems:'center',gap:6}}>
+        <button className={styles.coachMarkBtn} onClick={()=>startTour(tab)} title="Show page tour">?</button>
         <div className={styles.profileArea} data-profile>
           <button className={styles.avatarBtn} onClick={() => { setProfileOpen(o => !o); if (profileOpen) setProfilePanel(null) }}>
             {unreadCount > 0 && <span className={styles.notifDot}>{unreadCount > 9 ? '9+' : unreadCount}</span>}
@@ -889,6 +933,7 @@ export default function PantryPal() {
             </div>
           )}
         </div>
+        </div>
       </header>
 
       <div className={styles.content}>
@@ -908,13 +953,13 @@ export default function PantryPal() {
       {/* ══ PANTRY ══ */}
       {tab === 'pantry' && (
         <section>
-          <div className={styles.statsRow}>
+          <div className={styles.statsRow} id="tour-stats">
             <div className={styles.statCard}><div className={styles.statVal}>{stats.fresh}</div><div className={styles.statLbl}>In stock</div></div>
             <div className={styles.statCard}><div className={styles.statVal}>{stats.low}</div><div className={styles.statLbl}>Running low</div></div>
             <div className={styles.statCard}><div className={styles.statVal}>{stats.out}</div><div className={styles.statLbl}>Out of stock</div></div>
           </div>
 
-          <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:10,flexWrap:'nowrap'}}>
+          <div id="tour-filters" style={{display:'flex',alignItems:'center',gap:6,marginBottom:10,flexWrap:'nowrap'}}>
             <div style={{display:'flex',gap:4,flex:1,flexWrap:'nowrap'}}>
               {['all','fresh','low','out'].map(f => (
                 <button key={f} className={pantryFilter===f?`${styles.chip} ${styles.chipOn}`:styles.chip} onClick={()=>setPantryFilter(f)} style={{padding:'5px 9px',fontSize:11}}>
@@ -923,7 +968,7 @@ export default function PantryPal() {
               ))}
             </div>
             <div style={{display:'flex',gap:6,flexShrink:0}}>
-            <button className={styles.chip} onClick={()=>setShowAddItem(a=>!a)} style={{fontSize:11}}>+ Add item</button>
+            <button id="tour-add-item" className={styles.chip} onClick={()=>setShowAddItem(a=>!a)} style={{fontSize:11}}>+ Add item</button>
             <div style={{position:'relative'}} data-actions>
               <button className={styles.chip} onClick={()=>setShowActions(a=>!a)} style={{fontSize:11}}>⚙ Actions</button>
               {showActions && (
@@ -956,7 +1001,7 @@ export default function PantryPal() {
             </div>
           )}
 
-          <div style={{marginBottom:12}}>
+          <div id="tour-categories" style={{marginBottom:12}}>
             <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
               <span className={styles.sectionLabel} style={{margin:0}}>Categories</span>
               <button className={styles.chip} onClick={()=>setShowAddCat(!showAddCat)}>+ Add category</button>
@@ -1045,7 +1090,7 @@ export default function PantryPal() {
         <section>
           <p className={styles.sectionLabel}>Upload a receipt photo</p>
           {!previewSrc&&(
-            <div className={styles.uploadBtns}>
+            <div id="tour-scan-upload" className={styles.uploadBtns}>
               <label className={styles.uploadLabel}>📁 Choose from files<input type="file" accept="image/*" onChange={e=>loadFile(e.target.files[0])} hidden /></label>
               <label className={styles.uploadLabel}>📷 Take a photo<input type="file" accept="image/*" capture="environment" onChange={e=>loadFile(e.target.files[0])} hidden /></label>
             </div>
@@ -1059,7 +1104,7 @@ export default function PantryPal() {
           {previewSrc&&!scanLoading&&<button className={styles.scanBtn} onClick={()=>doScan({imageBase64:imgBase64,imageMime:imgMime})}>✨ Read receipt with AI</button>}
           {scanLoading&&<div className={styles.loadRow}><Spinner /> Scanning receipt…</div>}
           <div className={styles.divider}>or paste receipt text</div>
-          <textarea className={styles.textarea} value={receiptText} onChange={e=>setReceiptText(e.target.value)} rows={5} placeholder="Paste receipt text, grocery list, or type items and prices…" />
+          <textarea id="tour-scan-text" className={styles.textarea} value={receiptText} onChange={e=>setReceiptText(e.target.value)} rows={5} placeholder="Paste receipt text, grocery list, or type items and prices…" />
           {!scanLoading&&<button className={styles.scanBtn} style={{marginTop:8,opacity:!receiptText.trim()?0.5:1}} onClick={()=>{if(receiptText.trim())doScan({text:receiptText})}}>✓ Parse text with AI</button>}
           {scanResult&&!scanResult.error&&(
             <div className={styles.scanSuccess}>
@@ -1084,7 +1129,7 @@ export default function PantryPal() {
         <section>
           {receiptsLoading?<div className={styles.loadRow}><Spinner /> Loading receipts…</div>
           :receipts.length===0?<div className={styles.empty}>No receipts yet — scan one from the Scan tab.</div>
-          :receipts.map(r=>(
+          :<div id="tour-history-list">{receipts.map(r=>(
             <div key={r.id} className={styles.receiptCard}>
               <div className={styles.receiptHeader} onClick={()=>setExpandedReceipt(expandedReceipt===r.id?null:r.id)}>
                 <div className={styles.receiptMeta}>
@@ -1115,18 +1160,18 @@ export default function PantryPal() {
                 </div>
               )}
             </div>
-          ))}
+          ))}</div>
         </section>
       )}
 
       {/* ══ RECIPES ══ */}
       {tab==='recipes'&&(
         <section>
-          <div style={{display:'flex',gap:8,marginBottom:16}}>
-            <button className={styles.scanBtn} style={{flex:1}} onClick={getRecipes} disabled={recipeLoading}>
+          <div id="tour-cart-input" style={{display:'flex',gap:8,marginBottom:16}}>
+            <button id="tour-recipes-btn" className={styles.scanBtn} style={{flex:1}} onClick={getRecipes} disabled={recipeLoading}>
               {recipeLoading?'Finding matches…':'✨ Suggest recipes from my pantry'}
             </button>
-            <button className={`${styles.chip} ${showSaved?styles.chipOn:''}`} onClick={()=>setShowSaved(!showSaved)}>
+            <button id="tour-recipes-saved" className={`${styles.chip} ${showSaved?styles.chipOn:''}`} onClick={()=>setShowSaved(!showSaved)}>
               ❤️ Saved {savedRecipes.length>0&&`(${savedRecipes.length})`}
             </button>
           </div>
@@ -1211,7 +1256,7 @@ export default function PantryPal() {
             <div className={styles.sectionLabel} style={{margin:0}}>Shopping cart — {cart.length} item{cart.length!==1?'s':''}</div>
             <div style={{display:'flex',gap:6}}>
               {cartCheckedCount>0&&<button className={styles.chip} onClick={clearCheckedCart}>🗑 Remove checked ({cartCheckedCount})</button>}
-              <div style={{position:'relative'}} data-actions>
+              <div id="tour-cart-share" style={{position:'relative'}} data-actions>
                 <button className={styles.chip} onClick={()=>setShowActions(a=>a==='share-cart'?false:'share-cart')}>📤 Share cart</button>
                 {showActions==='share-cart'&&(
                   <div className={styles.actionsDropdown}>
@@ -1233,11 +1278,11 @@ export default function PantryPal() {
             <input type="text" value={cartItemQty} placeholder="Qty" onChange={e=>setCartItemQty(e.target.value)} style={{width:64,padding:'9px 8px',border:'1px solid #e0e0e0',borderRadius:8,fontSize:14,fontFamily:'inherit'}} />
             <button className={styles.addBtn} onClick={addToCart}>+ Add</button>
           </div>
-          <button className={styles.chip} style={{marginBottom:12}} onClick={addLowItemsToCart}>↓ Pull in low/out pantry items</button>
+          <button id="tour-cart-pull" className={styles.chip} style={{marginBottom:12}} onClick={addLowItemsToCart}>↓ Pull in low/out pantry items</button>
           {cartLoading?<div className={styles.loadRow}><Spinner /> Loading cart…</div>
           :cart.length===0?<div className={styles.empty}>Cart is empty — add items above or pull from pantry</div>
           :(
-            <div style={{display:'flex',flexDirection:'column',gap:6}}>
+            <div id="tour-cart-list" style={{display:'flex',flexDirection:'column',gap:6}}>
               {['manual','pantry','recipe'].map(source=>{
                 const sourceItems=cart.filter(i=>i.source===source)
                 if(!sourceItems.length)return null
@@ -1275,6 +1320,8 @@ export default function PantryPal() {
       </nav>
 
       {toast&&<div className={styles.toast}>{toast}</div>}
+
+      {activeTour && <Tour steps={activeTour} onComplete={completeTour} onSkip={skipTour} />}
 
       {showTutorial && (
         <div className={styles.confirmOverlay}>
