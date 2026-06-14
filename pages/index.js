@@ -978,6 +978,7 @@ export default function PantryPal() {
                 </div>
               )}
             </div>
+            </div>
           </div>
 
           {showAddItem && (
@@ -1161,7 +1162,7 @@ export default function PantryPal() {
                 </div>
               )}
             </div>
-          ))}</div>
+          ))}</div>}
         </section>
       )}
 
