@@ -4,16 +4,13 @@ import { supabase } from '../lib/supabase'
 import styles from '../styles/Home.module.css'
 
 function fmt(n) { return n != null ? `$${Number(n).toFixed(2)}` : '' }
-
 function PriceDelta({ delta }) {
   if (delta == null || delta === 0) return null
   const up = delta > 0
   return <span className={up ? styles.priceUp : styles.priceDown}>{up ? '▲' : '▼'} {fmt(Math.abs(delta))}</span>
 }
-
 function Spinner() { return <span className={styles.spinner} /> }
 
-// ── Splash screen ─────────────────────────────────────────────────────────
 function SplashScreen() {
   return (
     <div className={styles.splash}>
@@ -26,7 +23,6 @@ function SplashScreen() {
   )
 }
 
-// ── Landing page ──────────────────────────────────────────────────────────
 function LandingPage({ onSignIn }) {
   return (
     <div className={styles.landing}>
@@ -69,12 +65,16 @@ export default function PantryPal() {
   const [movingItem, setMovingItem] = useState(null)
   const [showActions, setShowActions] = useState(false)
   const [collapsedCats, setCollapsedCats] = useState({})
-  const [profileOpen, setProfileOpen] = useState(false)
   const [manualName, setManualName] = useState('')
   const [manualStatus, setManualStatus] = useState('fresh')
   const [manualCount, setManualCount] = useState('')
   const [manualDate, setManualDate] = useState('')
   const [manualCategory, setManualCategory] = useState('Other')
+
+  // Household / pantry view
+  const [household, setHousehold] = useState(null)
+  const [householdMembers, setHouseholdMembers] = useState([])
+  const [pantryView, setPantryView] = useState('household') // 'household' | 'personal'
 
   // Categories
   const [categories, setCategories] = useState([])
@@ -110,27 +110,37 @@ export default function PantryPal() {
   const [cartItemName, setCartItemName] = useState('')
   const [cartItemQty, setCartItemQty] = useState('')
 
+  // Profile / social
+  const [profileOpen, setProfileOpen] = useState(false)
+  const [profilePanel, setProfilePanel] = useState(null) // null | 'edit' | 'friends' | 'household' | 'notifications' | 'shares'
+  const [profile, setProfile] = useState(null)
+  const [editUsername, setEditUsername] = useState('')
+  const [editDisplayName, setEditDisplayName] = useState('')
+  const [profileSaving, setProfileSaving] = useState(false)
+  const [friendSearch, setFriendSearch] = useState('')
+  const [friendSearchType, setFriendSearchType] = useState('username')
+  const [friendResults, setFriendResults] = useState([])
+  const [friendsData, setFriendsData] = useState({ sent: [], received: [] })
+  const [notifications, setNotifications] = useState([])
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [shares, setShares] = useState([])
+  const [householdName, setHouseholdName] = useState('')
+  const [householdInviteSearch, setHouseholdInviteSearch] = useState('')
+  const [householdInviteResults, setHouseholdInviteResults] = useState([])
+
   const [toast, setToast] = useState('')
   const [confirmDialog, setConfirmDialog] = useState(null)
 
   const showToast = useCallback((msg) => { setToast(msg); setTimeout(() => setToast(''), 2800) }, [])
-
-  useEffect(() => {
-    function handleClick(e) {
-      if (!e.target.closest('[data-actions]')) setShowActions(false)
-      if (!e.target.closest('[data-profile]')) setProfileOpen(false)
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
-
   function confirm(message, onConfirm) { setConfirmDialog({ message, onConfirm }) }
   function confirmYes() { if (confirmDialog?.onConfirm) confirmDialog.onConfirm(); setConfirmDialog(null) }
   function confirmNo() { setConfirmDialog(null) }
 
+  // Current household_id for pantry queries
+  const activeHouseholdId = pantryView === 'household' && household ? household.id : null
+
   // ── Auth ──────────────────────────────────────────────────────────────────
   useEffect(() => {
-    // Show splash for at least 2 seconds
     setTimeout(() => setShowSplash(false), 2000)
     supabase.auth.getSession().then(({ data }) => {
       setUser(data?.session?.user ?? null)
@@ -141,15 +151,215 @@ export default function PantryPal() {
   }, [])
 
   useEffect(() => {
-    if (user) { loadPantry(); loadCategories(); loadReceipts(); loadCart(); loadSavedRecipes() }
-    else if (!authLoading) { setPantry([]); setReceipts([]); setCart([]); setSavedRecipes([]) }
+    if (user) {
+      loadPantry()
+      loadCategories()
+      loadReceipts()
+      loadCart()
+      loadSavedRecipes()
+      loadProfile()
+      loadNotifications()
+      loadFriends()
+      loadHousehold()
+      loadShares()
+    } else if (!authLoading) {
+      setPantry([]); setReceipts([]); setCart([]); setSavedRecipes([])
+    }
   }, [user, authLoading])
+
+  useEffect(() => {
+    if (user) loadPantry()
+  }, [pantryView, household])
+
+  useEffect(() => {
+    function handleClick(e) {
+      if (!e.target.closest('[data-actions]')) setShowActions(false)
+      if (!e.target.closest('[data-profile]')) { setProfileOpen(false); }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
 
   async function signInWithGoogle() {
     await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } })
   }
   async function signOut() {
     await supabase.auth.signOut(); setPantry([]); setReceipts([]); setCart([]); showToast('Signed out')
+  }
+
+  // ── Profile ───────────────────────────────────────────────────────────────
+  async function loadProfile() {
+    if (!user) return
+    const res = await fetch(`/api/profile?user_id=${user.id}`)
+    const data = await res.json()
+    setProfile(data.profile)
+    setEditUsername(data.profile?.username || '')
+    setEditDisplayName(data.profile?.display_name || '')
+  }
+
+  async function saveProfile() {
+    setProfileSaving(true)
+    const res = await fetch(`/api/profile?user_id=${user.id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: editUsername.trim(), display_name: editDisplayName.trim() })
+    })
+    const data = await res.json()
+    if (data.error) { showToast(data.error); setProfileSaving(false); return }
+    setProfile(data.profile)
+    showToast('Profile updated!')
+    setProfileSaving(false)
+  }
+
+  // ── Notifications ─────────────────────────────────────────────────────────
+  async function loadNotifications() {
+    if (!user) return
+    const res = await fetch(`/api/notifications?user_id=${user.id}`)
+    const data = await res.json()
+    setNotifications(data.notifications || [])
+    setUnreadCount(data.unread || 0)
+  }
+
+  async function markAllRead() {
+    await fetch(`/api/notifications?user_id=${user.id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ markAllRead: true })
+    })
+    setNotifications(n => n.map(x => ({ ...x, read: true })))
+    setUnreadCount(0)
+  }
+
+  // ── Friends ───────────────────────────────────────────────────────────────
+  async function loadFriends() {
+    if (!user) return
+    const res = await fetch(`/api/friends?user_id=${user.id}`)
+    const data = await res.json()
+    setFriendsData(data)
+  }
+
+  async function searchFriends() {
+    if (!friendSearch.trim()) return
+    const res = await fetch(`/api/friends?user_id=${user.id}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: friendSearchType === 'email' ? 'search_email' : 'search', search: friendSearch })
+    })
+    const data = await res.json()
+    setFriendResults(data.results || [])
+  }
+
+  async function sendFriendRequest(friend_id) {
+    await fetch(`/api/friends?user_id=${user.id}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'request', friend_id })
+    })
+    showToast('Friend request sent!'); loadFriends(); setFriendResults([])
+  }
+
+  async function respondToFriendRequest(friend_id, action) {
+    await fetch(`/api/friends?user_id=${user.id}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, friend_id })
+    })
+    showToast(action === 'accept' ? 'Friend added!' : 'Request declined')
+    loadFriends(); loadNotifications()
+  }
+
+  async function removeFriend(friend_id) {
+    await fetch(`/api/friends?user_id=${user.id}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'remove', friend_id })
+    })
+    showToast('Friend removed'); loadFriends()
+  }
+
+  // ── Shares ────────────────────────────────────────────────────────────────
+  async function loadShares() {
+    if (!user) return
+    const res = await fetch(`/api/shares?user_id=${user.id}`)
+    const data = await res.json()
+    setShares(data.shares || [])
+  }
+
+  async function shareRecipeWithFriend(recipe, friend_id) {
+    await fetch(`/api/shares?user_id=${user.id}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to_user: friend_id, share_type: 'recipe', title: recipe.title, content: recipe })
+    })
+    showToast(`Recipe shared!`)
+  }
+
+  async function shareCartWithFriend(friend_id) {
+    await fetch(`/api/shares?user_id=${user.id}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to_user: friend_id, share_type: 'cart', title: 'Shopping cart', content: { items: cart } })
+    })
+    showToast('Cart shared!')
+  }
+
+  // ── Household ─────────────────────────────────────────────────────────────
+  async function loadHousehold() {
+    if (!user) return
+    const res = await fetch(`/api/households?user_id=${user.id}`)
+    const data = await res.json()
+    setHousehold(data.household || null)
+    setHouseholdMembers(data.members || [])
+    if (!data.household) setPantryView('personal')
+  }
+
+  async function createHousehold() {
+    if (!householdName.trim()) return
+    const res = await fetch(`/api/households?user_id=${user.id}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'create', name: householdName.trim() })
+    })
+    const data = await res.json()
+    setHousehold(data.household)
+    setPantryView('household')
+    setHouseholdName('')
+    showToast(`"${data.household.name}" created!`)
+    loadHousehold()
+  }
+
+  async function searchHouseholdInvite() {
+    if (!householdInviteSearch.trim()) return
+    const res = await fetch(`/api/friends?user_id=${user.id}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'search', search: householdInviteSearch })
+    })
+    const data = await res.json()
+    setHouseholdInviteResults(data.results || [])
+  }
+
+  async function inviteToHousehold(invitee_id) {
+    await fetch(`/api/households?user_id=${user.id}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'invite', household_id: household.id, invitee_id })
+    })
+    showToast('Invitation sent!'); setHouseholdInviteResults([])
+  }
+
+  async function leaveHousehold() {
+    await fetch(`/api/households?user_id=${user.id}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'leave', household_id: household.id })
+    })
+    setHousehold(null); setHouseholdMembers([]); setPantryView('personal')
+    showToast('Left household'); setProfilePanel(null)
+  }
+
+  async function acceptHouseholdInvite(household_id) {
+    await fetch(`/api/households?user_id=${user.id}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'accept_invite', household_id })
+    })
+    showToast('Joined household!'); loadHousehold(); loadNotifications()
+  }
+
+  async function declineHouseholdInvite(household_id) {
+    await fetch(`/api/households?user_id=${user.id}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'decline_invite', household_id })
+    })
+    showToast('Invitation declined'); loadNotifications()
   }
 
   // ── Categories ────────────────────────────────────────────────────────────
@@ -189,11 +399,7 @@ export default function PantryPal() {
     showToast('Category deleted')
   }
 
-  function toggleCat(catName) {
-    setCollapsedCats(c => ({ ...c, [catName]: !c[catName] }))
-  }
-
-  // ── Drag & drop ───────────────────────────────────────────────────────────
+  function toggleCat(catName) { setCollapsedCats(c => ({ ...c, [catName]: !c[catName] })) }
   function onDragStart(item) { setDragItem(item) }
   function onDragOver(e, catName) { e.preventDefault(); setDragOverCat(catName) }
   async function onDrop(catName) {
@@ -203,8 +409,7 @@ export default function PantryPal() {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: dragItem.id, category: catName })
     })
-    setDragItem(null); setDragOverCat(null)
-    showToast(`Moved to ${catName}`)
+    setDragItem(null); setDragOverCat(null); showToast(`Moved to ${catName}`)
   }
 
   // ── Pantry ────────────────────────────────────────────────────────────────
@@ -212,11 +417,11 @@ export default function PantryPal() {
     if (!user) return
     setPantryLoading(true)
     try {
-      const res = await fetch(`/api/pantry?user_id=${user.id}`)
+      const hid = pantryView === 'household' && household ? household.id : null
+      const res = await fetch(`/api/pantry?user_id=${user.id}${hid ? `&household_id=${hid}` : ''}`)
       const data = await res.json()
       const items = data.items || []
       setPantry(items)
-      // Collapse all categories by default on load
       const cats = ['Uncategorized', ...new Set(items.map(i => i.category || 'Uncategorized'))]
       const collapsed = {}
       cats.forEach(c => { collapsed[c] = true })
@@ -228,7 +433,8 @@ export default function PantryPal() {
   async function addManual() {
     const name = manualName.trim()
     if (!name || !user) return
-    await fetch(`/api/pantry?user_id=${user.id}`, {
+    const hid = activeHouseholdId
+    await fetch(`/api/pantry?user_id=${user.id}${hid ? `&household_id=${hid}` : ''}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, status: manualStatus, qty: manualCount ? `x${manualCount}` : '', last_purchased: manualDate || null, category: manualCategory })
     })
@@ -254,7 +460,8 @@ export default function PantryPal() {
 
   async function clearPantry() {
     setPantry([])
-    await fetch(`/api/pantry?user_id=${user.id}`, {
+    const hid = activeHouseholdId
+    await fetch(`/api/pantry?user_id=${user.id}${hid ? `&household_id=${hid}` : ''}`, {
       method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clearAll: true })
     })
     showToast('Pantry cleared')
@@ -262,7 +469,8 @@ export default function PantryPal() {
 
   async function clearCategory(catName) {
     setPantry(p => p.filter(i => (i.category || 'Uncategorized') !== catName))
-    await fetch(`/api/pantry?user_id=${user.id}`, {
+    const hid = activeHouseholdId
+    await fetch(`/api/pantry?user_id=${user.id}${hid ? `&household_id=${hid}` : ''}`, {
       method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clearCategory: catName })
     })
     showToast(`${catName} cleared`)
@@ -287,7 +495,7 @@ export default function PantryPal() {
       img.onload = () => {
         const canvas = document.createElement('canvas')
         const maxSize = 1200; let w = img.width, h = img.height
-        if (w > maxSize || h > maxSize) { if (w > h) { h = Math.round(h * maxSize / w); w = maxSize } else { w = Math.round(w * maxSize / h); h = maxSize } }
+        if (w > maxSize || h > maxSize) { if (w > h) { h = Math.round(h*maxSize/w); w = maxSize } else { w = Math.round(w*maxSize/h); h = maxSize } }
         canvas.width = w; canvas.height = h
         canvas.getContext('2d').drawImage(img, 0, 0, w, h)
         const compressed = canvas.toDataURL('image/jpeg', 0.7)
@@ -314,7 +522,7 @@ export default function PantryPal() {
       setScanResult({ receipt: data.receipt, items: data.items })
       showToast(`${data.items.length} items added to pantry`)
       loadPantry(); loadReceipts()
-    } catch (e) { setScanResult({ error: e.message || 'Could not parse receipt. Please try again.' }) }
+    } catch (e) { setScanResult({ error: e.message || 'Could not parse receipt.' }) }
     setScanLoading(false)
   }
 
@@ -322,7 +530,7 @@ export default function PantryPal() {
   async function loadReceipts() {
     if (!user) return
     setReceiptsLoading(true)
-    try { const res = await fetch(`/api/receipts?user_id=${user.id}`); const data = await res.json(); setReceipts(data.receipts || []) } catch (e) { console.error(e) }
+    try { const res = await fetch(`/api/receipts?user_id=${user.id}`); const data = await res.json(); setReceipts(data.receipts || []) } catch(e){}
     setReceiptsLoading(false)
   }
   async function deleteReceipt(id) {
@@ -341,7 +549,7 @@ export default function PantryPal() {
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       setRecipes(data.recipes || [])
-    } catch (e) { showToast('Could not load recipes. Try again.') }
+    } catch(e) { showToast('Could not load recipes. Try again.') }
     setRecipeLoading(false)
   }
 
@@ -370,7 +578,7 @@ export default function PantryPal() {
 
   async function addRecipeIngredientsToCart(recipe) {
     const needed = recipe.need || []
-    if (!needed.length) { showToast('No missing ingredients for this recipe!'); return }
+    if (!needed.length) { showToast('No missing ingredients!'); return }
     await fetch(`/api/cart?user_id=${user.id}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ items: needed.map(n => ({ name: n, qty: '', category: 'Other', source: 'recipe' })) })
@@ -382,10 +590,9 @@ export default function PantryPal() {
   async function loadCart() {
     if (!user) return
     setCartLoading(true)
-    try { const res = await fetch(`/api/cart?user_id=${user.id}`); const data = await res.json(); setCart(data.items || []) } catch (e) { console.error(e) }
+    try { const res = await fetch(`/api/cart?user_id=${user.id}`); const data = await res.json(); setCart(data.items || []) } catch(e){}
     setCartLoading(false)
   }
-
   async function addToCart() {
     if (!cartItemName.trim() || !user) return
     await fetch(`/api/cart?user_id=${user.id}`, {
@@ -394,21 +601,18 @@ export default function PantryPal() {
     })
     setCartItemName(''); setCartItemQty(''); showToast(`Added: ${cartItemName}`); loadCart()
   }
-
   async function toggleCartItem(id, checked) {
     setCart(c => c.map(i => i.id === id ? { ...i, checked } : i))
     await fetch(`/api/cart?user_id=${user.id}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, checked })
     })
   }
-
   async function removeCartItem(id) {
     setCart(c => c.filter(i => i.id !== id))
     await fetch(`/api/cart?user_id=${user.id}`, {
       method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id })
     })
   }
-
   async function clearCheckedCart() {
     setCart(c => c.filter(i => !i.checked))
     await fetch(`/api/cart?user_id=${user.id}`, {
@@ -419,25 +623,20 @@ export default function PantryPal() {
 
   // ── Derived ───────────────────────────────────────────────────────────────
   const filtered = pantryFilter === 'all' ? pantry : pantry.filter(i => i.status === pantryFilter)
-  const stats = { total: pantry.length, fresh: pantry.filter(i => i.status === 'fresh').length, low: pantry.filter(i => i.status === 'low').length, out: pantry.filter(i => i.status === 'out').length }
+  const stats = { fresh: pantry.filter(i=>i.status==='fresh').length, low: pantry.filter(i=>i.status==='low').length, out: pantry.filter(i=>i.status==='out').length }
   const catNames = ['Uncategorized', ...categories.map(c => c.name)]
-  const groupedPantry = catNames.reduce((acc, cat) => {
-    acc[cat] = filtered.filter(i => (i.category || 'Uncategorized') === cat)
-    return acc
-  }, {})
-  const knownCats = new Set(catNames)
-  const orphans = filtered.filter(i => !knownCats.has(i.category || 'Uncategorized'))
-  if (orphans.length) groupedPantry['Uncategorized'] = [...(groupedPantry['Uncategorized'] || []), ...orphans]
+  const groupedPantry = catNames.reduce((acc, cat) => { acc[cat] = filtered.filter(i => (i.category||'Uncategorized')===cat); return acc }, {})
+  const orphans = filtered.filter(i => !new Set(catNames).has(i.category||'Uncategorized'))
+  if (orphans.length) groupedPantry['Uncategorized'] = [...(groupedPantry['Uncategorized']||[]), ...orphans]
   const savedIds = new Set(savedRecipes.map(r => r.title))
   const cartCheckedCount = cart.filter(i => i.checked).length
+  const acceptedFriends = [...(friendsData.sent||[]).filter(f=>f.status==='accepted'), ...(friendsData.received||[]).filter(f=>f.status==='accepted')]
+  const pendingReceived = (friendsData.received||[]).filter(f=>f.status==='pending')
 
-  // ── Render: splash ────────────────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────────────────────
   if (authLoading || showSplash) return <SplashScreen />
-
-  // ── Render: landing ───────────────────────────────────────────────────────
   if (!user) return <LandingPage onSignIn={signInWithGoogle} />
 
-  // ── Render: app ───────────────────────────────────────────────────────────
   return (
     <div className={styles.app}>
 
@@ -447,31 +646,226 @@ export default function PantryPal() {
           <img src="/logo.png" alt="PantryPal logo" className={styles.headerLogo} />
           <span className={styles.appTitle}>PantryPal</span>
         </button>
-
         <div className={styles.profileArea} data-profile>
-          <button className={styles.avatarBtn} onClick={() => setProfileOpen(o => !o)}>
+          <button className={styles.avatarBtn} onClick={() => { setProfileOpen(o => !o); if (profileOpen) setProfilePanel(null) }}>
+            {unreadCount > 0 && <span className={styles.notifDot}>{unreadCount > 9 ? '9+' : unreadCount}</span>}
             {user.user_metadata?.avatar_url
               ? <img src={user.user_metadata.avatar_url} alt="Profile" className={styles.avatarImg} />
               : <div className={styles.avatarFallback}>👤</div>}
           </button>
+
           {profileOpen && (
             <div className={styles.profileMenu}>
-              <div className={styles.profileMenuName}>
-                {user.user_metadata?.full_name || user.email}
-              </div>
-              <div className={styles.profileMenuDivider} />
-              <button className={styles.profileMenuItem} onClick={() => { setTab('pantry'); setProfileOpen(false) }}>
-                📋 My Pantry
-              </button>
-              <button className={styles.profileMenuItemDanger} onClick={() => { signOut(); setProfileOpen(false) }}>
-                🚪 Sign out
-              </button>
+              {!profilePanel && (
+                <>
+                  <div className={styles.profileMenuName}>{profile?.display_name || user.email}</div>
+                  {profile?.username && <div className={styles.profileMenuUsername}>@{profile.username}</div>}
+                  <div className={styles.profileMenuDivider} />
+                  <button className={styles.profileMenuItem} onClick={() => setProfilePanel('edit')}>✏️ Edit profile</button>
+                  <button className={styles.profileMenuItem} onClick={() => { setProfilePanel('friends'); loadFriends() }}>
+                    👥 Friends {pendingReceived.length > 0 && <span className={styles.menuBadge}>{pendingReceived.length}</span>}
+                  </button>
+                  <button className={styles.profileMenuItem} onClick={() => { setProfilePanel('household'); loadHousehold() }}>🏠 My Household</button>
+                  <button className={styles.profileMenuItem} onClick={() => { setProfilePanel('notifications'); loadNotifications() }}>
+                    🔔 Notifications {unreadCount > 0 && <span className={styles.menuBadge}>{unreadCount}</span>}
+                  </button>
+                  <button className={styles.profileMenuItem} onClick={() => { setProfilePanel('shares'); loadShares() }}>📬 Shared with me</button>
+                  <div className={styles.profileMenuDivider} />
+                  <Link href="/privacy" className={styles.profileMenuItem} style={{textDecoration:'none',display:'block'}}>🔒 Privacy Policy</Link>
+                  <button className={styles.profileMenuItemDanger} onClick={() => { signOut(); setProfileOpen(false) }}>🚪 Sign out</button>
+                </>
+              )}
+
+              {/* Edit Profile Panel */}
+              {profilePanel === 'edit' && (
+                <div className={styles.panelInner}>
+                  <button className={styles.panelBack} onClick={() => setProfilePanel(null)}>← Back</button>
+                  <div className={styles.panelTitle}>Edit Profile</div>
+                  <label className={styles.panelLabel}>Display name</label>
+                  <input className={styles.panelInput} value={editDisplayName} onChange={e => setEditDisplayName(e.target.value)} placeholder="Your name" />
+                  <label className={styles.panelLabel}>Username</label>
+                  <input className={styles.panelInput} value={editUsername} onChange={e => setEditUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g,''))} placeholder="username (letters, numbers, _)" />
+                  <button className={styles.panelBtn} onClick={saveProfile} disabled={profileSaving}>{profileSaving ? 'Saving…' : 'Save profile'}</button>
+                </div>
+              )}
+
+              {/* Friends Panel */}
+              {profilePanel === 'friends' && (
+                <div className={styles.panelInner}>
+                  <button className={styles.panelBack} onClick={() => setProfilePanel(null)}>← Back</button>
+                  <div className={styles.panelTitle}>Friends</div>
+                  <div className={styles.searchTypeRow}>
+                    <button className={friendSearchType==='username'?`${styles.searchTypeBtn} ${styles.searchTypeBtnOn}`:styles.searchTypeBtn} onClick={()=>setFriendSearchType('username')}>Username</button>
+                    <button className={friendSearchType==='email'?`${styles.searchTypeBtn} ${styles.searchTypeBtnOn}`:styles.searchTypeBtn} onClick={()=>setFriendSearchType('email')}>Email</button>
+                  </div>
+                  <div style={{display:'flex',gap:6,marginBottom:8}}>
+                    <input className={styles.panelInput} style={{flex:1,marginBottom:0}} value={friendSearch} onChange={e=>setFriendSearch(e.target.value)} placeholder={`Search by ${friendSearchType}…`} onKeyDown={e=>e.key==='Enter'&&searchFriends()} />
+                    <button className={styles.panelBtn} style={{marginTop:0,padding:'7px 12px'}} onClick={searchFriends}>Search</button>
+                  </div>
+                  {friendResults.map(u => (
+                    <div key={u.id} className={styles.friendRow}>
+                      <div className={styles.friendInfo}>
+                        <div className={styles.friendName}>{u.display_name || u.username}</div>
+                        {u.username && <div className={styles.friendUser}>@{u.username}</div>}
+                      </div>
+                      <button className={styles.panelBtnSm} onClick={() => sendFriendRequest(u.id)}>+ Add</button>
+                    </div>
+                  ))}
+                  {pendingReceived.length > 0 && (
+                    <>
+                      <div className={styles.panelSection}>Pending requests</div>
+                      {pendingReceived.map(f => (
+                        <div key={f.id} className={styles.friendRow}>
+                          <div className={styles.friendInfo}>
+                            <div className={styles.friendName}>{f.requester?.display_name || f.requester?.username}</div>
+                          </div>
+                          <div style={{display:'flex',gap:4}}>
+                            <button className={styles.panelBtnSm} onClick={() => respondToFriendRequest(f.requester_id, 'accept')}>✓</button>
+                            <button className={styles.panelBtnSmDanger} onClick={() => respondToFriendRequest(f.requester_id, 'decline')}>✕</button>
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                  {acceptedFriends.length > 0 && (
+                    <>
+                      <div className={styles.panelSection}>Your friends</div>
+                      {acceptedFriends.map(f => {
+                        const friend = f.addressee || f.requester
+                        const friendId = f.addressee_id || f.requester_id
+                        return (
+                          <div key={f.id} className={styles.friendRow}>
+                            <div className={styles.friendInfo}>
+                              <div className={styles.friendName}>{friend?.display_name || friend?.username}</div>
+                              {friend?.username && <div className={styles.friendUser}>@{friend.username}</div>}
+                            </div>
+                            <button className={styles.panelBtnSmDanger} onClick={() => confirm(`Remove ${friend?.display_name} as friend?`, () => removeFriend(friendId))}>Remove</button>
+                          </div>
+                        )
+                      })}
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Household Panel */}
+              {profilePanel === 'household' && (
+                <div className={styles.panelInner}>
+                  <button className={styles.panelBack} onClick={() => setProfilePanel(null)}>← Back</button>
+                  <div className={styles.panelTitle}>My Household</div>
+                  {!household ? (
+                    <>
+                      <div className={styles.panelNote}>Create a household to share your pantry with family or roommates.</div>
+                      <label className={styles.panelLabel}>Household name</label>
+                      <input className={styles.panelInput} value={householdName} onChange={e => setHouseholdName(e.target.value)} placeholder="e.g. James Family" onKeyDown={e => e.key==='Enter'&&createHousehold()} />
+                      <button className={styles.panelBtn} onClick={createHousehold}>Create household</button>
+                    </>
+                  ) : (
+                    <>
+                      <div className={styles.householdName}>🏠 {household.name}</div>
+                      <div className={styles.panelSection}>Members ({householdMembers.length})</div>
+                      {householdMembers.map(m => (
+                        <div key={m.id} className={styles.friendRow}>
+                          <div className={styles.friendName}>{m.profile?.display_name || m.profile?.username} {m.role==='owner' && <span className={styles.ownerBadge}>Owner</span>}</div>
+                          {household.owner_id === user.id && m.user_id !== user.id && (
+                            <button className={styles.panelBtnSmDanger} onClick={() => confirm('Remove this member?', () => { fetch(`/api/households?user_id=${user.id}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'remove_member', household_id: household.id, member_id: m.user_id }) }); loadHousehold() })}>Remove</button>
+                          )}
+                        </div>
+                      ))}
+                      <div className={styles.panelSection}>Invite someone</div>
+                      <div style={{display:'flex',gap:6,marginBottom:8}}>
+                        <input className={styles.panelInput} style={{flex:1,marginBottom:0}} value={householdInviteSearch} onChange={e=>setHouseholdInviteSearch(e.target.value)} placeholder="Search by username…" onKeyDown={e=>e.key==='Enter'&&searchHouseholdInvite()} />
+                        <button className={styles.panelBtn} style={{marginTop:0,padding:'7px 12px'}} onClick={searchHouseholdInvite}>Find</button>
+                      </div>
+                      {householdInviteResults.map(u => (
+                        <div key={u.id} className={styles.friendRow}>
+                          <div className={styles.friendName}>{u.display_name || u.username}</div>
+                          <button className={styles.panelBtnSm} onClick={() => inviteToHousehold(u.id)}>Invite</button>
+                        </div>
+                      ))}
+                      <button className={styles.panelBtnDanger} onClick={() => confirm('Leave this household?', leaveHousehold)}>Leave household</button>
+                      {household.owner_id === user.id && (
+                        <button className={styles.panelBtnDanger} style={{marginTop:4}} onClick={() => confirm('Delete this household? This cannot be undone.', () => { fetch(`/api/households?user_id=${user.id}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'delete', household_id: household.id }) }); setHousehold(null); setHouseholdMembers([]); setPantryView('personal'); setProfilePanel(null) })}>Delete household</button>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Notifications Panel */}
+              {profilePanel === 'notifications' && (
+                <div className={styles.panelInner}>
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
+                    <button className={styles.panelBack} onClick={() => setProfilePanel(null)}>← Back</button>
+                    {unreadCount > 0 && <button className={styles.panelBtnSm} onClick={markAllRead}>Mark all read</button>}
+                  </div>
+                  <div className={styles.panelTitle}>Notifications</div>
+                  {notifications.length === 0 ? <div className={styles.panelNote}>No notifications yet.</div> : notifications.map(n => (
+                    <div key={n.id} className={`${styles.notifRow} ${!n.read?styles.notifUnread:''}`}>
+                      <div>
+                        <div className={styles.notifTitle}>{n.title}</div>
+                        <div className={styles.notifBody}>{n.body}</div>
+                      </div>
+                      {n.type === 'friend_request' && (
+                        <div style={{display:'flex',gap:4,flexShrink:0}}>
+                          <button className={styles.panelBtnSm} onClick={() => { respondToFriendRequest(n.data?.from_user, 'accept'); loadNotifications() }}>✓</button>
+                          <button className={styles.panelBtnSmDanger} onClick={() => { respondToFriendRequest(n.data?.from_user, 'decline'); loadNotifications() }}>✕</button>
+                        </div>
+                      )}
+                      {n.type === 'household_invite' && (
+                        <div style={{display:'flex',gap:4,flexShrink:0}}>
+                          <button className={styles.panelBtnSm} onClick={() => { acceptHouseholdInvite(n.data?.household_id); loadNotifications() }}>Join</button>
+                          <button className={styles.panelBtnSmDanger} onClick={() => { declineHouseholdInvite(n.data?.household_id); loadNotifications() }}>✕</button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Shared with me Panel */}
+              {profilePanel === 'shares' && (
+                <div className={styles.panelInner}>
+                  <button className={styles.panelBack} onClick={() => setProfilePanel(null)}>← Back</button>
+                  <div className={styles.panelTitle}>Shared with me</div>
+                  {shares.length === 0 ? <div className={styles.panelNote}>Nothing shared with you yet.</div> : shares.map(s => (
+                    <div key={s.id} className={styles.shareRow}>
+                      <div className={styles.shareIcon}>{s.share_type === 'recipe' ? '🍳' : '🛒'}</div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div className={styles.shareTitle}>{s.title}</div>
+                        <div className={styles.shareFrom}>from {s.sender?.display_name || s.sender?.username}</div>
+                      </div>
+                      {s.share_type === 'recipe' && (
+                        <button className={styles.panelBtnSm} onClick={() => { saveRecipe(s.content); showToast('Recipe saved!') }}>Save</button>
+                      )}
+                      {s.share_type === 'cart' && (
+                        <button className={styles.panelBtnSm} onClick={() => {
+                          fetch(`/api/cart?user_id=${user.id}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ items: s.content?.items || [] }) })
+                          loadCart(); showToast('Cart items added!')
+                        }}>Add to cart</button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
       </header>
 
       <div className={styles.content}>
+
+      {/* HOUSEHOLD / PERSONAL TAB ROW */}
+      {household && tab === 'pantry' && (
+        <div className={styles.viewTabs}>
+          <button className={pantryView==='household'?`${styles.viewTab} ${styles.viewTabOn}`:styles.viewTab} onClick={() => setPantryView('household')}>
+            🏠 {household.name}
+          </button>
+          <button className={pantryView==='personal'?`${styles.viewTab} ${styles.viewTabOn}`:styles.viewTab} onClick={() => setPantryView('personal')}>
+            👤 My Personal
+          </button>
+        </div>
+      )}
 
       {/* ══ PANTRY ══ */}
       {tab === 'pantry' && (
@@ -510,7 +904,7 @@ export default function PantryPal() {
               </select>
             </div>
             <div className={styles.manualRow2}>
-              <select value={manualCategory} onChange={e=>setManualCategory(e.target.value)} style={{flex:1,padding:'7px 10px',border:'1px solid #e0e0e0',borderRadius:8,fontSize:13,fontFamily:'inherit'}}>
+              <select value={manualCategory} onChange={e=>setManualCategory(e.target.value)} style={{flex:1,padding:'7px 10px',border:'1px solid rgba(255,255,255,0.4)',borderRadius:8,fontSize:13,fontFamily:'inherit',background:'rgba(255,255,255,0.92)'}}>
                 {categories.map(c=><option key={c.id} value={c.name}>{c.emoji} {c.name}</option>)}
                 <option value="Other">📦 Other</option>
               </select>
@@ -533,9 +927,7 @@ export default function PantryPal() {
             )}
           </div>
 
-          {pantryLoading ? (
-            <div className={styles.loadRow}><Spinner /> Loading…</div>
-          ) : (
+          {pantryLoading ? <div className={styles.loadRow}><Spinner /> Loading…</div> : (
             Object.entries(groupedPantry).map(([catName, items]) => {
               const catObj = categories.find(c=>c.name===catName)
               const emoji = catObj?.emoji || '📦'
@@ -546,28 +938,21 @@ export default function PantryPal() {
                     <span className={styles.catName}>{emoji} {catName}</span>
                     <div className={styles.catRight} onClick={e=>e.stopPropagation()}>
                       <span className={styles.catItemCount}>Items: {items.length}</span>
-                      {items.length>0&&(
-                        <button className={styles.catClearBtn} onClick={()=>confirm(`Clear all ${items.length} item${items.length!==1?'s':''} in "${catName}"?`,()=>clearCategory(catName))}>Clear</button>
-                      )}
-                      {catName!=='Uncategorized'&&catObj&&(
-                        <button className={styles.catDeleteBtn} onClick={()=>deleteCategory(catObj.id,catName)} title="Delete category">🗑</button>
-                      )}
+                      {items.length>0&&<button className={styles.catClearBtn} onClick={()=>confirm(`Clear all ${items.length} item${items.length!==1?'s':''} in "${catName}"?`,()=>clearCategory(catName))}>Clear</button>}
+                      {catName!=='Uncategorized'&&catObj&&<button className={styles.catDeleteBtn} onClick={()=>deleteCategory(catObj.id,catName)}>🗑</button>}
                       <span className={`${styles.categoryChevron} ${!collapsedCats[catName]?styles.categoryChevronOpen:''}`}>▼</span>
                     </div>
                   </div>
                   {!collapsedCats[catName] && (
-                    items.length===0 ? (
-                      <div className={styles.emptyCategory}>Drag items here</div>
-                    ) : (
+                    items.length===0 ? <div className={styles.emptyCategory}>Drag items here</div> : (
                       <div className={styles.itemsGrid}>
                         {items.map(item=>(
-                          <div key={item.id} className={styles.itemCard}
-                            draggable onDragStart={()=>onDragStart(item)}
-                            style={{borderLeftColor: item.status==='low'?'#f59e0b':item.status==='out'?'#ef4444':'#3cb87a'}}>
+                          <div key={item.id} className={styles.itemCard} draggable onDragStart={()=>onDragStart(item)}
+                            style={{borderLeftColor:item.status==='low'?'#f59e0b':item.status==='out'?'#ef4444':'#3cb87a'}}>
                             {editingItem===item.id ? (
                               <div style={{display:'flex',flexDirection:'column',gap:4,flex:1}}>
                                 <input defaultValue={item.name} onBlur={e=>updateItem(item.id,{name:e.target.value})} style={{fontSize:13,fontWeight:600,padding:'3px 6px',border:'1px solid #3cb87a',borderRadius:5,width:'100%'}} autoFocus />
-                                <input defaultValue={item.qty} placeholder="Qty (e.g. x2, 500ml)" onBlur={e=>updateItem(item.id,{qty:e.target.value})} style={{fontSize:12,padding:'3px 6px',border:'1px solid #e0e0e0',borderRadius:5,width:'100%'}} />
+                                <input defaultValue={item.qty} placeholder="Qty" onBlur={e=>updateItem(item.id,{qty:e.target.value})} style={{fontSize:12,padding:'3px 6px',border:'1px solid #e0e0e0',borderRadius:5,width:'100%'}} />
                                 <button onClick={()=>setEditingItem(null)} style={{fontSize:11,padding:'3px 0',background:'#3cb87a',color:'#fff',border:'none',borderRadius:5,cursor:'pointer'}}>Done</button>
                               </div>
                             ) : (
@@ -581,21 +966,18 @@ export default function PantryPal() {
                                 </div>
                                 <div className={styles.itemRight}>
                                   <select className={`${styles.statusSel} ${styles['s_'+item.status]}`} value={item.status} onChange={e=>updateItem(item.id,{status:e.target.value})}>
-                                    <option value="fresh">✓ Stock</option>
-                                    <option value="low">↓ Low</option>
-                                    <option value="out">✕ Out</option>
+                                    <option value="fresh">✓ Stock</option><option value="low">↓ Low</option><option value="out">✕ Out</option>
                                   </select>
-                                  <button className={styles.iconBtn} onClick={()=>setMovingItem(movingItem===item.id?null:item.id)} title="Move">📂</button>
-                                  <button className={styles.iconBtn} onClick={()=>setEditingItem(item.id)} title="Edit">✏️</button>
+                                  <button className={styles.iconBtn} onClick={()=>setMovingItem(movingItem===item.id?null:item.id)}>📂</button>
+                                  <button className={styles.iconBtn} onClick={()=>setEditingItem(item.id)}>✏️</button>
                                   <button className={styles.iconBtn} onClick={()=>removeItem(item.id,item.name)}>✕</button>
                                 </div>
                                 {movingItem===item.id&&(
                                   <div className={styles.moveCatBox}>
                                     <div className={styles.moveCatLabel}>Move to:</div>
-                                    <button className={styles.moveCatBtn} onClick={()=>{updateItem(item.id,{category:'Uncategorized'});setMovingItem(null);showToast('Moved to Uncategorized')}}>📦 Uncategorized</button>
+                                    <button className={styles.moveCatBtn} onClick={()=>{updateItem(item.id,{category:'Uncategorized'});setMovingItem(null)}}>📦 Uncategorized</button>
                                     {categories.map(c=>(
-                                      <button key={c.id} className={styles.moveCatBtn}
-                                        onClick={()=>{updateItem(item.id,{category:c.name});setMovingItem(null);showToast(`Moved to ${c.name}`)}}>
+                                      <button key={c.id} className={styles.moveCatBtn} onClick={()=>{updateItem(item.id,{category:c.name});setMovingItem(null);showToast(`Moved to ${c.name}`)}}>
                                         {c.emoji} {c.name}
                                       </button>
                                     ))}
@@ -632,7 +1014,7 @@ export default function PantryPal() {
             </div>
           )}
           {previewSrc&&!scanLoading&&<button className={styles.scanBtn} onClick={()=>doScan({imageBase64:imgBase64,imageMime:imgMime})}>✨ Read receipt with AI</button>}
-          {scanLoading&&<div className={styles.loadRow}><Spinner /> Scanning receipt… this may take a few seconds</div>}
+          {scanLoading&&<div className={styles.loadRow}><Spinner /> Scanning receipt…</div>}
           <div className={styles.divider}>or paste receipt text</div>
           <textarea className={styles.textarea} value={receiptText} onChange={e=>setReceiptText(e.target.value)} rows={5} placeholder="Paste receipt text, grocery list, or type items and prices…" />
           {!scanLoading&&<button className={styles.scanBtn} style={{marginTop:8,opacity:!receiptText.trim()?0.5:1}} onClick={()=>{if(receiptText.trim())doScan({text:receiptText})}}>✓ Parse text with AI</button>}
@@ -705,11 +1087,11 @@ export default function PantryPal() {
               ❤️ Saved {savedRecipes.length>0&&`(${savedRecipes.length})`}
             </button>
           </div>
-          {recipeLoading&&<div className={styles.loadRow}><Spinner /> Finding the best recipe matches…</div>}
+          {recipeLoading&&<div className={styles.loadRow}><Spinner /> Finding matches…</div>}
           {showSaved&&(
             <div style={{marginBottom:16}}>
               <div className={styles.sectionLabel}>Saved recipes</div>
-              {savedRecipes.length===0?<div className={styles.empty}>No saved recipes yet — heart one below!</div>
+              {savedRecipes.length===0?<div className={styles.empty}>No saved recipes yet!</div>
               :savedRecipes.map(r=>(
                 <div key={r.id} className={styles.recipeCard}>
                   <div className={styles.recipeTop}>
@@ -747,11 +1129,25 @@ export default function PantryPal() {
                   {r.have?.map(x=><span key={x} className={`${styles.tag} ${styles.tagHave}`}>✓ {x}</span>)}
                   {r.need?.map(x=><span key={x} className={`${styles.tag} ${styles.tagNeed}`}>+ {x}</span>)}
                 </div>
-                <div style={{display:'flex',gap:8,marginTop:8,alignItems:'center'}}>
+                <div style={{display:'flex',gap:8,marginTop:8,alignItems:'center',flexWrap:'wrap'}}>
                   <button className={styles.stepsToggle} onClick={()=>setOpenSteps(s=>({...s,[i]:!s[i]}))}>
                     {openSteps[i]?'▲ Hide steps':'▼ Show steps'}
                   </button>
                   {r.need?.length>0&&<button className={styles.chip} onClick={()=>addRecipeIngredientsToCart(r)}>🛒 Add missing to cart</button>}
+                  {acceptedFriends.length>0&&(
+                    <div style={{position:'relative'}} data-actions>
+                      <button className={styles.chip} onClick={()=>setShowActions(a=>a===`share-${i}`?false:`share-${i}`)}>📤 Share</button>
+                      {showActions===`share-${i}`&&(
+                        <div className={styles.actionsDropdown}>
+                          {acceptedFriends.map(f=>{
+                            const friend = f.addressee||f.requester
+                            const fid = f.addressee_id||f.requester_id
+                            return <button key={fid} className={styles.actionItem} onClick={()=>{shareRecipeWithFriend(r,fid);setShowActions(false)}}>{friend?.display_name||friend?.username}</button>
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
                 {openSteps[i]&&(
                   <div className={styles.stepsBody}>
@@ -767,9 +1163,25 @@ export default function PantryPal() {
       {/* ══ CART ══ */}
       {tab==='cart'&&(
         <section>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12,flexWrap:'wrap',gap:6}}>
             <div className={styles.sectionLabel} style={{margin:0}}>Shopping cart — {cart.length} item{cart.length!==1?'s':''}</div>
-            {cartCheckedCount>0&&<button className={styles.chip} onClick={clearCheckedCart}>🗑 Remove checked ({cartCheckedCount})</button>}
+            <div style={{display:'flex',gap:6}}>
+              {cartCheckedCount>0&&<button className={styles.chip} onClick={clearCheckedCart}>🗑 Remove checked ({cartCheckedCount})</button>}
+              {acceptedFriends.length>0&&(
+                <div style={{position:'relative'}} data-actions>
+                  <button className={styles.chip} onClick={()=>setShowActions(a=>a==='share-cart'?false:'share-cart')}>📤 Share cart</button>
+                  {showActions==='share-cart'&&(
+                    <div className={styles.actionsDropdown}>
+                      {acceptedFriends.map(f=>{
+                        const friend=f.addressee||f.requester
+                        const fid=f.addressee_id||f.requester_id
+                        return <button key={fid} className={styles.actionItem} onClick={()=>{shareCartWithFriend(fid);setShowActions(false)}}>{friend?.display_name||friend?.username}</button>
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
           <div style={{display:'flex',gap:8,marginBottom:16}}>
             <input type="text" value={cartItemName} placeholder="Add item…" onChange={e=>setCartItemName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&addToCart()} style={{flex:2,padding:'9px 11px',border:'1px solid #e0e0e0',borderRadius:8,fontSize:14,fontFamily:'inherit',minWidth:0}} />
@@ -806,20 +1218,18 @@ export default function PantryPal() {
 
       </div>
 
-      {toast&&<div className={styles.toast}>{toast}</div>}
-
       {/* BOTTOM NAV */}
       <nav className={styles.bottomNav}>
-        {[['pantry','📋','My Pantry'],['cart','🛒','Cart'],['scan','📷','Scan'],['history','🧾','History'],['recipes','🍳','Recipes']].map(([id, icon, label]) => (
-          <button key={id}
-            className={tab === id ? `${styles.bottomNavItem} ${styles.bottomNavActive}` : styles.bottomNavItem}
-            onClick={() => setTab(id)}>
+        {[['pantry','📋','My Pantry'],['cart','🛒','Cart'],['scan','📷','Scan'],['history','🧾','History'],['recipes','🍳','Recipes']].map(([id,icon,label])=>(
+          <button key={id} className={tab===id?`${styles.bottomNavItem} ${styles.bottomNavActive}`:styles.bottomNavItem} onClick={()=>setTab(id)}>
             <span className={styles.bottomNavIcon}>{icon}</span>
             <span className={styles.bottomNavLabel}>{label}</span>
-            {id === 'cart' && cart.length > 0 && <span className={styles.cartBadge}>{cart.length}</span>}
+            {id==='cart'&&cart.length>0&&<span className={styles.cartBadge}>{cart.length}</span>}
           </button>
         ))}
       </nav>
+
+      {toast&&<div className={styles.toast}>{toast}</div>}
 
       {confirmDialog&&(
         <div className={styles.confirmOverlay}>
