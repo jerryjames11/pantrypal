@@ -933,6 +933,7 @@ export default function PantryPal() {
             </div>
           )}
         </div>
+        </div>
       </header>
 
       <div className={styles.content}>
