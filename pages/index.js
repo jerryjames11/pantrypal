@@ -373,12 +373,11 @@ export default function PantryPal() {
     const data = await res.json()
     const cats = data.categories || []
     setCategories(cats)
-    // Collapse all categories including empty ones
-    setCollapsedCats(prev => {
-      const collapsed = { ...prev, 'Uncategorized': true }
-      cats.forEach(c => { collapsed[c.name] = true })
-      return collapsed
-    })
+    // Collapse ALL categories definitively — overwrite everything
+    const collapsed = { 'Uncategorized': true }
+    cats.forEach(c => { collapsed[c.name] = true })
+    setCollapsedCats(collapsed)
+    return cats
   }
 
   async function addCategory() {
@@ -410,7 +409,7 @@ export default function PantryPal() {
     showToast('Category deleted')
   }
 
-  function toggleCat(catName) { setCollapsedCats(c => ({ ...c, [catName]: !c[catName] })) }
+  function toggleCat(catName) { setCollapsedCats(c => ({ ...c, [catName]: c[catName] === false ? true : false })) }
   function onDragStart(item) { setDragItem(item) }
   function onDragOver(e, catName) { e.preventDefault(); setDragOverCat(catName) }
   async function onDrop(catName) {
@@ -951,10 +950,10 @@ export default function PantryPal() {
                       <span className={styles.catItemCount}>Items: {items.length}</span>
                       {items.length>0&&<button className={styles.catClearBtn} onClick={()=>confirm(`Clear all ${items.length} item${items.length!==1?'s':''} in "${catName}"?`,()=>clearCategory(catName))}>Clear</button>}
                       {catName!=='Uncategorized'&&catObj&&<button className={styles.catDeleteBtn} onClick={()=>deleteCategory(catObj.id,catName)}>🗑</button>}
-                      <span className={`${styles.categoryChevron} ${!collapsedCats[catName]?styles.categoryChevronOpen:''}`}>▼</span>
+                      <span className={`${styles.categoryChevron} ${collapsedCats[catName]===false?styles.categoryChevronOpen:''}`}>▼</span>
                     </div>
                   </div>
-                  {!collapsedCats[catName] && (
+                  {collapsedCats[catName] === false && (
                     items.length===0 ? <div className={styles.emptyCategory}>Drag items here</div> : (
                       <div className={styles.itemsGrid}>
                         {items.map(item=>(
