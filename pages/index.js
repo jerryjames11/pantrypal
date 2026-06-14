@@ -933,7 +933,6 @@ export default function PantryPal() {
             </div>
           )}
         </div>
-        </div>
       </header>
 
       <div className={styles.content}>
@@ -1086,6 +1085,7 @@ export default function PantryPal() {
       )}
 
       {/* ══ SCAN ══ */}
+
       {tab==='scan'&&(
         <section>
           <p className={styles.sectionLabel}>Upload a receipt photo</p>
