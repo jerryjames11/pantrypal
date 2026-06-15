@@ -189,10 +189,12 @@ export default function PantryPal() {
   useEffect(() => {
     if (!user || !tab) return
     const tourKey = `tour_${tab}`
-    if (!seenTours[tourKey] && TOURS[tab]) {
+    const hasSeenAnyTour = Object.values(seenTours).some(v => v === true)
+    // Only auto-start tour for brand new users who haven't seen any tour yet
+    if (!hasSeenAnyTour && !seenTours[tourKey] && TOURS[tab]) {
       setTimeout(() => startTour(tab), 800)
     }
-  }, [tab, user])
+  }, [tab, user, seenTours])
 
   useEffect(() => {
     function handleClick(e) {
@@ -269,9 +271,9 @@ export default function PantryPal() {
         if (data.profile[`tour_${t}`]) seen[`tour_${t}`] = true
       })
       setSeenTours(seen)
-      // Show help hint for returning users who've already seen the home tour
+      // Show help hint immediately for returning users who've already seen the home tour
       if (data.profile.tour_home) {
-        setTimeout(() => setShowHelpHint(true), 1500)
+        setShowHelpHint(true)
         setTimeout(() => setShowHelpHint(false), 5000)
       }
     }
@@ -1444,7 +1446,7 @@ export default function PantryPal() {
       <nav id="tour-bottom-nav" className={styles.bottomNav}>
         {[
           ['pantry', <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>, 'My Pantry'],
-          ['cart', <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>, 'Cart'],
+          ['cart', <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>, 'Shop'],
           ['scan', <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>, 'Scan'],
           ['history', <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>, 'History'],
           ['recipes', <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2h1a2 2 0 0 1 2 2v15a2 2 0 0 1-2 2H3"/><path d="M21 22h-1a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h1"/><path d="M8 7h8"/><path d="M8 11h8"/><path d="M8 15h5"/></svg>, 'Recipes'],

@@ -4,19 +4,21 @@ import styles from '../styles/Tour.module.css'
 export default function Tour({ steps, onComplete, onSkip }) {
   const [current, setCurrent] = useState(0)
   const [pos, setPos] = useState(null)
+  const [ready, setReady] = useState(false)
   const boxRef = useRef(null)
   const step = steps[current]
 
-  useEffect(() => { setCurrent(0) }, [steps])
+  useEffect(() => { setCurrent(0); setReady(false) }, [steps])
 
   useEffect(() => {
-    if (!step?.target) { setPos({ centered: true }); return }
+    if (!step?.target) { setPos({ centered: true }); setReady(true); return }
     const el = document.querySelector(step.target)
-    if (!el) { setPos({ centered: true }); return }
+    if (!el) { setPos({ centered: true }); setReady(true); return }
     el.scrollIntoView({ behavior: 'smooth', block: 'center' })
     setTimeout(() => {
       const rect = el.getBoundingClientRect()
       setPos({ rect, vw: window.innerWidth, vh: window.innerHeight })
+      setReady(true)
       el.setAttribute('data-tour-highlight', 'true')
       el.style.position = 'relative'
       el.style.zIndex = '1001'
@@ -67,7 +69,7 @@ export default function Tour({ steps, onComplete, onSkip }) {
           border: '2px solid #3cb87a'
         }} />
       )}
-      <div ref={boxRef} className={styles.tooltip} style={getStyle()}>
+      <div ref={boxRef} className={styles.tooltip} style={{...getStyle(), opacity: ready ? 1 : 0, transition: 'opacity 0.15s ease'}}>
         <div className={styles.stepCount}>{current + 1} / {steps.length}</div>
         <div className={styles.stepTitle}>{step?.title}</div>
         <div className={styles.stepBody}>{step?.body}</div>
