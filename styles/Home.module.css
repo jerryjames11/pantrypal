@@ -460,3 +460,10 @@
 .catGearDanger { color: #991b1b; }
 .catGearDanger:hover { background: #fef2f2 !important; }
 .catGearDivider { height: 1px; background: #e8d8c0; }
+
+/* ── Fix home box border consistency ─────────────────────────────────── */
+.pantryCard { border: 1.5px solid #4db88a !important; }
+.homeShortcutJade { border: 1.5px solid #4db88a !important; }
+.homeHHBox { border: 1.5px solid #4db88a !important; }
+.homeShareEmptyJade { border: 1.5px solid #4db88a !important; }
+.homeSharesScrollJade { border: 1.5px solid #4db88a !important; }

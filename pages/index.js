@@ -194,6 +194,7 @@ export default function PantryPal() {
     function handleClick(e) {
       if (!e.target.closest('[data-actions]')) setShowActions(false)
       if (!e.target.closest('[data-catmenu]')) setOpenCatMenu(null)
+      if (!e.target.closest('[data-catmenu]')) setOpenCatMenu(null)
       if (!e.target.closest('[data-profile]')) { setProfileOpen(false); }
     }
     document.addEventListener('mousedown', handleClick)
@@ -1062,7 +1063,6 @@ export default function PantryPal() {
               ))}
             </div>
             <div style={{display:'flex',gap:6,flexShrink:0}}>
-            <button id="tour-add-item" className={styles.chip} onClick={()=>setShowAddItem(a=>!a)} style={{fontSize:11}}>+ Add item</button>
             <div style={{position:'relative'}} data-actions>
               <button className={styles.chip} onClick={()=>setShowActions(a=>!a)} style={{fontSize:11}}>⚙ Actions</button>
               {showActions && (
@@ -1100,6 +1100,7 @@ export default function PantryPal() {
             <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
               <span className={styles.sectionLabel} style={{margin:0}}>Categories</span>
               <button className={styles.chip} onClick={()=>setShowAddCat(!showAddCat)}>+ Add category</button>
+              <button id="tour-add-item" className={styles.addItemBtnJade} onClick={()=>setShowAddItem(a=>!a)}>+ Add item</button>
             </div>
             {showAddCat && (
               <div style={{display:'flex',gap:6,marginBottom:8}}>
@@ -1121,8 +1122,20 @@ export default function PantryPal() {
                     <span className={styles.catName}>{emoji} {catName}</span>
                     <div className={styles.catRight} onClick={e=>e.stopPropagation()}>
                       <span className={styles.catItemCount}>Items: {items.length}</span>
-                      {items.length>0&&<button className={styles.catClearBtn} onClick={()=>confirm(`Clear all ${items.length} item${items.length!==1?'s':''} in "${catName}"?`,()=>clearCategory(catName))}>Clear</button>}
-                      {catName!=='Uncategorized'&&catObj&&<button className={styles.catDeleteBtn} onClick={()=>deleteCategory(catObj.id,catName)}>🗑</button>}
+                      <div style={{position:'relative'}} data-catmenu>
+                        <button className={`${styles.catGearBtn} ${openCatMenu===catName?styles.catGearActive:''}`}
+                          onClick={()=>setOpenCatMenu(openCatMenu===catName?null:catName)}>⚙</button>
+                        {openCatMenu===catName&&(
+                          <div className={styles.catGearDropdown}>
+                            {items.length>0&&<button className={styles.catGearItem} onClick={()=>{setOpenCatMenu(null);confirm(`Clear all ${items.length} item${items.length!==1?'s':''} in "${catName}"? This cannot be undone.`,()=>clearCategory(catName))}}>🗑 Clear all items</button>}
+                            {items.length>0&&<div className={styles.catGearDivider}/>}
+                            {catName!=='Uncategorized'&&catObj
+                              ?<button className={`${styles.catGearItem} ${styles.catGearDanger}`} onClick={()=>{setOpenCatMenu(null);confirm(`Delete "${catName}"? Items will move to Uncategorized.`,()=>deleteCategory(catObj.id,catName))}}>✕ Delete category</button>
+                              :<button className={styles.catGearItem} style={{color:'#aaa',cursor:'default',fontSize:11}}>Cannot delete Uncategorized</button>
+                            }
+                          </div>
+                        )}
+                      </div>
                       <span className={`${styles.categoryChevron} ${collapsedCats[catName]===false?styles.categoryChevronOpen:''}`}>▼</span>
                     </div>
                   </div>
