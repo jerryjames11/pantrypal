@@ -726,8 +726,8 @@ export default function PantryPal() {
       <header className={styles.header}>
         <button className={styles.brandBtn} onClick={() => setTab('pantry')}>
           <img src="/logo.png" alt="PantryPal logo" className={styles.headerLogo} />
-          <span className={styles.appTitle}>PantryPal</span>
         </button>
+        <img src="/pantrypal-text.png" alt="PantryPal" className={styles.headerText} />
         <div style={{display:'flex',alignItems:'center',gap:6}}>
         <button className={styles.coachMarkBtn} onClick={()=>startTour(tab)} title="Show page tour">?</button>
         <div className={styles.profileArea} data-profile>
