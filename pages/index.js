@@ -729,6 +729,9 @@ export default function PantryPal() {
       {/* HEADER */}
       <header id="tour-header" className={styles.header}>
         <button className={styles.brandBtnHome} onClick={() => setTab('home')}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
+            <path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/>
+          </svg>
           <img src="/basket.png" alt="PantryPal" className={styles.headerBasket} />
         </button>
         <button className={styles.titleBtnHome} onClick={() => setTab('home')}>
@@ -975,7 +978,9 @@ export default function PantryPal() {
               <div className={styles.homeStatBox}><div className={styles.homeStatVal}>{stats.out}</div><div className={styles.homeStatLbl}>Out of stock</div></div>
             </div>
             <div className={styles.homeLowBar}>
-              {stats.low > 0 || stats.out > 0 ? (
+              {pantry.length === 0 ? (
+                <div className={styles.homeLowNone}>📭 Pantry is empty — add items to get started</div>
+              ) : stats.low > 0 || stats.out > 0 ? (
                 <div>
                   <div className={styles.homeLowText}>⚠️ {stats.low + stats.out} item{stats.low+stats.out!==1?'s':''} need attention</div>
                   <div className={styles.homeLowSub}>{pantry.filter(i=>i.status==='low'||i.status==='out').slice(0,4).map(i=>i.name).join(' · ')}</div>
