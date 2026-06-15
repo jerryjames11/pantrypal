@@ -9,7 +9,7 @@
 .brandBtn:hover { background: rgba(255,255,255,0.15); }
 .logo { font-size: 28px; line-height: 1; }
 .appTitle { font-size: 17px; font-weight: 700; letter-spacing: -.3px; color: #fff; font-family: inherit; }
-.headerText { position: absolute; left: 50%; transform: translateX(-50%); height: 28px; object-fit: contain; filter: brightness(0) invert(1); pointer-events: none; }
+.headerText { position: absolute; left: 50%; transform: translateX(-50%); height: 28px; object-fit: contain; mix-blend-mode: screen; pointer-events: none; }
 .appSub { font-size: 12px; color: #7a5c2e; margin-top: 1px; }
 .userArea { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .profileArea { position: relative; flex-shrink: 0; }
@@ -29,7 +29,7 @@
 /* ── Stats ───────────────────────────────────────────────────────────── */
 .statsRow { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 1.25rem; }
 .statCard { background: #f5ede0; border-radius: 12px; padding: 14px 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); border: 1px solid #e8d8c0; }
-.statVal { font-size: 28px; font-weight: 800; color: #25905c; }
+.statVal { font-size: 28px; font-weight: 800; color: #2d8a6b; }
 .statLbl { font-size: 11px; color: #7a6a52; margin-top: 2px; font-weight: 500; }
 
 /* ── Filters ─────────────────────────────────────────────────────────── */
@@ -46,32 +46,32 @@
 
 /* ── Items grid ──────────────────────────────────────────────────────── */
 .itemsGrid { display: flex; flex-direction: column; gap: 5px; padding: 8px; }
-.itemCard { background: #fdf8f0; border: 1px solid #e8d8c0; border-left: 3px solid #3cb87a; border-radius: 0 8px 8px 0; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; position: relative; }
+.itemCard { background: #fdf8f0; border: 1px solid #e8d8c0; border-left: 3px solid #4db88a; border-radius: 0 8px 8px 0; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; position: relative; }
 .itemName { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .itemRow2 { display: flex; justify-content: space-between; align-items: center; }
 .itemQty { font-size: 11px; color: #aaa; }
 .itemPrice { font-size: 12px; color: #555; font-weight: 500; }
 .itemFoot { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
 .statusSel { border: none; font-size: 11px; font-weight: 600; cursor: pointer; padding: 3px 7px; border-radius: 20px; font-family: inherit; }
-.s_fresh { background: #d4f5e5; color: #1a7a52; }
+.s_fresh { background: #e8f5f0; color: #145040; }
 .s_low   { background: #fff3cd; color: #856404; }
 .s_out   { background: #fde8e8; color: #991b1b; }
 .iconBtn { background: none; border: none; cursor: pointer; color: #bbb; font-size: 13px; padding: 3px 5px; border-radius: 5px; font-family: inherit; }
 .iconBtn:hover { color: #333; background: #f5f5f5; }
 
 /* ── Scan button ─────────────────────────────────────────────────────── */
-.scanBtn { display: block; width: 100%; padding: 13px; background: #3cb87a; color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; text-align: center; }
-.scanBtn:hover:not(:disabled) { background: #25905c; }
+.scanBtn { display: block; width: 100%; padding: 13px; background: #4db88a; color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; text-align: center; }
+.scanBtn:hover:not(:disabled) { background: #2d8a6b; }
 .scanBtn:disabled { opacity: .55; cursor: not-allowed; }
 
 /* ── Upload buttons ──────────────────────────────────────────────────── */
 .uploadBtns { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
 .uploadLabel { flex: 1; min-width: 140px; padding: 13px; border: 1.5px dashed #ccc; border-radius: 10px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 600; font-family: inherit; background: #fff; }
-.uploadLabel:hover { border-color: #3cb87a; background: #e8faf3; }
+.uploadLabel:hover { border-color: #4db88a; background: #e8f5f0; }
 
 /* ── Upload ──────────────────────────────────────────────────────────── */
 .uploadZone { display: block; border: 2px dashed #ddd; border-radius: 14px; padding: 2.5rem 1rem; text-align: center; cursor: pointer; margin-bottom: 12px; transition: all .15s; }
-.uploadZone:hover { border-color: #3cb87a; background: #e8faf3; }
+.uploadZone:hover { border-color: #4db88a; background: #e8f5f0; }
 .uploadIcon { font-size: 40px; display: block; margin-bottom: 8px; }
 .uploadTitle { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
 .uploadSub { font-size: 13px; color: #888; }
@@ -82,24 +82,24 @@
 .divider { display: flex; align-items: center; gap: 10px; margin: 18px 0; color: #bbb; font-size: 12px; }
 .divider::before,.divider::after { content:''; flex:1; height:1px; background:#eee; }
 .textarea { width: 100%; padding: 10px 12px; border: 1px solid #e0e0e0; border-radius: 9px; font-size: 14px; font-family: inherit; resize: vertical; }
-.textarea:focus { outline: none; border-color: #3cb87a; }
+.textarea:focus { outline: none; border-color: #4db88a; }
 
 /* ── Buttons ─────────────────────────────────────────────────────────── */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 11px 16px; border: 1px solid #e0e0e0; border-radius: 10px; background: #fff; font-size: 14px; font-family: inherit; cursor: pointer; }
-.btnPrimary { background: #3cb87a; border-color: #3cb87a; color: #fff; font-weight: 600; }
-.btnPrimary:hover:not(:disabled) { background: #25905c; }
+.btnPrimary { background: #4db88a; border-color: #4db88a; color: #fff; font-weight: 600; }
+.btnPrimary:hover:not(:disabled) { background: #2d8a6b; }
 .btnPrimary:disabled { opacity: .55; cursor: not-allowed; }
 .btnWide { width: 100%; }
 
 /* ── Loading ─────────────────────────────────────────────────────────── */
 .loadRow { display: flex; align-items: center; gap: 8px; color: #888; font-size: 14px; padding: 1rem 0; }
-.spinner { display: inline-block; width: 18px; height: 18px; border: 2.5px solid #ddd; border-top-color: #3cb87a; border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
+.spinner { display: inline-block; width: 18px; height: 18px; border: 2.5px solid #ddd; border-top-color: #4db88a; border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
 .spinnerSm { display: inline-block; width: 13px; height: 13px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── Scan result ─────────────────────────────────────────────────────── */
 .scanSuccess { background: #f5ede0; border: 1px solid #e8d8c0; border-radius: 10px; padding: 12px 14px; margin-top: 12px; }
-.scanSuccessHead { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 600; color: #1a7a52; margin-bottom: 10px; }
+.scanSuccessHead { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 600; color: #145040; margin-bottom: 10px; }
 .storeName { font-weight: 500; color: #555; font-size: 12px; }
 .scanItemList { display: flex; flex-direction: column; gap: 2px; max-height: 280px; overflow-y: auto; }
 .scanItem { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #dcfce7; font-size: 13px; }
@@ -111,7 +111,7 @@
 
 /* ── Price delta ─────────────────────────────────────────────────────── */
 .priceUp   { font-size: 11px; font-weight: 700; color: #b91c1c; background: #fef2f2; padding: 2px 6px; border-radius: 20px; white-space: nowrap; }
-.priceDown { font-size: 11px; font-weight: 700; color: #1a7a52; background: #e8faf3; padding: 2px 6px; border-radius: 20px; white-space: nowrap; }
+.priceDown { font-size: 11px; font-weight: 700; color: #145040; background: #e8f5f0; padding: 2px 6px; border-radius: 20px; white-space: nowrap; }
 
 /* ── Receipt history ─────────────────────────────────────────────────── */
 .receiptCard { background: #fdf8f0; border: 1px solid #e8d8c0; border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
@@ -138,11 +138,11 @@
 .recipeTop { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
 .recipeName { font-size: 15px; font-weight: 700; }
 .recipeTime { font-size: 12px; color: #888; margin-top: 2px; }
-.matchBadge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; background: #d4f5e5; color: #1a7a52; flex-shrink: 0; }
+.matchBadge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; background: #e8f5f0; color: #145040; flex-shrink: 0; }
 .recipeDesc { font-size: 13px; color: #666; line-height: 1.55; margin-bottom: 10px; }
 .tags { display: flex; flex-wrap: wrap; gap: 4px; }
 .tag { font-size: 11px; padding: 2px 8px; border-radius: 20px; }
-.tagHave { background: #d4f5e5; color: #1a7a52; }
+.tagHave { background: #e8f5f0; color: #145040; }
 .tagNeed { background: #fde8e8; color: #991b1b; }
 .stepsToggle { font-size: 12px; color: #888; cursor: pointer; background: none; border: none; padding: 0; margin-top: 8px; font-family: inherit; }
 .stepsToggle:hover { color: #111; }
@@ -154,7 +154,7 @@
 .empty { text-align: center; padding: 3rem 1rem; color: #bbb; font-size: 14px; }
 
 /* ── Toast ───────────────────────────────────────────────────────────── */
-.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #25905c; color: #fff; font-size: 13px; padding: 9px 20px; border-radius: 20px; z-index: 999; white-space: nowrap; box-shadow: 0 4px 16px rgba(0,0,0,.18); pointer-events: none; }
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #2d8a6b; color: #fff; font-size: 13px; padding: 9px 20px; border-radius: 20px; z-index: 999; white-space: nowrap; box-shadow: 0 4px 16px rgba(0,0,0,.18); pointer-events: none; }
 
 /* ── Responsive ──────────────────────────────────────────────────────── */
 @media (max-width: 480px) {
@@ -164,21 +164,21 @@
 }
 
 /* ── Manual add expanded form ──────────────────────────────────────── */
-.manualAddBox { background: linear-gradient(135deg, #3cb87a 0%, #25905c 100%); border: none; border-radius: 10px; padding: 12px; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 2px 8px rgba(60,184,122,0.25); }
+.manualAddBox { background: linear-gradient(135deg, #4db88a 0%, #2d8a6b 100%); border: none; border-radius: 10px; padding: 12px; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 2px 8px rgba(77,184,138,0.25); }
 .manualRow1 { display: flex; gap: 7px; }
 .manualRow1 input, .manualRow1 select { padding: 9px 11px; border: 1px solid rgba(255,255,255,0.4); border-radius: 8px; font-size: 14px; font-family: inherit; background: rgba(255,255,255,0.92); min-width: 0; color: #111; }
 .manualRow2 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .dateLabel { font-size: 12px; color: rgba(255,255,255,0.9); white-space: nowrap; font-weight: 500; }
 .dateInput { padding: 7px 10px; border: 1px solid rgba(255,255,255,0.4); border-radius: 8px; font-size: 13px; font-family: inherit; background: rgba(255,255,255,0.92); flex: 1; min-width: 140px; color: #111; }
-.addBtn { padding: 8px 16px; background: #3cb87a; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; font-family: inherit; }
-.addBtn:hover { background: #25905c; }
+.addBtn { padding: 8px 16px; background: #4db88a; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; font-family: inherit; }
+.addBtn:hover { background: #2d8a6b; }
 
 /* ── Item date ───────────────────────────────────────────────────── */
 .itemDate { font-size: 10px; color: #aaa; margin-top: 2px; }
 
 /* ── Category groups ─────────────────────────────────────────────────── */
 .categoryGroup { margin-bottom: 20px; border: 1.5px solid #e8d8c0; border-radius: 12px; overflow: visible; transition: border-color .15s; background: #fdf8f0; }
-.categoryGroup.dragOver { border-color: #3cb87a; background: #e8faf3; }
+.categoryGroup.dragOver { border-color: #4db88a; background: #e8f5f0; }
 .categoryHeader { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: #f0e6d0; font-size: 13px; font-weight: 600; color: #3d2b0e; border-bottom: 1px solid #e8d8c0; }
 .categoryCount { display: none; }
 .categoryGroup .itemsGrid { padding: 10px; border-radius: 0; }
@@ -187,14 +187,14 @@
 .cartItem { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #fdf8f0; border: 1px solid #e8d8c0; border-radius: 9px; transition: opacity .15s; }
 .cartItemChecked { opacity: 0.45; }
 .cartItemChecked .cartItemName { text-decoration: line-through; }
-.cartCheck { width: 17px; height: 17px; cursor: pointer; accent-color: #3cb87a; flex-shrink: 0; }
+.cartCheck { width: 17px; height: 17px; cursor: pointer; accent-color: #4db88a; flex-shrink: 0; }
 .cartItemName { flex: 1; font-size: 14px; color: #111; }
 .cartItemQty { font-size: 12px; color: #888; background: #f2f2f2; padding: 2px 7px; border-radius: 20px; }
-.cartBadge { background: #3cb87a; color: #fff; font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 20px; margin-left: 3px; }
+.cartBadge { background: #4db88a; color: #fff; font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 20px; margin-left: 3px; }
 
 /* ── Empty category drop zone ────────────────────────────────────────── */
 .emptyCategory { padding: 20px; text-align: center; font-size: 13px; color: #bbb; border: 2px dashed #e5e7eb; border-radius: 8px; margin: 10px; transition: all .15s; }
-.categoryGroup.dragOver .emptyCategory { border-color: #3cb87a; color: #25905c; background: #e8faf3; }
+.categoryGroup.dragOver .emptyCategory { border-color: #4db88a; color: #2d8a6b; background: #e8f5f0; }
 
 /* ── Danger chip ─────────────────────────────────────────────────────── */
 .chipDanger { font-size: 12px; padding: 5px 12px; border-radius: 20px; border: 1px solid #fecaca; background: #fef2f2; color: #991b1b; cursor: pointer; font-family: inherit; }
@@ -215,18 +215,18 @@
 .confirmYes:hover { background: #b91c1c; }
 
 /* ── Move category dropdown ──────────────────────────────────────────── */
-.moveCatBox { background: #fff; border: 1px solid #a0eecb; border-radius: 10px; padding: 6px; display: flex; flex-direction: column; gap: 2px; position: absolute; right: 0; top: calc(100% + 4px); z-index: 999; min-width: 180px; box-shadow: 0 4px 20px rgba(0,0,0,0.18); }
-.moveCatLabel { font-size: 10px; font-weight: 700; color: #25905c; text-transform: uppercase; letter-spacing: .06em; padding: 2px 4px; margin-bottom: 2px; }
+.moveCatBox { background: #fff; border: 1px solid #a8d5c2; border-radius: 10px; padding: 6px; display: flex; flex-direction: column; gap: 2px; position: absolute; right: 0; top: calc(100% + 4px); z-index: 999; min-width: 180px; box-shadow: 0 4px 20px rgba(0,0,0,0.18); }
+.moveCatLabel { font-size: 10px; font-weight: 700; color: #2d8a6b; text-transform: uppercase; letter-spacing: .06em; padding: 2px 4px; margin-bottom: 2px; }
 .moveCatBtn { text-align: left; padding: 5px 8px; border: none; background: #fff; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: inherit; color: #111; transition: background .1s; }
-.moveCatBtn:hover { background: #c8f5e0; color: #1c7549; font-weight: 500; }
+.moveCatBtn:hover { background: #b8e0d0; color: #1f6b52; font-weight: 500; }
 
 /* ── New header layout ───────────────────────────────────────────────── */
-.header { display: flex; flex-direction: row; align-items: center; justify-content: space-between; padding: 6px 12px; background: linear-gradient(135deg, #3cb87a 0%, #25905c 100%); border-radius: 0; box-shadow: 0 2px 8px rgba(60,184,122,0.25); gap: 8px; }
+.header { display: flex; flex-direction: row; align-items: center; justify-content: space-between; padding: 6px 12px; background: linear-gradient(135deg, #4db88a 0%, #2d8a6b 100%); border-radius: 0; box-shadow: 0 2px 8px rgba(77,184,138,0.25); gap: 8px; }
 .content { padding: 1.25rem 1rem 5.5rem; background: #fdf8f0; }
 /* header nav removed — moved to bottom */
 
 /* ── Splash screen ───────────────────────────────────────────────────── */
-.splash { position: fixed; inset: 0; background: linear-gradient(135deg, #3cb87a 0%, #1c7549 100%); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+.splash { position: fixed; inset: 0; background: linear-gradient(135deg, #4db88a 0%, #1f6b52 100%); display: flex; align-items: center; justify-content: center; z-index: 9999; }
 .splashInner { text-align: center; }
 @keyframes splashBounce { from { transform: translateY(0); } to { transform: translateY(-10px); } }
 .splashSub { font-size: 15px; color: rgba(255,255,255,0.8); margin-bottom: 28px; }
@@ -234,22 +234,22 @@
 .splashSpinner .spinner { border-color: rgba(255,255,255,0.3); border-top-color: #fff; width: 24px; height: 24px; }
 
 /* ── Landing page ────────────────────────────────────────────────────── */
-.landing { min-height: 100vh; background: linear-gradient(160deg, #25905c 0%, #1c7549 100%); display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
+.landing { min-height: 100vh; background: linear-gradient(160deg, #2d8a6b 0%, #1f6b52 100%); display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
 .landingCard { background: #fdf8f0; border-radius: 20px; padding: 2.5rem 2rem; max-width: 420px; width: 100%; box-shadow: 0 8px 40px rgba(0,0,0,0.2); text-align: center; }
 .landingSub { font-size: 15px; color: #666; line-height: 1.6; margin-bottom: 24px; }
 .landingFeatures { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 28px; }
-.landingFeature { background: #e8faf3; border-radius: 10px; padding: 10px 12px; font-size: 13px; color: #1a7a52; font-weight: 500; text-align: left; }
-.landingSignIn { width: 100%; padding: 14px 20px; background: linear-gradient(135deg, #3cb87a 0%, #25905c 100%); color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 12px; box-shadow: 0 4px 14px rgba(60,184,122,0.35); }
-.landingSignIn:hover { background: linear-gradient(135deg, #25905c 0%, #1c7549 100%); }
+.landingFeature { background: #e8f5f0; border-radius: 10px; padding: 10px 12px; font-size: 13px; color: #145040; font-weight: 500; text-align: left; }
+.landingSignIn { width: 100%; padding: 14px 20px; background: linear-gradient(135deg, #4db88a 0%, #2d8a6b 100%); color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 12px; box-shadow: 0 4px 14px rgba(77,184,138,0.35); }
+.landingSignIn:hover { background: linear-gradient(135deg, #2d8a6b 0%, #1f6b52 100%); }
 .landingNote { font-size: 12px; color: #aaa; }
 
 /* ── Logo images ─────────────────────────────────────────────────────── */
-.headerLogo { width: 90px; height: 90px; object-fit: contain; filter: brightness(0) invert(1); margin: -20px 0; }
+.headerLogo { width: 52px; height: 52px; object-fit: cover; object-position: top center; filter: brightness(0) invert(1); }
 .splashLogo { width: 300px; height: 300px; object-fit: contain; margin-bottom: 16px; animation: splashBounce 1s ease infinite alternate; filter: brightness(0) invert(1); }
 .landingLogo { width: 500px; height: 500px; object-fit: contain; max-width: 90vw; }
 
 /* ── Bottom navigation bar ───────────────────────────────────────────── */
-.bottomNav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 660px; background: linear-gradient(135deg, #25905c 0%, #1c7549 100%); display: flex; align-items: center; justify-content: space-around; padding: 8px 6px env(safe-area-inset-bottom, 12px); border-top: 1px solid rgba(255,255,255,0.15); z-index: 100; }
+.bottomNav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 660px; background: linear-gradient(135deg, #2d8a6b 0%, #1f6b52 100%); display: flex; align-items: center; justify-content: space-around; padding: 8px 6px env(safe-area-inset-bottom, 12px); border-top: 1px solid rgba(255,255,255,0.15); z-index: 100; }
 .bottomNavItem { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 12px; border-radius: 14px; border: none; background: transparent; cursor: pointer; font-family: inherit; position: relative; min-width: 56px; }
 .bottomNavItem:hover { background: rgba(255,255,255,0.12); }
 .bottomNavActive { background: linear-gradient(135deg, #f5f0e8 0%, #e8dcc8 100%) !important; }
@@ -308,7 +308,7 @@
 .profileMenuItemDanger:hover { background: #fef2f2; }
 
 /* ── Landing privacy link ────────────────────────────────────────────── */
-.landingPrivacy { display: block; margin-top: 10px; font-size: 12px; color: #25905c; text-decoration: none; }
+.landingPrivacy { display: block; margin-top: 10px; font-size: 12px; color: #2d8a6b; text-decoration: none; }
 .landingPrivacy:hover { text-decoration: underline; }
 
 /* ── Landing logo size fix ───────────────────────────────────────────── */
@@ -321,18 +321,18 @@
 .catDeleteBtn:hover { background: #fef2f2; }
 
 /* ── Profile menu panels ─────────────────────────────────────────────── */
-.profileMenuUsername { padding: 0 16px 8px; font-size: 12px; color: #25905c; }
+.profileMenuUsername { padding: 0 16px 8px; font-size: 12px; color: #2d8a6b; }
 .menuBadge { background: #ff6b6b; color: #fff; font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 10px; margin-left: 6px; }
 .notifDot { position: absolute; top: -2px; right: -2px; background: #ff6b6b; color: #fff; font-size: 9px; font-weight: 700; padding: 1px 4px; border-radius: 10px; z-index: 1; min-width: 16px; text-align: center; }
 .panelInner { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; max-height: 70vh; overflow-y: auto; }
-.panelBack { background: none; border: none; cursor: pointer; font-size: 12px; color: #25905c; font-family: inherit; padding: 0; text-align: left; }
+.panelBack { background: none; border: none; cursor: pointer; font-size: 12px; color: #2d8a6b; font-family: inherit; padding: 0; text-align: left; }
 .panelTitle { font-size: 15px; font-weight: 700; color: #3d2b0e; margin-bottom: 4px; }
 .panelLabel { font-size: 12px; font-weight: 600; color: #555; margin-bottom: 2px; }
 .panelInput { padding: 8px 10px; border: 1px solid #e8d8c0; border-radius: 8px; font-size: 13px; font-family: inherit; background: #fff; margin-bottom: 4px; }
-.panelInput:focus { outline: none; border-color: #3cb87a; }
-.panelBtn { padding: 9px 14px; background: linear-gradient(135deg,#3cb87a,#25905c); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 4px; }
+.panelInput:focus { outline: none; border-color: #4db88a; }
+.panelBtn { padding: 9px 14px; background: linear-gradient(135deg,#4db88a,#2d8a6b); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 4px; }
 .panelBtn:disabled { opacity: .6; cursor: not-allowed; }
-.panelBtnSm { padding: 5px 10px; background: #3cb87a; color: #fff; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
+.panelBtnSm { padding: 5px 10px; background: #4db88a; color: #fff; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
 .panelBtnSmDanger { padding: 5px 10px; background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
 .panelBtnDanger { padding: 9px 14px; background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 4px; width: 100%; }
 .panelSection { font-size: 11px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: .06em; margin-top: 8px; margin-bottom: 2px; }
@@ -341,15 +341,15 @@
 /* ── Friends ─────────────────────────────────────────────────────────── */
 .searchTypeRow { display: flex; gap: 4px; margin-bottom: 8px; }
 .searchTypeBtn { flex: 1; padding: 6px; border: 1px solid #e8d8c0; border-radius: 7px; background: #fff; font-size: 12px; cursor: pointer; font-family: inherit; }
-.searchTypeBtnOn { background: #3cb87a; color: #fff; border-color: #3cb87a; font-weight: 600; }
+.searchTypeBtnOn { background: #4db88a; color: #fff; border-color: #4db88a; font-weight: 600; }
 .friendRow { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 0; border-bottom: 1px solid #f5ede0; }
 .friendInfo { flex: 1; min-width: 0; }
 .friendName { font-size: 13px; font-weight: 600; color: #111; }
 .friendUser { font-size: 11px; color: #888; }
 
 /* ── Household ───────────────────────────────────────────────────────── */
-.householdName { font-size: 16px; font-weight: 700; color: #25905c; margin-bottom: 8px; }
-.ownerBadge { font-size: 10px; background: #d4f5e5; color: #1a7a52; padding: 1px 6px; border-radius: 20px; margin-left: 6px; font-weight: 600; }
+.householdName { font-size: 16px; font-weight: 700; color: #2d8a6b; margin-bottom: 8px; }
+.ownerBadge { font-size: 10px; background: #e8f5f0; color: #145040; padding: 1px 6px; border-radius: 20px; margin-left: 6px; font-weight: 600; }
 
 /* ── Notifications ───────────────────────────────────────────────────── */
 .notifRow { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid #f5ede0; }
@@ -366,22 +366,71 @@
 /* ── Household view tabs ─────────────────────────────────────────────── */
 .viewTabs { display: flex; border-bottom: 2px solid #e8d8c0; background: #fdf8f0; margin-bottom: 12px; }
 .viewTab { flex: 1; padding: 10px 8px; text-align: center; font-size: 13px; font-weight: 600; color: #7a6a52; border: none; background: none; cursor: pointer; font-family: inherit; border-bottom: 3px solid transparent; margin-bottom: -2px; }
-.viewTab:hover { color: #25905c; }
-.viewTabOn { color: #25905c; border-bottom-color: #25905c; }
+.viewTab:hover { color: #2d8a6b; }
+.viewTabOn { color: #2d8a6b; border-bottom-color: #2d8a6b; }
 
 /* ── Tutorial modal ──────────────────────────────────────────────────── */
 .tutorialBox { background: #fdf8f0; border-radius: 20px; padding: 1.5rem; max-width: 380px; width: 100%; box-shadow: 0 8px 40px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
 .tutorialLogo { text-align: center; margin-bottom: 10px; }
-.tutorialTitle { font-size: 20px; font-weight: 800; color: #1a7a52; text-align: center; margin-bottom: 4px; }
+.tutorialTitle { font-size: 20px; font-weight: 800; color: #145040; text-align: center; margin-bottom: 4px; }
 .tutorialSub { font-size: 13px; color: #888; text-align: center; margin-bottom: 16px; }
 .tutorialSteps { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
 .tutorialStep { display: flex; align-items: flex-start; gap: 12px; background: #f5ede0; border-radius: 10px; padding: 10px 12px; }
 .tutorialIcon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
 .tutorialStep strong { font-size: 13px; font-weight: 700; color: #3d2b0e; display: block; margin-bottom: 2px; }
 .tutorialStep p { font-size: 12px; color: #7a6a52; line-height: 1.4; margin: 0; }
-.tutorialBtn { width: 100%; padding: 13px; background: linear-gradient(135deg, #3cb87a, #25905c); color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
-.tutorialBtn:hover { background: linear-gradient(135deg, #25905c, #1c7549); }
+.tutorialBtn { width: 100%; padding: 13px; background: linear-gradient(135deg, #4db88a, #2d8a6b); color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
+.tutorialBtn:hover { background: linear-gradient(135deg, #2d8a6b, #1f6b52); }
 
 /* ── Coach mark button ───────────────────────────────────────────────── */
 .coachMarkBtn { width: 26px; height: 26px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.7); background: rgba(255,255,255,0.2); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-family: inherit; transition: background .15s; }
 .coachMarkBtn:hover { background: rgba(255,255,255,0.35); }
+
+/* ── Jade green header text image ────────────────────────────────────── */
+.headerTitleImg { position: absolute; left: 50%; transform: translateX(-50%); height: 28px; object-fit: contain; filter: brightness(0) invert(1); pointer-events: none; z-index: 0; }
+.headerBasket { width: 44px; height: 44px; object-fit: contain; filter: brightness(0) invert(1); flex-shrink: 0; }
+.brandBtnHome { background: none; border: none; cursor: pointer; padding: 2px; border-radius: 8px; display: flex; align-items: center; flex-shrink: 0; }
+.brandBtnHome:hover { background: rgba(255,255,255,0.15); }
+.titleBtnHome { background: none; border: none; cursor: pointer; position: absolute; left: 50%; transform: translateX(-50%); padding: 4px 8px; border-radius: 6px; }
+.titleBtnHome:hover { background: rgba(255,255,255,0.15); }
+
+/* ── Home page ───────────────────────────────────────────────────────── */
+.homePage { padding: 14px 14px 5rem; }
+.homeGreeting { font-size: 16px; font-weight: 700; color: #145040; margin-bottom: 2px; }
+.homeGreetingSub { font-size: 12px; color: #7a6a52; margin-bottom: 14px; }
+.pantryCard { background: #fff; border: 2px solid #4db88a; border-radius: 13px; padding: 13px; margin-bottom: 12px; cursor: pointer; position: relative; transition: background .1s; }
+.pantryCard:hover { background: #f5fdf9; }
+.pantryCard::after { content: '›'; position: absolute; right: 13px; top: 50%; transform: translateY(-50%); font-size: 20px; color: #2d8a6b; font-weight: 700; }
+.pantryCardTitle { font-size: 10px; font-weight: 700; color: #2d8a6b; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 10px; }
+.homeStats { display: grid; grid-template-columns: repeat(3,1fr); gap: 7px; margin-bottom: 10px; }
+.homeStatBox { background: #e8f5f0; border-radius: 8px; padding: 8px 4px; text-align: center; }
+.homeStatVal { font-size: 22px; font-weight: 800; color: #2d8a6b; }
+.homeStatLbl { font-size: 9px; color: #5a7a6a; margin-top: 1px; }
+.homeLowBar { background: #fff8e6; border: 1px solid #f5d87a; border-radius: 8px; padding: 8px 10px; display: flex; align-items: center; justify-content: space-between; }
+.homeLowText { font-size: 12px; font-weight: 600; color: #856404; }
+.homeLowSub { font-size: 10px; color: #a07c20; margin-top: 2px; }
+.homeLowNone { font-size: 12px; color: #2d8a6b; font-weight: 500; }
+.homeShortcuts { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 12px; }
+.homeShortcut { background: #fff; border: 0.5px solid #e8d8c0; border-radius: 11px; padding: 12px 6px; text-align: center; cursor: pointer; transition: background .1s; }
+.homeShortcut:hover { background: #f5ede0; }
+.homeShortcutIcon { font-size: 24px; margin-bottom: 5px; }
+.homeShortcutLbl { font-size: 11px; color: #555; font-weight: 500; }
+.homeHHBox { height: 52px; border-radius: 10px; padding: 0 12px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.homeHHActive { background: #e8f5f0; }
+.homeHHEmpty { background: #f5ede0; border: 1px dashed #c8b89a; }
+.homeHHName { font-size: 12px; font-weight: 600; color: #145040; }
+.homeHHSub { font-size: 10px; color: #5a7a6a; margin-top: 2px; }
+.homeHHPill { font-size: 10px; background: #c8ead8; color: #1f6b52; border-radius: 20px; padding: 3px 10px; font-weight: 600; }
+.homeHHLink { font-size: 12px; font-weight: 600; color: #2d8a6b; text-decoration: underline; cursor: pointer; background: none; border: none; font-family: inherit; }
+.homeSectionHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; }
+.homeSectionTitle { font-size: 11px; font-weight: 700; color: #7a6a52; text-transform: uppercase; letter-spacing: .06em; }
+.homeSectionCount { font-size: 11px; color: #aaa; }
+.homeSharesScroll { height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 2px; position: relative; }
+.homeSharesScroll::-webkit-scrollbar { width: 2px; }
+.homeSharesScroll::-webkit-scrollbar-thumb { background: #e8d8c0; border-radius: 2px; }
+.homeShareCard { background: #fff; border: 0.5px solid #e8d8c0; border-radius: 9px; padding: 9px 11px; display: flex; align-items: center; gap: 9px; flex-shrink: 0; }
+.homeShareIcon { font-size: 20px; flex-shrink: 0; }
+.homeShareTitle { font-size: 12px; font-weight: 600; color: #111; }
+.homeShareFrom { font-size: 10px; color: #888; margin-top: 1px; }
+.homeShareBtn { font-size: 11px; background: #2d8a6b; color: #fff; border: none; border-radius: 6px; padding: 4px 10px; margin-left: auto; cursor: pointer; font-weight: 600; white-space: nowrap; }
+.homeShareEmpty { background: #f5ede0; border-radius: 9px; height: 120px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #7a6a52; }

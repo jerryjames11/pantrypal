@@ -55,7 +55,7 @@ function LandingPage({ onSignIn }) {
 }
 
 export default function PantryPal() {
-  const [tab, setTab] = useState('pantry')
+  const [tab, setTab] = useState('home')
   const [user, setUser] = useState(null)
   const [authLoading, setAuthLoading] = useState(true)
   const [showSplash, setShowSplash] = useState(true)
@@ -724,10 +724,12 @@ export default function PantryPal() {
 
       {/* HEADER */}
       <header className={styles.header}>
-        <button className={styles.brandBtn} onClick={() => setTab('pantry')}>
-          <img src="/logo.png" alt="PantryPal logo" className={styles.headerLogo} />
+        <button className={styles.brandBtnHome} onClick={() => setTab('home')}>
+          <img src="/basket.png" alt="PantryPal" className={styles.headerBasket} />
         </button>
-        <img src="/pantrypal-text.png" alt="PantryPal" className={styles.headerText} />
+        <button className={styles.titleBtnHome} onClick={() => setTab('home')}>
+          <img src="/pantrypal-text.png" alt="PantryPal" className={styles.headerTitleImg} />
+        </button>
         <div style={{display:'flex',alignItems:'center',gap:6}}>
         <button className={styles.coachMarkBtn} onClick={()=>startTour(tab)} title="Show page tour">?</button>
         <div className={styles.profileArea} data-profile>
@@ -952,6 +954,94 @@ export default function PantryPal() {
         </div>
       )}
 
+      {/* ══ HOME ══ */}
+      {tab === 'home' && (
+        <section className={styles.homePage}>
+          <div className={styles.homeGreeting}>
+            Welcome back, {profile?.username ? `@${profile.username}` : (profile?.display_name || user?.user_metadata?.full_name || 'there')} 👋
+          </div>
+          <div className={styles.homeGreetingSub}>Here's your pantry overview</div>
+
+          {/* Pantry summary card */}
+          <div className={styles.pantryCard} onClick={() => setTab('pantry')}>
+            <div className={styles.pantryCardTitle}>My Pantry</div>
+            <div className={styles.homeStats}>
+              <div className={styles.homeStatBox}><div className={styles.homeStatVal}>{stats.fresh}</div><div className={styles.homeStatLbl}>In stock</div></div>
+              <div className={styles.homeStatBox}><div className={styles.homeStatVal}>{stats.low}</div><div className={styles.homeStatLbl}>Running low</div></div>
+              <div className={styles.homeStatBox}><div className={styles.homeStatVal}>{stats.out}</div><div className={styles.homeStatLbl}>Out of stock</div></div>
+            </div>
+            <div className={styles.homeLowBar}>
+              {stats.low > 0 || stats.out > 0 ? (
+                <div>
+                  <div className={styles.homeLowText}>⚠️ {stats.low + stats.out} item{stats.low+stats.out!==1?'s':''} need attention</div>
+                  <div className={styles.homeLowSub}>{pantry.filter(i=>i.status==='low'||i.status==='out').slice(0,4).map(i=>i.name).join(' · ')}</div>
+                </div>
+              ) : (
+                <div className={styles.homeLowNone}>✓ All pantry items in stock</div>
+              )}
+              <span style={{fontSize:18,color:'#856404'}}>›</span>
+            </div>
+          </div>
+
+          {/* Shortcuts */}
+          <div className={styles.homeShortcuts}>
+            <div className={styles.homeShortcut} onClick={() => setTab('scan')}>
+              <div className={styles.homeShortcutIcon}>📷</div>
+              <div className={styles.homeShortcutLbl}>Scan receipt</div>
+            </div>
+            <div className={styles.homeShortcut} onClick={() => setTab('cart')}>
+              <div className={styles.homeShortcutIcon}>🛒</div>
+              <div className={styles.homeShortcutLbl}>View cart {cart.length > 0 && `(${cart.length})`}</div>
+            </div>
+            <div className={styles.homeShortcut} onClick={() => setTab('recipes')}>
+              <div className={styles.homeShortcutIcon}>🍳</div>
+              <div className={styles.homeShortcutLbl}>Recipes</div>
+            </div>
+          </div>
+
+          {/* Household */}
+          {household ? (
+            <div className={`${styles.homeHHBox} ${styles.homeHHActive}`}>
+              <div>
+                <div className={styles.homeHHName}>🏠 {household.name}</div>
+                <div className={styles.homeHHSub}>{householdMembers.length} member{householdMembers.length!==1?'s':''} · shared pantry</div>
+              </div>
+              <div className={styles.homeHHPill}>Active</div>
+            </div>
+          ) : (
+            <div className={`${styles.homeHHBox} ${styles.homeHHEmpty}`}>
+              <div style={{fontSize:12,color:'#7a6a52'}}>🏠 No household yet</div>
+              <button className={styles.homeHHLink} onClick={() => { setProfileOpen(true); setProfilePanel('household') }}>Create one →</button>
+            </div>
+          )}
+
+          {/* Shared with me */}
+          <div className={styles.homeSectionHeader}>
+            <div className={styles.homeSectionTitle}>Shared with you</div>
+            {shares.length > 0 && <div className={styles.homeSectionCount}>{shares.length} item{shares.length!==1?'s':''}</div>}
+          </div>
+          {shares.length === 0 ? (
+            <div className={styles.homeShareEmpty}>Nothing shared with you yet</div>
+          ) : (
+            <div className={styles.homeSharesScroll}>
+              {shares.map(s => (
+                <div key={s.id} className={styles.homeShareCard}>
+                  <span className={styles.homeShareIcon}>{s.share_type==='recipe'?'🍳':'🛒'}</span>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div className={styles.homeShareTitle}>{s.title}</div>
+                    <div className={styles.homeShareFrom}>from {s.sender?.display_name || s.sender?.username}</div>
+                  </div>
+                  {s.share_type==='recipe'
+                    ? <button className={styles.homeShareBtn} onClick={()=>{saveRecipe(s.content);showToast('Recipe saved!')}}>Save</button>
+                    : <button className={styles.homeShareBtn} onClick={()=>{fetch(`/api/cart?user_id=${user.id}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:s.content?.items||[]})});loadCart();showToast('Cart items added!')}}>Add to cart</button>
+                  }
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
       {/* ══ PANTRY ══ */}
       {tab === 'pantry' && (
         <section>
@@ -1039,12 +1129,12 @@ export default function PantryPal() {
                       <div className={styles.itemsGrid}>
                         {items.map(item=>(
                           <div key={item.id} className={styles.itemCard} draggable onDragStart={()=>onDragStart(item)}
-                            style={{borderLeftColor:item.status==='low'?'#f59e0b':item.status==='out'?'#ef4444':'#3cb87a'}}>
+                            style={{borderLeftColor:item.status==='low'?'#f59e0b':item.status==='out'?'#ef4444':'#4db88a'}}>
                             {editingItem===item.id ? (
                               <div style={{display:'flex',flexDirection:'column',gap:4,flex:1}}>
                                 <input defaultValue={item.name} onBlur={e=>updateItem(item.id,{name:e.target.value})} style={{fontSize:13,fontWeight:600,padding:'3px 6px',border:'1px solid #3cb87a',borderRadius:5,width:'100%'}} autoFocus />
                                 <input defaultValue={item.qty} placeholder="Qty" onBlur={e=>updateItem(item.id,{qty:e.target.value})} style={{fontSize:12,padding:'3px 6px',border:'1px solid #e0e0e0',borderRadius:5,width:'100%'}} />
-                                <button onClick={()=>setEditingItem(null)} style={{fontSize:11,padding:'3px 0',background:'#3cb87a',color:'#fff',border:'none',borderRadius:5,cursor:'pointer'}}>Done</button>
+                                <button onClick={()=>setEditingItem(null)} style={{fontSize:11,padding:'3px 0',background:'#4db88a',color:'#fff',border:'none',borderRadius:5,cursor:'pointer'}}>Done</button>
                               </div>
                             ) : (
                               <>
@@ -1314,7 +1404,13 @@ export default function PantryPal() {
 
       {/* BOTTOM NAV */}
       <nav className={styles.bottomNav}>
-        {[['pantry','📋','My Pantry'],['cart','🛒','Cart'],['scan','📷','Scan'],['history','🧾','History'],['recipes','🍳','Recipes']].map(([id,icon,label])=>(
+        {[
+          ['pantry', <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>, 'My Pantry'],
+          ['cart', <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>, 'Cart'],
+          ['scan', <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>, 'Scan'],
+          ['history', <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>, 'History'],
+          ['recipes', <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2h1a2 2 0 0 1 2 2v15a2 2 0 0 1-2 2H3"/><path d="M21 22h-1a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h1"/><path d="M8 7h8"/><path d="M8 11h8"/><path d="M8 15h5"/></svg>, 'Recipes'],
+        ].map(([id, icon, label]) => (
           <button key={id} className={tab===id?`${styles.bottomNavItem} ${styles.bottomNavActive}`:styles.bottomNavItem} onClick={()=>setTab(id)}>
             <span className={styles.bottomNavIcon}>{icon}</span>
             <span className={styles.bottomNavLabel}>{label}</span>
