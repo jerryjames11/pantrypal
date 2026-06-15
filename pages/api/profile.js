@@ -11,7 +11,7 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'PATCH') {
-    const { username, display_name, tutorial_completed, ...rest } = req.body
+    const { username, display_name, tutorial_completed, username_prompt_shown, ...rest } = req.body
 
     if (username) {
       const { data: existing } = await sb.from('profiles').select('id').eq('username', username).neq('id', user_id).single()
@@ -22,6 +22,7 @@ export default async function handler(req, res) {
     if (username !== undefined) update.username = username
     if (display_name !== undefined) update.display_name = display_name
     if (tutorial_completed !== undefined) update.tutorial_completed = tutorial_completed
+    if (username_prompt_shown !== undefined) update.username_prompt_shown = username_prompt_shown
 
     // Store tour flags (tour_pantry, tour_scan, tour_cart, tour_history, tour_recipes)
     const tourKeys = ['tour_home', 'tour_pantry', 'tour_scan', 'tour_cart', 'tour_history', 'tour_recipes']

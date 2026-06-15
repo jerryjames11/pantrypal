@@ -143,6 +143,10 @@ export default function PantryPal() {
   const [seenTours, setSeenTours] = useState({})
   const [profileLoaded, setProfileLoaded] = useState(false)
   const [showHelpHint, setShowHelpHint] = useState(false)
+  const [showUsernamePrompt, setShowUsernamePrompt] = useState(false)
+  const [usernameInput, setUsernameInput] = useState('')
+  const [usernameSaving, setUsernameSaving] = useState(false)
+  const [usernameError, setUsernameError] = useState('')
 
   const showToast = useCallback((msg) => { setToast(msg); setTimeout(() => setToast(''), 2800) }, [])
   function confirm(message, onConfirm) { setConfirmDialog({ message, onConfirm }) }
@@ -273,6 +277,10 @@ export default function PantryPal() {
       })
       setSeenTours(seen)
       setProfileLoaded(true)
+      // Show username prompt if never shown before
+      if (!data.profile?.username_prompt_shown) {
+        setShowUsernamePrompt(true)
+      }
       if (data.profile.tour_home) {
         setShowHelpHint(true)
         setTimeout(() => setShowHelpHint(false), 5000)
@@ -291,6 +299,30 @@ export default function PantryPal() {
     setProfile(data.profile)
     showToast('Profile updated!')
     setProfileSaving(false)
+  }
+
+  async function saveUsernameAndContinue() {
+    if (!usernameInput.trim()) { dismissUsernamePrompt(); return }
+    setUsernameSaving(true); setUsernameError('')
+    const res = await fetch(`/api/profile?user_id=${user.id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: usernameInput.trim().toLowerCase().replace(/[^a-z0-9_]/g,''), username_prompt_shown: true })
+    })
+    const data = await res.json()
+    if (data.error) { setUsernameError(data.error); setUsernameSaving(false); return }
+    setProfile(data.profile)
+    setShowUsernamePrompt(false)
+    showToast('Username set! Friends can now find you.')
+    setUsernameSaving(false)
+  }
+
+  async function dismissUsernamePrompt() {
+    setShowUsernamePrompt(false)
+    // Mark as shown so it never appears again
+    await fetch(`/api/profile?user_id=${user.id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username_prompt_shown: true })
+    })
   }
 
   // ── Notifications ─────────────────────────────────────────────────────────
@@ -1050,7 +1082,18 @@ export default function PantryPal() {
             {shares.length > 0 && <div className={styles.homeSectionCount}>{shares.length} item{shares.length!==1?'s':''}</div>}
           </div>
           {shares.length === 0 ? (
-            <div id="tour-home-shared" className={styles.homeShareEmptyJade}>Nothing shared with you yet</div>
+            !profile?.username ? (
+              <div id="tour-home-shared" className={styles.homeUsernameNudge} onClick={() => { setProfileOpen(true); setProfilePanel('edit') }}>
+                <div className={styles.nudgeIcon}>👤</div>
+                <div style={{flex:1}}>
+                  <div className={styles.nudgeTitle}>Set your username</div>
+                  <div className={styles.nudgeSub}>Friends need it to find you and share with you</div>
+                </div>
+                <span className={styles.nudgeArrow}>›</span>
+              </div>
+            ) : (
+              <div id="tour-home-shared" className={styles.homeShareEmptyJade}>Nothing shared with you yet</div>
+            )
           ) : (
             <div id="tour-home-shared" className={styles.homeSharesScrollJade}>
               {shares.map(s => (
@@ -1480,6 +1523,36 @@ export default function PantryPal() {
               <div className={styles.tutorialStep}><span className={styles.tutorialIcon}>👤</span><div><strong>Profile</strong><p>Add friends, create a household to share your pantry, and manage notifications.</p></div></div>
             </div>
             <button className={styles.tutorialBtn} onClick={completeTutorial}>Got it, let's go! →</button>
+          </div>
+        </div>
+      )}
+
+      {showUsernamePrompt && (
+        <div className={styles.confirmOverlay}>
+          <div className={styles.usernamePromptBox}>
+            <img src="/logo.png" alt="PantryPal" className={styles.promptLogo} />
+            <div className={styles.promptTitle}>Welcome to PantryPal!</div>
+            <div className={styles.promptSub}>Set a username so friends can find and connect with you.</div>
+            <div className={styles.whyBox}>
+              <div className={styles.whyItem}><span>👥</span> Find and add friends</div>
+              <div className={styles.whyItem}><span>🍳</span> Share recipes</div>
+              <div className={styles.whyItem}><span>🛒</span> Share shopping lists</div>
+              <div className={styles.whyItem}><span>🏠</span> Create a household</div>
+            </div>
+            <label className={styles.promptLabel}>Choose your username</label>
+            <div className={styles.promptInputRow}>
+              <span className={styles.promptAt}>@</span>
+              <input className={styles.promptInput} value={usernameInput} onChange={e=>setUsernameInput(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g,''))} placeholder="yourname" autoFocus />
+            </div>
+            <div className={styles.promptHint}>Letters, numbers and underscores only.</div>
+            {usernameInput && <div className={styles.promptPreview}>You'll appear as @{usernameInput}</div>}
+            {usernameError && <div className={styles.promptError}>{usernameError}</div>}
+            <button className={styles.promptBtn} onClick={saveUsernameAndContinue} disabled={usernameSaving}>
+              {usernameSaving ? 'Saving…' : 'Set username & continue →'}
+            </button>
+            <button className={styles.promptSkip} onClick={dismissUsernamePrompt}>
+              Skip for now — <span>set it later in profile</span>
+            </button>
           </div>
         </div>
       )}
