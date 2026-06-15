@@ -67,6 +67,7 @@ export default function PantryPal() {
   const [editingItem, setEditingItem] = useState(null)
   const [movingItem, setMovingItem] = useState(null)
   const [showActions, setShowActions] = useState(false)
+  const [openCatMenu, setOpenCatMenu] = useState(null)
   const [showAddItem, setShowAddItem] = useState(false)
   const [collapsedCats, setCollapsedCats] = useState({})
   const [manualName, setManualName] = useState('')
@@ -192,6 +193,7 @@ export default function PantryPal() {
   useEffect(() => {
     function handleClick(e) {
       if (!e.target.closest('[data-actions]')) setShowActions(false)
+      if (!e.target.closest('[data-catmenu]')) setOpenCatMenu(null)
       if (!e.target.closest('[data-profile]')) { setProfileOpen(false); }
     }
     document.addEventListener('mousedown', handleClick)
@@ -985,15 +987,15 @@ export default function PantryPal() {
 
           {/* Shortcuts */}
           <div className={styles.homeShortcuts}>
-            <div className={styles.homeShortcut} onClick={() => setTab('scan')}>
+            <div className={styles.homeShortcutJade} onClick={() => setTab('scan')}>
               <div className={styles.homeShortcutIcon}>📷</div>
               <div className={styles.homeShortcutLbl}>Scan receipt</div>
             </div>
-            <div className={styles.homeShortcut} onClick={() => setTab('cart')}>
+            <div className={styles.homeShortcutJade} onClick={() => setTab('cart')}>
               <div className={styles.homeShortcutIcon}>🛒</div>
               <div className={styles.homeShortcutLbl}>View cart {cart.length > 0 && `(${cart.length})`}</div>
             </div>
-            <div className={styles.homeShortcut} onClick={() => setTab('recipes')}>
+            <div className={styles.homeShortcutJade} onClick={() => setTab('recipes')}>
               <div className={styles.homeShortcutIcon}>🍳</div>
               <div className={styles.homeShortcutLbl}>Recipes</div>
             </div>
@@ -1001,7 +1003,7 @@ export default function PantryPal() {
 
           {/* Household */}
           {household ? (
-            <div className={`${styles.homeHHBox} ${styles.homeHHActive}`}>
+            <div className={`${styles.homeHHBox} ${styles.homeHHActive} ${styles.homeHHJade}`}>
               <div>
                 <div className={styles.homeHHName}>🏠 {household.name}</div>
                 <div className={styles.homeHHSub}>{householdMembers.length} member{householdMembers.length!==1?'s':''} · shared pantry</div>
@@ -1009,7 +1011,7 @@ export default function PantryPal() {
               <div className={styles.homeHHPill}>Active</div>
             </div>
           ) : (
-            <div className={`${styles.homeHHBox} ${styles.homeHHEmpty}`}>
+            <div className={`${styles.homeHHBox} ${styles.homeHHEmpty} ${styles.homeHHJade}`}>
               <div style={{fontSize:12,color:'#7a6a52'}}>🏠 No household yet</div>
               <button className={styles.homeHHLink} onClick={() => { setProfileOpen(true); setProfilePanel('household') }}>Create one →</button>
             </div>
@@ -1021,9 +1023,9 @@ export default function PantryPal() {
             {shares.length > 0 && <div className={styles.homeSectionCount}>{shares.length} item{shares.length!==1?'s':''}</div>}
           </div>
           {shares.length === 0 ? (
-            <div className={styles.homeShareEmpty}>Nothing shared with you yet</div>
+            <div className={styles.homeShareEmptyJade}>Nothing shared with you yet</div>
           ) : (
-            <div className={styles.homeSharesScroll}>
+            <div className={styles.homeSharesScrollJade}>
               {shares.map(s => (
                 <div key={s.id} className={styles.homeShareCard}>
                   <span className={styles.homeShareIcon}>{s.share_type==='recipe'?'🍳':'🛒'}</span>
