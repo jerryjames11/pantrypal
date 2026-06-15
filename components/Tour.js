@@ -18,14 +18,16 @@ export default function Tour({ steps, onComplete, onSkip }) {
       const rect = el.getBoundingClientRect()
       setPos({ rect, vw: window.innerWidth, vh: window.innerHeight })
       el.setAttribute('data-tour-highlight', 'true')
+      el.style.position = 'relative'
+      el.style.zIndex = '1001'
     }, 300)
-    return () => { if (el) el.removeAttribute('data-tour-highlight') }
+    return () => { if (el) { el.removeAttribute('data-tour-highlight'); el.style.position = ''; el.style.zIndex = '' } }
   }, [current, step])
 
   function clearHighlight() {
     if (step?.target) {
       const el = document.querySelector(step.target)
-      if (el) el.removeAttribute('data-tour-highlight')
+      if (el) { el.removeAttribute('data-tour-highlight'); el.style.position = ''; el.style.zIndex = '' }
     }
   }
 
