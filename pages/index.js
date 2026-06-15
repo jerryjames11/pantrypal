@@ -727,7 +727,7 @@ export default function PantryPal() {
     <div className={styles.app}>
 
       {/* HEADER */}
-      <header className={styles.header}>
+      <header id="tour-header" className={styles.header}>
         <button className={styles.brandBtnHome} onClick={() => setTab('home')}>
           <img src="/basket.png" alt="PantryPal" className={styles.headerBasket} />
         </button>
@@ -1005,7 +1005,7 @@ export default function PantryPal() {
 
           {/* Household */}
           {household ? (
-            <div className={`${styles.homeHHBox} ${styles.homeHHActive} ${styles.homeHHJade}`}>
+            <div id="tour-home-household" className={`${styles.homeHHBox} ${styles.homeHHActive} ${styles.homeHHJade}`}>
               <div>
                 <div className={styles.homeHHName}>🏠 {household.name}</div>
                 <div className={styles.homeHHSub}>{householdMembers.length} member{householdMembers.length!==1?'s':''} · shared pantry</div>
@@ -1013,7 +1013,7 @@ export default function PantryPal() {
               <div className={styles.homeHHPill}>Active</div>
             </div>
           ) : (
-            <div className={`${styles.homeHHBox} ${styles.homeHHEmpty} ${styles.homeHHJade}`}>
+            <div id="tour-home-household" className={`${styles.homeHHBox} ${styles.homeHHEmpty} ${styles.homeHHJade}`}>
               <div style={{fontSize:12,color:'#7a6a52'}}>🏠 No household yet</div>
               <button className={styles.homeHHLink} onClick={() => { setProfileOpen(true); setProfilePanel('household') }}>Create one →</button>
             </div>
@@ -1025,9 +1025,9 @@ export default function PantryPal() {
             {shares.length > 0 && <div className={styles.homeSectionCount}>{shares.length} item{shares.length!==1?'s':''}</div>}
           </div>
           {shares.length === 0 ? (
-            <div className={styles.homeShareEmptyJade}>Nothing shared with you yet</div>
+            <div id="tour-home-shared" className={styles.homeShareEmptyJade}>Nothing shared with you yet</div>
           ) : (
-            <div className={styles.homeSharesScrollJade}>
+            <div id="tour-home-shared" className={styles.homeSharesScrollJade}>
               {shares.map(s => (
                 <div key={s.id} className={styles.homeShareCard}>
                   <span className={styles.homeShareIcon}>{s.share_type==='recipe'?'🍳':'🛒'}</span>
@@ -1419,7 +1419,7 @@ export default function PantryPal() {
       </div>
 
       {/* BOTTOM NAV */}
-      <nav className={styles.bottomNav}>
+      <nav id="tour-bottom-nav" className={styles.bottomNav}>
         {[
           ['pantry', <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>, 'My Pantry'],
           ['cart', <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>, 'Cart'],
