@@ -19,5 +19,5 @@
 .nextBtn { padding: 6px 14px; border: none; border-radius: 8px; background: linear-gradient(135deg, #3cb87a, #25905c); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
 .nextBtn:hover { background: linear-gradient(135deg, #25905c, #1c7549); }
 
-/* Highlight effect on tour target elements */
-[data-tour-highlight] { position: relative; z-index: 1001; }
+/* Highlight effect on tour target elements - applied via JS */
+:global([data-tour-highlight]) { position: relative; z-index: 1001; }
