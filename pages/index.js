@@ -31,12 +31,15 @@ function LandingPage({ onSignIn }) {
     <div className={styles.landing}>
       <div className={styles.landingCard}>
         <img src="/logo.png" alt="PantryPal" className={styles.landingLogo} />
-        <p className={styles.landingSub}>Track your groceries, scan receipts, get recipe ideas, and never forget what you need at the store.</p>
-        <div className={styles.landingFeatures}>
-          <div className={styles.landingFeature}><span>📷</span> Scan and log receipts</div>
-          <div className={styles.landingFeature}><span>🧺</span> Track your pantry</div>
-          <div className={styles.landingFeature}><span>🍳</span> Get recipe suggestions</div>
-          <div className={styles.landingFeature}><span>🛒</span> Smart shopping cart</div>
+        <p className={styles.landingHook}>Shop smarter, cook better, waste less.</p>
+        <p className={styles.landingSub}>PantryPal keeps track of your groceries so you always know what you have, what you need, and what to make for your next meal.</p>
+        <div className={styles.landingBulletsWrap}>
+          <div className={styles.landingBullets}>
+            <div className={styles.landingBullet}><span className={styles.landingBulletIcon}>📷</span><span className={styles.landingBulletText}>Scan and log receipts</span></div>
+            <div className={styles.landingBullet}><span className={styles.landingBulletIcon}>🧺</span><span className={styles.landingBulletText}>Track your pantry</span></div>
+            <div className={styles.landingBullet}><span className={styles.landingBulletIcon}>🍳</span><span className={styles.landingBulletText}>Get recipe suggestions</span></div>
+            <div className={styles.landingBullet}><span className={styles.landingBulletIcon}>🛒</span><span className={styles.landingBulletText}>Smart shopping cart</span></div>
+          </div>
         </div>
         <button className={styles.landingSignIn} onClick={onSignIn}>
           <svg width="18" height="18" viewBox="0 0 24 24" style={{flexShrink:0}}>
@@ -136,8 +139,9 @@ export default function PantryPal() {
   const [toast, setToast] = useState('')
   const [confirmDialog, setConfirmDialog] = useState(null)
   const [showTutorial, setShowTutorial] = useState(false)
-  const [activeTour, setActiveTour] = useState(null) // steps array
+  const [activeTour, setActiveTour] = useState(null)
   const [seenTours, setSeenTours] = useState({})
+  const [showHelpHint, setShowHelpHint] = useState(false)
 
   const showToast = useCallback((msg) => { setToast(msg); setTimeout(() => setToast(''), 2800) }, [])
   function confirm(message, onConfirm) { setConfirmDialog({ message, onConfirm }) }
@@ -265,6 +269,11 @@ export default function PantryPal() {
         if (data.profile[`tour_${t}`]) seen[`tour_${t}`] = true
       })
       setSeenTours(seen)
+      // Show help hint for returning users who've already seen the home tour
+      if (data.profile.tour_home) {
+        setTimeout(() => setShowHelpHint(true), 1500)
+        setTimeout(() => setShowHelpHint(false), 5000)
+      }
     }
   }
 
@@ -738,7 +747,15 @@ export default function PantryPal() {
           <img src="/pantrypal-text.png" alt="PantryPal" className={styles.headerTitleImg} />
         </button>
         <div style={{display:'flex',alignItems:'center',gap:6}}>
-        <button className={styles.coachMarkBtn} onClick={()=>startTour(tab)} title="Show page tour">?</button>
+        <div style={{position:'relative'}}>
+          <button className={styles.coachMarkBtn} onClick={()=>{startTour(tab);setShowHelpHint(false)}} title="Show page tour">?</button>
+          {showHelpHint && (
+            <div className={styles.helpHint}>
+              <div className={styles.helpHintArrow}/>
+              Tap for help
+            </div>
+          )}
+        </div>
         <div className={styles.profileArea} data-profile>
           <button className={styles.avatarBtn} onClick={() => { setProfileOpen(o => !o); if (profileOpen) setProfilePanel(null) }}>
             {unreadCount > 0 && <span className={styles.notifDot}>{unreadCount > 9 ? '9+' : unreadCount}</span>}

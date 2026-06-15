@@ -10,8 +10,8 @@
 
 .btnRow { display: flex; align-items: center; justify-content: space-between; }
 
-.skipBtn { background: none; border: none; font-size: 12px; color: #aaa; cursor: pointer; font-family: inherit; padding: 0; }
-.skipBtn:hover { color: #666; }
+.skipBtn { background: none; border: none; font-size: 14px; font-weight: 600; color: #2d8a6b; cursor: pointer; font-family: inherit; padding: 4px 0; }
+.skipBtn:hover { color: #1f6b52; text-decoration: underline; }
 
 .prevBtn { padding: 6px 12px; border: 1px solid #e0e0e0; border-radius: 8px; background: #fff; font-size: 12px; cursor: pointer; font-family: inherit; }
 .prevBtn:hover { background: #f5f5f5; }

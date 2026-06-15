@@ -56,7 +56,7 @@ export default function Tour({ steps, onComplete, onSkip }) {
 
   return (
     <>
-      <div className={styles.overlay} onClick={skip} />
+      <div className={styles.overlay} onClick={skip} aria-label="Close tour" />
       {pos?.rect && (
         <div style={{
           position: 'fixed',

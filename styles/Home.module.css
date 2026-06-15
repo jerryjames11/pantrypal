@@ -467,3 +467,15 @@
 .homeHHBox { border: 1.5px solid #4db88a !important; }
 .homeShareEmptyJade { border: 1.5px solid #4db88a !important; }
 .homeSharesScrollJade { border: 1.5px solid #4db88a !important; }
+
+/* ── Landing page redesign ───────────────────────────────────────────── */
+.landingHook { font-size: 16px; font-weight: 800; color: #1a5c45; margin-bottom: 10px; text-align: center; }
+.landingBulletsWrap { display: flex; justify-content: center; margin-bottom: 24px; }
+.landingBullets { display: inline-flex; flex-direction: column; gap: 12px; text-align: left; }
+.landingBullet { display: flex; align-items: center; gap: 12px; white-space: nowrap; }
+.landingBulletIcon { font-size: 20px; width: 28px; text-align: center; flex-shrink: 0; }
+.landingBulletText { font-size: 14px; font-weight: 700; color: #1a5c45; white-space: nowrap; }
+
+/* ── Help hint bubble ────────────────────────────────────────────────── */
+.helpHint { position: absolute; top: calc(100% + 10px); right: 0; background: #1f6b52; color: #fff; font-size: 12px; font-weight: 600; padding: 7px 12px; border-radius: 10px; white-space: nowrap; z-index: 300; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+.helpHintArrow { position: absolute; top: -6px; right: 10px; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 6px solid #1f6b52; }
