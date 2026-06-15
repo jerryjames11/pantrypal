@@ -142,7 +142,7 @@ export default function PantryPal() {
   const [activeTour, setActiveTour] = useState(null)
   const [seenTours, setSeenTours] = useState({})
   const [profileLoaded, setProfileLoaded] = useState(false)
-
+  const [showHelpHint, setShowHelpHint] = useState(false)
 
   const showToast = useCallback((msg) => { setToast(msg); setTimeout(() => setToast(''), 2800) }, [])
   function confirm(message, onConfirm) { setConfirmDialog({ message, onConfirm }) }
