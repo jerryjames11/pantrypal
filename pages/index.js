@@ -1105,11 +1105,11 @@ export default function PantryPal() {
               <button onClick={clearImage} style={{marginTop:6,fontSize:12,padding:'4px 10px',cursor:'pointer'}}>✕ Clear</button>
             </div>
           )}
-          {previewSrc&&!scanLoading&&<button className={styles.scanBtn} onClick={()=>doScan({imageBase64:imgBase64,imageMime:imgMime})}>✨ Read receipt with AI</button>}
+          {previewSrc&&!scanLoading&&<button className={styles.scanBtn} onClick={()=>doScan({imageBase64:imgBase64,imageMime:imgMime})}>📷 Read receipt</button>}
           {scanLoading&&<div className={styles.loadRow}><Spinner /> Scanning receipt…</div>}
           <div className={styles.divider}>or paste receipt text</div>
           <textarea id="tour-scan-text" className={styles.textarea} value={receiptText} onChange={e=>setReceiptText(e.target.value)} rows={5} placeholder="Paste receipt text, grocery list, or type items and prices…" />
-          {!scanLoading&&<button className={styles.scanBtn} style={{marginTop:8,opacity:!receiptText.trim()?0.5:1}} onClick={()=>{if(receiptText.trim())doScan({text:receiptText})}}>✓ Parse text with AI</button>}
+          {!scanLoading&&<button className={styles.scanBtn} style={{marginTop:8,opacity:!receiptText.trim()?0.5:1}} onClick={()=>{if(receiptText.trim())doScan({text:receiptText})}}>✓ Parse text</button>}
           {scanResult&&!scanResult.error&&(
             <div className={styles.scanSuccess}>
               <div className={styles.scanSuccessHead}><span>✓ {scanResult.items.length} items added</span><span className={styles.storeName}>{scanResult.receipt?.store_name}</span></div>
@@ -1173,7 +1173,7 @@ export default function PantryPal() {
         <section>
           <div id="tour-cart-input" style={{display:'flex',gap:8,marginBottom:16}}>
             <button id="tour-recipes-btn" className={styles.scanBtn} style={{flex:1}} onClick={getRecipes} disabled={recipeLoading}>
-              {recipeLoading?'Finding matches…':'✨ Suggest recipes from my pantry'}
+              {recipeLoading?'Finding matches…':'🍳 Suggest recipes from my pantry'}
             </button>
             <button id="tour-recipes-saved" className={`${styles.chip} ${showSaved?styles.chipOn:''}`} onClick={()=>setShowSaved(!showSaved)}>
               ❤️ Saved {savedRecipes.length>0&&`(${savedRecipes.length})`}
@@ -1337,9 +1337,9 @@ export default function PantryPal() {
             <p className={styles.tutorialSub}>Here's what you can do:</p>
             <div className={styles.tutorialSteps}>
               <div className={styles.tutorialStep}><span className={styles.tutorialIcon}>📋</span><div><strong>My Pantry</strong><p>Track everything in your home. Add items manually or scan a receipt.</p></div></div>
-              <div className={styles.tutorialStep}><span className={styles.tutorialIcon}>📷</span><div><strong>Scan</strong><p>Photograph or paste a receipt — AI reads it and adds items to your pantry automatically.</p></div></div>
+              <div className={styles.tutorialStep}><span className={styles.tutorialIcon}>📷</span><div><strong>Scan</strong><p>Photograph or paste a receipt and it reads it and adds items to your pantry automatically.</p></div></div>
               <div className={styles.tutorialStep}><span className={styles.tutorialIcon}>🛒</span><div><strong>Cart</strong><p>Build your shopping list. Low or out-of-stock items can be pulled in automatically.</p></div></div>
-              <div className={styles.tutorialStep}><span className={styles.tutorialIcon}>🍳</span><div><strong>Recipes</strong><p>Get AI recipe suggestions based on what's in your pantry. Save favorites and share with friends.</p></div></div>
+              <div className={styles.tutorialStep}><span className={styles.tutorialIcon}>🍳</span><div><strong>Recipes</strong><p>Get recipe suggestions based on what's in your pantry. Save favorites and share with friends.</p></div></div>
               <div className={styles.tutorialStep}><span className={styles.tutorialIcon}>👤</span><div><strong>Profile</strong><p>Add friends, create a household to share your pantry, and manage notifications.</p></div></div>
             </div>
             <button className={styles.tutorialBtn} onClick={completeTutorial}>Got it, let's go! →</button>
