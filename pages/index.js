@@ -3,6 +3,8 @@ import { track, identify, reset } from '../lib/posthog'
 import Link from 'next/link'
 import { supabase } from '../lib/supabase'
 import styles from '../styles/Home.module.css'
+import Tour from '../components/Tour'
+import { TOURS } from '../lib/tourSteps'
 
 function fmt(n) { return n != null ? `$${Number(n).toFixed(2)}` : '' }
 function PriceDelta({ delta }) {
