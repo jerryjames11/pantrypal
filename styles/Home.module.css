@@ -250,12 +250,14 @@
 
 /* ── Bottom navigation bar ───────────────────────────────────────────── */
 .bottomNav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 660px; background: linear-gradient(135deg, #2d8a6b 0%, #1f6b52 100%); display: flex; align-items: center; justify-content: space-around; padding: 8px 6px env(safe-area-inset-bottom, 12px); border-top: 1px solid rgba(255,255,255,0.15); z-index: 100; }
-.bottomNavItem { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 12px; border-radius: 14px; border: none; background: transparent; cursor: pointer; font-family: inherit; position: relative; min-width: 56px; }
+.bottomNavItem { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 10px; border-radius: 12px; border: none; background: transparent; cursor: pointer; font-family: inherit; position: relative; min-width: 52px; }
 .bottomNavItem:hover { background: rgba(255,255,255,0.12); }
-.bottomNavActive { background: linear-gradient(135deg, #f5f0e8 0%, #e8dcc8 100%) !important; }
-.bottomNavIcon { font-size: 22px; line-height: 1; }
-.bottomNavLabel { font-size: 10px; font-weight: 500; color: rgba(255,255,255,0.75); white-space: nowrap; }
-.bottomNavActive .bottomNavLabel { color: #3d2b0e; font-weight: 700; }
+.bottomNavItem svg { stroke: rgba(255,255,255,0.7); }
+.bottomNavActive svg { stroke: #fff !important; }
+.bottomNavActive { background: rgba(255,255,255,0.18) !important; }
+.bottomNavIcon { font-size: 22px; line-height: 1; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.7); }
+.bottomNavLabel { font-size: 10px; font-weight: 500; color: rgba(255,255,255,0.7); white-space: nowrap; }
+.bottomNavActive .bottomNavLabel { color: #fff; font-weight: 700; }
 .cartBadge { position: absolute; top: 2px; right: 6px; background: #ff6b6b; color: #fff; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 10px; min-width: 16px; text-align: center; }
 
 /* Landing logo sits on white circle so white bg blends in */
@@ -387,11 +389,11 @@
 .coachMarkBtn:hover { background: rgba(255,255,255,0.35); }
 
 /* ── Jade green header text image ────────────────────────────────────── */
-.headerTitleImg { position: absolute; left: 50%; transform: translateX(-50%); height: 28px; object-fit: contain; filter: brightness(0) invert(1); pointer-events: none; z-index: 0; }
-.headerBasket { width: 44px; height: 44px; object-fit: contain; filter: brightness(0) invert(1); flex-shrink: 0; }
-.brandBtnHome { background: none; border: none; cursor: pointer; padding: 2px; border-radius: 8px; display: flex; align-items: center; flex-shrink: 0; }
-.brandBtnHome:hover { background: rgba(255,255,255,0.15); }
-.titleBtnHome { background: none; border: none; cursor: pointer; position: absolute; left: 50%; transform: translateX(-50%); padding: 4px 8px; border-radius: 6px; }
+.headerTitleImg { position: absolute; left: 50%; transform: translateX(-50%); height: 30px; object-fit: contain; filter: brightness(0) invert(1); pointer-events: none; z-index: 0; display: block; }
+.headerBasket { width: 48px; height: 48px; object-fit: contain; filter: brightness(0) invert(1); flex-shrink: 0; display: block; }
+.brandBtnHome { background: none; border: none; cursor: pointer; padding: 0; border-radius: 8px; display: flex; align-items: center; flex-shrink: 0; }
+.brandBtnHome:hover { background: rgba(255,255,255,0.12); }
+.titleBtnHome { background: none; border: none; cursor: pointer; position: absolute; left: 50%; transform: translateX(-50%); padding: 6px 10px; border-radius: 6px; z-index: 1; display: flex; align-items: center; }
 .titleBtnHome:hover { background: rgba(255,255,255,0.15); }
 
 /* ── Home page ───────────────────────────────────────────────────────── */
