@@ -186,7 +186,7 @@ export default function PantryPal() {
     if (!user || !tab) return
     const tourKey = `tour_${tab}`
     if (!seenTours[tourKey] && TOURS[tab]) {
-      setTimeout(() => startTour(tab), 600)
+      setTimeout(() => startTour(tab), 800)
     }
   }, [tab, user])
 
@@ -236,11 +236,12 @@ export default function PantryPal() {
     const tourKey = `tour_${tab}`
     setSeenTours(s => ({ ...s, [tourKey]: true }))
     setActiveTour(null)
-    // Persist to profile
-    fetch(`/api/profile?user_id=${user.id}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ [tourKey]: true })
-    })
+    if (user) {
+      fetch(`/api/profile?user_id=${user.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [tourKey]: true })
+      })
+    }
   }
 
   function skipTour() {
@@ -260,7 +261,7 @@ export default function PantryPal() {
     // Load seen tours
     if (data.profile) {
       const seen = {}
-      Object.keys(TOURS).forEach(t => {
+      ;['home','pantry','scan','cart','history','recipes'].forEach(t => {
         if (data.profile[`tour_${t}`]) seen[`tour_${t}`] = true
       })
       setSeenTours(seen)
@@ -966,7 +967,7 @@ export default function PantryPal() {
           <div className={styles.homeGreetingSub}>Here's your pantry overview</div>
 
           {/* Pantry summary card */}
-          <div className={styles.pantryCard} onClick={() => setTab('pantry')}>
+          <div className={styles.pantryCard} id="tour-home-pantry" onClick={() => setTab('pantry')}>
             <div className={styles.pantryCardTitle}>My Pantry</div>
             <div className={styles.homeStats}>
               <div className={styles.homeStatBox}><div className={styles.homeStatVal}>{stats.fresh}</div><div className={styles.homeStatLbl}>In stock</div></div>
@@ -987,7 +988,7 @@ export default function PantryPal() {
           </div>
 
           {/* Shortcuts */}
-          <div className={styles.homeShortcuts}>
+          <div id="tour-home-shortcuts" className={styles.homeShortcuts}>
             <div className={styles.homeShortcutJade} onClick={() => setTab('scan')}>
               <div className={styles.homeShortcutIcon}>📷</div>
               <div className={styles.homeShortcutLbl}>Scan receipt</div>
@@ -1276,7 +1277,7 @@ export default function PantryPal() {
       {/* ══ RECIPES ══ */}
       {tab==='recipes'&&(
         <section>
-          <div id="tour-cart-input" style={{display:'flex',gap:8,marginBottom:16}}>
+          <div id="tour-recipes-row" style={{display:'flex',gap:8,marginBottom:16}}>
             <button id="tour-recipes-btn" className={styles.scanBtn} style={{flex:1}} onClick={getRecipes} disabled={recipeLoading}>
               {recipeLoading?'Finding matches…':'🍳 Suggest recipes from my pantry'}
             </button>
@@ -1382,7 +1383,7 @@ export default function PantryPal() {
               </div>
             </div>
           </div>
-          <div style={{display:'flex',gap:8,marginBottom:16}}>
+          <div id="tour-cart-input" style={{display:'flex',gap:8,marginBottom:16}}>
             <input type="text" value={cartItemName} placeholder="Add item…" onChange={e=>setCartItemName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&addToCart()} style={{flex:2,padding:'9px 11px',border:'1px solid #e0e0e0',borderRadius:8,fontSize:14,fontFamily:'inherit',minWidth:0}} />
             <input type="text" value={cartItemQty} placeholder="Qty" onChange={e=>setCartItemQty(e.target.value)} style={{width:64,padding:'9px 8px',border:'1px solid #e0e0e0',borderRadius:8,fontSize:14,fontFamily:'inherit'}} />
             <button className={styles.addBtn} onClick={addToCart}>+ Add</button>

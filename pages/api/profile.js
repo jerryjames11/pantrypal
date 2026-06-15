@@ -24,7 +24,7 @@ export default async function handler(req, res) {
     if (tutorial_completed !== undefined) update.tutorial_completed = tutorial_completed
 
     // Store tour flags (tour_pantry, tour_scan, tour_cart, tour_history, tour_recipes)
-    const tourKeys = ['tour_pantry', 'tour_scan', 'tour_cart', 'tour_history', 'tour_recipes']
+    const tourKeys = ['tour_home', 'tour_pantry', 'tour_scan', 'tour_cart', 'tour_history', 'tour_recipes']
     tourKeys.forEach(k => { if (rest[k] !== undefined) update[k] = rest[k] })
 
     const { data, error } = await sb.from('profiles').upsert({ id: user_id, ...update }).select().single()
