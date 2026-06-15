@@ -141,7 +141,8 @@ export default function PantryPal() {
   const [showTutorial, setShowTutorial] = useState(false)
   const [activeTour, setActiveTour] = useState(null)
   const [seenTours, setSeenTours] = useState({})
-  const [showHelpHint, setShowHelpHint] = useState(false)
+  const [profileLoaded, setProfileLoaded] = useState(false)
+
 
   const showToast = useCallback((msg) => { setToast(msg); setTimeout(() => setToast(''), 2800) }, [])
   function confirm(message, onConfirm) { setConfirmDialog({ message, onConfirm }) }
@@ -187,14 +188,14 @@ export default function PantryPal() {
   }, [pantryView, household])
 
   useEffect(() => {
-    if (!user || !tab) return
+    if (!user || !tab || !profileLoaded) return
     const tourKey = `tour_${tab}`
     const hasSeenAnyTour = Object.values(seenTours).some(v => v === true)
     // Only auto-start tour for brand new users who haven't seen any tour yet
     if (!hasSeenAnyTour && !seenTours[tourKey] && TOURS[tab]) {
       setTimeout(() => startTour(tab), 800)
     }
-  }, [tab, user, seenTours])
+  }, [tab, user, seenTours, profileLoaded])
 
   useEffect(() => {
     function handleClick(e) {
@@ -271,7 +272,7 @@ export default function PantryPal() {
         if (data.profile[`tour_${t}`]) seen[`tour_${t}`] = true
       })
       setSeenTours(seen)
-      // Show help hint immediately for returning users who've already seen the home tour
+      setProfileLoaded(true)
       if (data.profile.tour_home) {
         setShowHelpHint(true)
         setTimeout(() => setShowHelpHint(false), 5000)
@@ -1014,16 +1015,16 @@ export default function PantryPal() {
           {/* Shortcuts */}
           <div id="tour-home-shortcuts" className={styles.homeShortcuts}>
             <div className={styles.homeShortcutJade} onClick={() => setTab('scan')}>
-              <div className={styles.homeShortcutIcon}>📷</div>
-              <div className={styles.homeShortcutLbl}>Scan receipt</div>
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2d8a6b" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              <div className={styles.homeShortcutLblJade}>Scan receipt</div>
             </div>
             <div className={styles.homeShortcutJade} onClick={() => setTab('cart')}>
-              <div className={styles.homeShortcutIcon}>🛒</div>
-              <div className={styles.homeShortcutLbl}>View cart {cart.length > 0 && `(${cart.length})`}</div>
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2d8a6b" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+              <div className={styles.homeShortcutLblJade}>Shopping list{cart.length > 0 && ` (${cart.length})`}</div>
             </div>
             <div className={styles.homeShortcutJade} onClick={() => setTab('recipes')}>
-              <div className={styles.homeShortcutIcon}>🍳</div>
-              <div className={styles.homeShortcutLbl}>Recipes</div>
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2d8a6b" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2h1a2 2 0 0 1 2 2v15a2 2 0 0 1-2 2H3"/><path d="M21 22h-1a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h1"/><path d="M8 7h8"/><path d="M8 11h8"/><path d="M8 15h5"/></svg>
+              <div className={styles.homeShortcutLblJade}>Recipes</div>
             </div>
           </div>
 
