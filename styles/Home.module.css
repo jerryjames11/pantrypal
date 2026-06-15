@@ -9,7 +9,7 @@
 .brandBtn:hover { background: rgba(255,255,255,0.15); }
 .logo { font-size: 28px; line-height: 1; }
 .appTitle { font-size: 17px; font-weight: 700; letter-spacing: -.3px; color: #fff; font-family: inherit; }
-.headerText { position: absolute; left: 50%; transform: translateX(-50%); height: 28px; object-fit: contain; mix-blend-mode: screen; pointer-events: none; }
+.headerText { position: absolute; left: 50%; transform: translateX(-50%); height: 28px; object-fit: contain; filter: brightness(0) invert(1); pointer-events: none; }
 .appSub { font-size: 12px; color: #7a5c2e; margin-top: 1px; }
 .userArea { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .profileArea { position: relative; flex-shrink: 0; }
@@ -244,7 +244,7 @@
 .landingNote { font-size: 12px; color: #aaa; }
 
 /* ── Logo images ─────────────────────────────────────────────────────── */
-.headerLogo { width: 52px; height: 52px; object-fit: cover; object-position: top center; filter: brightness(0) invert(1); }
+.headerLogo { width: 90px; height: 90px; object-fit: contain; filter: brightness(0) invert(1); margin: -20px 0; }
 .splashLogo { width: 300px; height: 300px; object-fit: contain; margin-bottom: 16px; animation: splashBounce 1s ease infinite alternate; filter: brightness(0) invert(1); }
 .landingLogo { width: 500px; height: 500px; object-fit: contain; max-width: 90vw; }
 
