@@ -200,9 +200,12 @@ export default function PantryShelf({ categories, pantryItems, onCategoryTap, on
     return { ...cat, _status: hasOut ? 'out' : hasLow ? 'low' : 'ok', _count: items.length }
   })
 
-  // Split into placed (have shelf_number) and unplaced
-  const placed = catsWithStatus.filter(c => c.shelf_number && c.shelf_x !== null && c.shelf_x !== undefined)
-  const unplaced = catsWithStatus.filter(c => !c.shelf_number || c.shelf_x === null || c.shelf_x === undefined)
+  // Always auto-spread categories across shelves initially
+  // Only use saved position if user has explicitly dragged (shelf_x !== default 0.1 or shelf_number > 1)
+  const hasCustomPosition = (c) => c.shelf_number > 1 || (c.shelf_number === 1 && c.shelf_x !== null && c.shelf_x !== undefined && c.shelf_x !== 0.1)
+  
+  const placed = catsWithStatus.filter(c => hasCustomPosition(c))
+  const unplaced = catsWithStatus.filter(c => !hasCustomPosition(c))
 
   // Build shelves from placed items
   const shelves = Array.from({ length: 6 }, (_, i) => ({
@@ -212,8 +215,8 @@ export default function PantryShelf({ categories, pantryItems, onCategoryTap, on
       .sort((a, b) => (a.shelf_x || 0) - (b.shelf_x || 0))
   }))
 
-  // Auto-place unplaced categories spread across shelves
-  const xPositions = [0.08, 0.38, 0.68] // left, center, right
+  // Auto-place unplaced categories spread evenly across all 6 shelves
+  const xPositions = [0.12, 0.45, 0.78]
   unplaced.forEach(cat => {
     for (let s = 0; s < 6; s++) {
       if (shelves[s].items.length < 3) {
