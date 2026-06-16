@@ -389,11 +389,11 @@
 .coachMarkBtn:hover { background: rgba(255,255,255,0.35); }
 
 /* ── Jade green header text image ────────────────────────────────────── */
-.headerTitleImg { height: 28px; object-fit: contain; filter: brightness(0) invert(1); display: block; }
-.headerBasket { width: 48px; height: 48px; object-fit: contain; filter: brightness(0) invert(1); flex-shrink: 0; display: block; }
-.brandBtnHome { background: none; border: none; cursor: pointer; padding: 0; border-radius: 8px; display: flex; align-items: center; flex-shrink: 0; }
+.headerTitleImg { height: 24px; object-fit: contain; filter: brightness(0) invert(1); display: block; }
+.headerBasket { width: 36px; height: 36px; object-fit: contain; filter: brightness(0) invert(1); flex-shrink: 0; display: block; vertical-align: middle; }
+.brandBtnHome { background: none; border: none; cursor: pointer; padding: 0; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; height: 40px; }
 .brandBtnHome:hover { background: rgba(255,255,255,0.12); }
-.titleBtnHome { background: none; border: none; cursor: pointer; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 6px 10px; border-radius: 6px; z-index: 1; display: flex; align-items: center; }
+.titleBtnHome { background: none; border: none; cursor: pointer; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 4px 8px; border-radius: 6px; z-index: 1; display: flex; align-items: center; justify-content: center; }
 .titleBtnHome:hover { background: rgba(255,255,255,0.15); }
 
 /* ── Home page ───────────────────────────────────────────────────────── */
