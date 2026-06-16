@@ -1125,45 +1125,69 @@ export default function PantryPal() {
           <div className={styles.homeGreeting}>
             Welcome back, {profile?.username ? `@${profile.username}` : (profile?.display_name || user?.user_metadata?.full_name || 'there')} 👋
           </div>
-          <div className={styles.homeGreetingSub}>Here's your pantry overview</div>
+          <div className={styles.homeGreetingSub}>
+            {pantry.length === 0
+              ? 'Your pantry is empty — scan a receipt to get started'
+              : stats.out > 0 && stats.low > 0
+                ? `You have ${stats.out + stats.low} items running low or out of stock`
+                : stats.out > 0
+                  ? `You have ${stats.out} item${stats.out !== 1 ? 's' : ''} out of stock`
+                  : stats.low > 0
+                    ? `You have ${stats.low} item${stats.low !== 1 ? 's' : ''} running low`
+                    : 'All stocked up! 🎉'}
+          </div>
 
-          {/* Pantry summary card */}
-          <div className={styles.pantryCard} id="tour-home-pantry" onClick={() => setTab('pantry')}>
-            <div className={styles.pantryCardTitle}>My Pantry</div>
-            <div className={styles.homeStats}>
-              <div className={styles.homeStatBox}><div className={styles.homeStatVal}>{stats.fresh}</div><div className={styles.homeStatLbl}>In stock</div></div>
-              <div className={styles.homeStatBox}><div className={styles.homeStatVal}>{stats.low}</div><div className={styles.homeStatLbl}>Running low</div></div>
-              <div className={styles.homeStatBox}><div className={styles.homeStatVal}>{stats.out}</div><div className={styles.homeStatLbl}>Out of stock</div></div>
+          {/* Scan hero */}
+          <div className={styles.scanHero} onClick={() => setTab('scan')}>
+            <div className={styles.scanHeroLeft}>
+              <div className={styles.scanHeroLabel}>Primary feature</div>
+              <div className={styles.scanHeroTitle}>Scan a Receipt</div>
+              <div className={styles.scanHeroSub}>Your pantry fills automatically</div>
             </div>
-            <div className={styles.homeLowBar}>
-              {pantry.length === 0 ? (
-                <div className={styles.homeLowNone}>📭 Pantry is empty — add items to get started</div>
-              ) : stats.low > 0 || stats.out > 0 ? (
-                <div>
-                  <div className={styles.homeLowText}>⚠️ {stats.low + stats.out} item{stats.low+stats.out!==1?'s':''} need attention</div>
-                  <div className={styles.homeLowSub}>{pantry.filter(i=>i.status==='low'||i.status==='out').slice(0,4).map(i=>i.name).join(' · ')}</div>
-                </div>
-              ) : (
-                <div className={styles.homeLowNone}>✓ All pantry items in stock</div>
-              )}
-              <span style={{fontSize:18,color:'#856404'}}>›</span>
+            <div className={styles.scanHeroIcon}>
+              <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             </div>
           </div>
 
-          {/* Shortcuts */}
-          <div id="tour-home-shortcuts" className={styles.homeShortcuts}>
-            <div className={styles.homeShortcutJade} onClick={() => setTab('scan')}>
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2d8a6b" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-              <div className={styles.homeShortcutLblJade}>Scan receipt</div>
+          {/* Mini stats — each taps to filtered pantry */}
+          <div className={styles.homeMiniStats} id="tour-home-pantry">
+            <div className={styles.homeMiniStat} onClick={() => { setTab('pantry'); setPantryFilter('fresh') }}>
+              <div className={styles.homeMiniStatVal}>{stats.fresh}</div>
+              <div className={styles.homeMiniStatLbl}>In stock</div>
             </div>
-            <div className={styles.homeShortcutJade} onClick={() => setTab('cart')}>
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2d8a6b" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-              <div className={styles.homeShortcutLblJade}>Shopping list{cart.length > 0 && ` (${cart.length})`}</div>
+            <div className={`${styles.homeMiniStat} ${stats.low > 0 ? styles.homeMiniStatLow : ''}`} onClick={() => { setTab('pantry'); setPantryFilter('low') }}>
+              <div className={styles.homeMiniStatVal}>{stats.low}</div>
+              <div className={styles.homeMiniStatLbl}>Running low</div>
             </div>
-            <div className={styles.homeShortcutJade} onClick={() => setTab('recipes')}>
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2d8a6b" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2h1a2 2 0 0 1 2 2v15a2 2 0 0 1-2 2H3"/><path d="M21 22h-1a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h1"/><path d="M8 7h8"/><path d="M8 11h8"/><path d="M8 15h5"/></svg>
-              <div className={styles.homeShortcutLblJade}>Recipes</div>
+            <div className={`${styles.homeMiniStat} ${stats.out > 0 ? styles.homeMiniStatOut : ''}`} onClick={() => { setTab('pantry'); setPantryFilter('out') }}>
+              <div className={styles.homeMiniStatVal}>{stats.out}</div>
+              <div className={styles.homeMiniStatLbl}>Out of stock</div>
             </div>
+          </div>
+
+          {/* Shopping list preview */}
+          <div className={styles.homeShopBox} id="tour-home-shortcuts" onClick={() => setTab('cart')}>
+            <div className={styles.homeShopBoxHdr}>
+              <div className={styles.homeShopBoxTitle}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2d8a6b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                Shopping List
+              </div>
+              {cart.length > 0 && <div className={styles.homeShopBadge}>{cart.length}</div>}
+              <span className={styles.homeShopArrow}>›</span>
+            </div>
+            {cart.length === 0 ? (
+              <div className={styles.homeShopEmpty}>No items yet — add from your pantry or manually</div>
+            ) : (
+              <div className={styles.homeShopItems}>
+                {cart.slice(0, 3).map(item => (
+                  <div key={item.id} className={styles.homeShopItem}>
+                    <div className={styles.homeShopCb} />
+                    <span>{item.name}</span>
+                  </div>
+                ))}
+                {cart.length > 3 && <div className={styles.homeShopMore}>+ {cart.length - 3} more items →</div>}
+              </div>
+            )}
           </div>
 
           {/* Household */}
@@ -1620,19 +1644,34 @@ export default function PantryPal() {
 
       {/* BOTTOM NAV */}
       <nav id="tour-bottom-nav" className={styles.bottomNav}>
-        {[
-          ['pantry', <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>, 'My Pantry'],
-          ['cart', <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>, 'Shop'],
-          ['scan', <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>, 'Scan'],
-          ['history', <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>, 'History'],
-          ['recipes', <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2h1a2 2 0 0 1 2 2v15a2 2 0 0 1-2 2H3"/><path d="M21 22h-1a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h1"/><path d="M8 7h8"/><path d="M8 11h8"/><path d="M8 15h5"/></svg>, 'Recipes'],
-        ].map(([id, icon, label]) => (
-          <button key={id} className={tab===id?`${styles.bottomNavItem} ${styles.bottomNavActive}`:styles.bottomNavItem} onClick={()=>setTab(id)}>
-            <span className={styles.bottomNavIcon}>{icon}</span>
-            <span className={styles.bottomNavLabel}>{label}</span>
-            {id==='cart'&&cart.length>0&&<span className={styles.cartBadge}>{cart.length}</span>}
-          </button>
-        ))}
+        {/* Home */}
+        <button className={tab==='home'?`${styles.bottomNavItem} ${styles.bottomNavActive}`:styles.bottomNavItem} onClick={()=>setTab('home')}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2z"/><line x1="9" y1="16" x2="15" y2="16"/></svg>
+          <span className={styles.bottomNavLabel}>Home</span>
+        </button>
+        {/* Shop */}
+        <button className={tab==='cart'?`${styles.bottomNavItem} ${styles.bottomNavActive}`:styles.bottomNavItem} onClick={()=>setTab('cart')} style={{position:'relative'}}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          <span className={styles.bottomNavLabel}>Shop</span>
+          {cart.length>0&&<span className={styles.cartBadge}>{cart.length}</span>}
+        </button>
+        {/* Scan — floating bump */}
+        <button className={styles.bottomNavScanWrap} onClick={()=>setTab('scan')}>
+          <div className={`${styles.bottomNavScanBump} ${tab==='scan'?styles.bottomNavScanActive:''}`}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          </div>
+          <span className={styles.bottomNavLabel} style={{color: tab==='scan' ? '#fff' : 'rgba(255,255,255,0.7)', fontWeight: tab==='scan'?700:500}}>Scan</span>
+        </button>
+        {/* My Pantry */}
+        <button className={tab==='pantry'?`${styles.bottomNavItem} ${styles.bottomNavActive}`:styles.bottomNavItem} onClick={()=>setTab('pantry')}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="18" rx="1"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="2" y1="17" x2="22" y2="17"/><rect x="5" y="5" width="3" height="4" rx="0.5"/><rect x="14" y="5" width="4" height="4" rx="0.5"/><rect x="5" y="12" width="4" height="4" rx="0.5"/></svg>
+          <span className={styles.bottomNavLabel}>My Pantry</span>
+        </button>
+        {/* Recipes */}
+        <button className={tab==='recipes'?`${styles.bottomNavItem} ${styles.bottomNavActive}`:styles.bottomNavItem} onClick={()=>setTab('recipes')}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2h1a2 2 0 0 1 2 2v15a2 2 0 0 1-2 2H3"/><path d="M21 22h-1a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h1"/><path d="M8 7h8"/><path d="M8 11h8"/><path d="M8 15h5"/></svg>
+          <span className={styles.bottomNavLabel}>Recipes</span>
+        </button>
       </nav>
 
       {toast&&<div className={styles.toast}>{toast}</div>}
