@@ -446,7 +446,12 @@ export default function PantryPal() {
     const data = await res.json()
     setHousehold(data.household || null)
     setHouseholdMembers(data.members || [])
-    if (!data.household) setPantryView('personal')
+    setPendingJoinRequests(data.pendingRequests || [])
+    if (data.household) {
+      setPantryView('household')
+    } else {
+      setPantryView('personal')
+    }
   }
 
   async function createHousehold() {
@@ -509,11 +514,17 @@ export default function PantryPal() {
     showToast('Left household'); setProfilePanel(null)
   }
 
-  async function acceptHouseholdInvite(household_id) {
+  async function acceptHouseholdInvite(household_id, notif_id) {
+    if (pantry.length > 0) {
+      setShowHouseholdWarning({ householdId: household_id, notifId: notif_id })
+      return
+    }
     await fetch(`/api/households?user_id=${user.id}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'accept_invite', household_id })
     })
+    await loadHousehold()
+    await loadPantry()
     showToast('Joined household!')
   }
 
@@ -1059,7 +1070,7 @@ export default function PantryPal() {
                                   const newData = {...n.data, joined:true}
                                   setNotifications(ns=>ns.map(x=>x.id===n.id?{...x,data:newData}:x))
                                   await fetch(`/api/notifications?user_id=${user.id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:n.id,data:newData})})
-                                  await acceptHouseholdInvite(n.data.household_id)
+                                  await acceptHouseholdInvite(n.data.household_id, n.id)
                                   await loadHousehold()
                                   await loadPantry()
                                 }}>Join</button>
