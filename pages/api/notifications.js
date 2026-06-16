@@ -12,9 +12,12 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'PATCH') {
-    const { id, markAllRead } = req.body
+    const { id, markAllRead, data: newData } = req.body
     if (markAllRead) {
       await sb.from('notifications').update({ read: true }).eq('user_id', user_id)
+    } else if (newData !== undefined) {
+      // Update notification data field (e.g. accepted/joined flags)
+      await sb.from('notifications').update({ data: newData }).eq('id', id).eq('user_id', user_id)
     } else {
       await sb.from('notifications').update({ read: true }).eq('id', id).eq('user_id', user_id)
     }

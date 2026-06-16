@@ -1024,7 +1024,9 @@ export default function PantryPal() {
                             ? <div style={{fontSize:11,color:'#2d8a6b',fontWeight:600,marginTop:6}}>✓ Friend added</div>
                             : <div style={{display:'flex',gap:6,marginTop:6}}>
                                 <button className={styles.panelBtnSm} onClick={async()=>{
-                                  setNotifications(ns=>ns.map(x=>x.id===n.id?{...x,data:{...x.data,accepted:true}}:x))
+                                  const newData = {...n.data, accepted:true}
+                                  setNotifications(ns=>ns.map(x=>x.id===n.id?{...x,data:newData}:x))
+                                  await fetch(`/api/notifications?user_id=${user.id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:n.id,data:newData})})
                                   await respondToFriendRequest(n.data.from_user,'accept')
                                   loadFriends()
                                 }}>Accept</button>
@@ -1040,7 +1042,9 @@ export default function PantryPal() {
                             ? <div style={{fontSize:11,color:'#2d8a6b',fontWeight:600,marginTop:6}}>✓ Joined household</div>
                             : <div style={{display:'flex',gap:6,marginTop:6}}>
                                 <button className={styles.panelBtnSm} onClick={async()=>{
-                                  setNotifications(ns=>ns.map(x=>x.id===n.id?{...x,data:{...x.data,joined:true}}:x))
+                                  const newData = {...n.data, joined:true}
+                                  setNotifications(ns=>ns.map(x=>x.id===n.id?{...x,data:newData}:x))
+                                  await fetch(`/api/notifications?user_id=${user.id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:n.id,data:newData})})
                                   await acceptHouseholdInvite(n.data.household_id)
                                   await loadHousehold()
                                   await loadPantry()
