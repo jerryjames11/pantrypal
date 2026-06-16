@@ -144,6 +144,8 @@ export default function PantryPal() {
   const [profileLoaded, setProfileLoaded] = useState(false)
   const [showHelpHint, setShowHelpHint] = useState(false)
   const [showUsernamePrompt, setShowUsernamePrompt] = useState(false)
+  const [showHouseholdWarning, setShowHouseholdWarning] = useState(null) // household_id
+  const [pendingJoinRequests, setPendingJoinRequests] = useState([])
   const [usernameInput, setUsernameInput] = useState('')
   const [usernameSaving, setUsernameSaving] = useState(false)
   const [usernameError, setUsernameError] = useState('')
@@ -337,6 +339,16 @@ export default function PantryPal() {
     setUnreadCount(data.unread || 0)
   }
 
+  async function markAllNotificationsRead() {
+    if (!user) return
+    await fetch(`/api/notifications?user_id=${user.id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ markAllRead: true })
+    })
+    setNotifications(ns => ns.map(n => ({ ...n, read: true })))
+    setUnreadCount(0)
+  }
+
   async function markAllRead() {
     await fetch(`/api/notifications?user_id=${user.id}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
@@ -454,6 +466,24 @@ export default function PantryPal() {
       body: JSON.stringify({ action: 'invite', household_id: household.id, invitee_id })
     })
     showToast('Invitation sent!'); setHouseholdInviteResults([])
+  }
+
+  async function approveJoinRequest(memberId) {
+    await fetch(`/api/households?user_id=${user.id}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'approve_join', household_id: household.id, member_id: memberId })
+    })
+    setPendingJoinRequests(r => r.filter(m => m.user_id !== memberId))
+    loadHousehold(); showToast('Member approved!')
+  }
+
+  async function rejectJoinRequest(memberId) {
+    await fetch(`/api/households?user_id=${user.id}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'reject_join', household_id: household.id, member_id: memberId })
+    })
+    setPendingJoinRequests(r => r.filter(m => m.user_id !== memberId))
+    showToast('Request rejected.')
   }
 
   async function leaveHousehold() {
@@ -856,11 +886,12 @@ export default function PantryPal() {
                 <div className={styles.panelInner}>
                   <button className={styles.panelBack} onClick={() => setProfilePanel(null)}>← Back</button>
                   <div className={styles.panelTitle}>Friends</div>
+                  {/* Search at top */}
                   <div className={styles.searchTypeRow}>
                     <button className={friendSearchType==='username'?`${styles.searchTypeBtn} ${styles.searchTypeBtnOn}`:styles.searchTypeBtn} onClick={()=>setFriendSearchType('username')}>Username</button>
                     <button className={friendSearchType==='email'?`${styles.searchTypeBtn} ${styles.searchTypeBtnOn}`:styles.searchTypeBtn} onClick={()=>setFriendSearchType('email')}>Email</button>
                   </div>
-                  <div style={{display:'flex',gap:6,marginBottom:8}}>
+                  <div style={{display:'flex',gap:6,marginBottom:12}}>
                     <input className={styles.panelInput} style={{flex:1,marginBottom:0}} value={friendSearch} onChange={e=>setFriendSearch(e.target.value)} placeholder={`Search by ${friendSearchType}…`} onKeyDown={e=>e.key==='Enter'&&searchFriends()} />
                     <button className={styles.panelBtn} style={{marginTop:0,padding:'7px 12px'}} onClick={searchFriends}>Search</button>
                   </div>
@@ -873,6 +904,7 @@ export default function PantryPal() {
                       <button className={styles.panelBtnSm} onClick={() => sendFriendRequest(u.id)}>+ Add</button>
                     </div>
                   ))}
+                  {/* Pending requests */}
                   {pendingReceived.length > 0 && (
                     <>
                       <div className={styles.panelSection}>Pending requests</div>
@@ -889,12 +921,13 @@ export default function PantryPal() {
                       ))}
                     </>
                   )}
-                  {acceptedFriends.length > 0 && (
-                    <>
-                      <div className={styles.panelSection}>Your friends</div>
-                      {acceptedFriends.map(f => {
-                        const friend = f.addressee || f.requester
-                        const friendId = f.addressee_id || f.requester_id
+                  {/* Friends list sorted by most recently added */}
+                  <div className={styles.panelSection}>Your friends ({acceptedFriends.length})</div>
+                  {acceptedFriends.length === 0
+                    ? <div className={styles.empty} style={{fontSize:12}}>No friends added yet</div>
+                    : [...acceptedFriends].sort((a,b) => new Date(b.updated_at||b.created_at) - new Date(a.updated_at||a.created_at)).map(f => {
+                        const friend = f.addressee_id === user.id ? f.requester : f.addressee
+                        const friendId = f.addressee_id === user.id ? f.requester_id : f.addressee_id
                         return (
                           <div key={f.id} className={styles.friendRow}>
                             <div className={styles.friendInfo}>
@@ -904,9 +937,8 @@ export default function PantryPal() {
                             <button className={styles.panelBtnSmDanger} onClick={() => confirm(`Remove ${friend?.display_name} as friend?`, () => removeFriend(friendId))}>Remove</button>
                           </div>
                         )
-                      })}
-                    </>
-                  )}
+                      })
+                  }
                 </div>
               )}
 
@@ -925,6 +957,26 @@ export default function PantryPal() {
                   ) : (
                     <>
                       <div className={styles.householdName}>🏠 {household.name}</div>
+                      {/* View household pantry button */}
+                      <button className={styles.panelBtn} style={{marginBottom:10}} onClick={()=>{setTab('pantry');setPantryView('household');setProfileOpen(false)}}>🧺 View household pantry →</button>
+                      {/* Pending join requests — only for owner */}
+                      {pendingJoinRequests.length > 0 && (
+                        <>
+                          <div className={styles.panelSection} style={{color:'#856404'}}>⏳ Join requests ({pendingJoinRequests.length})</div>
+                          {pendingJoinRequests.map(m => (
+                            <div key={m.id} className={styles.friendRow} style={{background:'#fff8e6',borderRadius:8,padding:'6px 8px',marginBottom:4}}>
+                              <div className={styles.friendInfo}>
+                                <div className={styles.friendName}>{m.profile?.display_name || m.profile?.username}</div>
+                                {m.profile?.username && <div className={styles.friendUser}>@{m.profile.username}</div>}
+                              </div>
+                              <div style={{display:'flex',gap:4}}>
+                                <button className={styles.panelBtnSm} onClick={()=>approveJoinRequest(m.user_id)}>Approve</button>
+                                <button className={styles.panelBtnSmDanger} onClick={()=>rejectJoinRequest(m.user_id)}>Reject</button>
+                              </div>
+                            </div>
+                          ))}
+                        </>
+                      )}
                       <div className={styles.panelSection}>Members ({householdMembers.length})</div>
                       {householdMembers.map(m => (
                         <div key={m.id} className={styles.friendRow}>
@@ -945,7 +997,7 @@ export default function PantryPal() {
                           <button className={styles.panelBtnSm} onClick={() => inviteToHousehold(u.id)}>Invite</button>
                         </div>
                       ))}
-                      <button className={styles.panelBtnDanger} onClick={() => confirm('Leave this household?', leaveHousehold)}>Leave household</button>
+                      <button className={styles.panelBtnDanger} onClick={() => confirm('Leave this household? Your items will return to your personal pantry.', leaveHousehold)}>Leave household</button>
                       {household.owner_id === user.id && (
                         <button className={styles.panelBtnDanger} style={{marginTop:4}} onClick={() => confirm('Delete this household? This cannot be undone.', () => { fetch(`/api/households?user_id=${user.id}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'delete', household_id: household.id }) }); setHousehold(null); setHouseholdMembers([]); setPantryView('personal'); setProfilePanel(null) })}>Delete household</button>
                       )}
@@ -957,29 +1009,34 @@ export default function PantryPal() {
               {/* Notifications Panel */}
               {profilePanel === 'notifications' && (
                 <div className={styles.panelInner}>
-                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
+                  <div style={{display:'flex',alignItems:'center',marginBottom:8}}>
                     <button className={styles.panelBack} onClick={() => setProfilePanel(null)}>← Back</button>
-                    {unreadCount > 0 && <button className={styles.panelBtnSm} onClick={markAllRead}>Mark all read</button>}
                   </div>
                   <div className={styles.panelTitle}>Notifications</div>
-                  {notifications.length === 0 ? <div className={styles.panelNote}>No notifications yet.</div> : notifications.map(n => (
-                    <div key={n.id} className={`${styles.notifRow} ${!n.read?styles.notifUnread:''}`}>
-                      <div>
+                  {notifications.length === 0
+                    ? <div className={styles.panelNote}>No notifications yet.</div>
+                    : notifications.map(n => (
+                    <div key={n.id} className={styles.notifRow}>
+                      <div style={{flex:1}}>
                         <div className={styles.notifTitle}>{n.title}</div>
                         <div className={styles.notifBody}>{n.body}</div>
+                        {n.type==='friend_request'&&n.data?.from_user&&(
+                          n.data?.accepted
+                            ? <div style={{fontSize:11,color:'#2d8a6b',fontWeight:600,marginTop:6}}>✓ Friend added</div>
+                            : <div style={{display:'flex',gap:6,marginTop:6}}>
+                                <button className={styles.panelBtnSm} onClick={()=>acceptFriend(n.data.from_user,n.id)}>Accept</button>
+                                <button className={styles.panelBtnSmDanger} onClick={()=>declineFriend(n.data.from_user,n.id)}>Decline</button>
+                              </div>
+                        )}
+                        {n.type==='household_invite'&&n.data?.household_id&&(
+                          n.data?.joined
+                            ? <div style={{fontSize:11,color:'#2d8a6b',fontWeight:600,marginTop:6}}>✓ Joined household</div>
+                            : <div style={{display:'flex',gap:6,marginTop:6}}>
+                                <button className={styles.panelBtnSm} onClick={()=>acceptHouseholdInvite(n.data.household_id,n.id)}>Join</button>
+                                <button className={styles.panelBtnSmDanger} onClick={()=>declineHouseholdInvite(n.data.household_id,n.id)}>Decline</button>
+                              </div>
+                        )}
                       </div>
-                      {n.type === 'friend_request' && (
-                        <div style={{display:'flex',gap:4,flexShrink:0}}>
-                          <button className={styles.panelBtnSm} onClick={() => { respondToFriendRequest(n.data?.from_user, 'accept'); loadNotifications() }}>✓</button>
-                          <button className={styles.panelBtnSmDanger} onClick={() => { respondToFriendRequest(n.data?.from_user, 'decline'); loadNotifications() }}>✕</button>
-                        </div>
-                      )}
-                      {n.type === 'household_invite' && (
-                        <div style={{display:'flex',gap:4,flexShrink:0}}>
-                          <button className={styles.panelBtnSm} onClick={() => { acceptHouseholdInvite(n.data?.household_id); loadNotifications() }}>Join</button>
-                          <button className={styles.panelBtnSmDanger} onClick={() => { declineHouseholdInvite(n.data?.household_id); loadNotifications() }}>✕</button>
-                        </div>
-                      )}
                     </div>
                   ))}
                 </div>
@@ -1079,12 +1136,17 @@ export default function PantryPal() {
 
           {/* Household */}
           {household ? (
-            <div id="tour-home-household" className={`${styles.homeHHBox} ${styles.homeHHActive} ${styles.homeHHJade}`}>
+            <div id="tour-home-household" className={`${styles.homeHHBox} ${styles.homeHHActive} ${styles.homeHHJade}`}
+              onClick={()=>{setTab('pantry');setPantryView('household')}} style={{cursor:'pointer'}}>
               <div>
                 <div className={styles.homeHHName}>🏠 {household.name}</div>
-                <div className={styles.homeHHSub}>{householdMembers.length} member{householdMembers.length!==1?'s':''} · shared pantry</div>
+                <div className={styles.homeHHSub}>{householdMembers.length} member{householdMembers.length!==1?'s':''}</div>
+                <div style={{fontSize:10,color:'#4db88a',fontStyle:'italic',marginTop:2}}>Tap to view household pantry</div>
               </div>
-              <div className={styles.homeHHPill}>Active</div>
+              <div style={{display:'flex',alignItems:'center',gap:6}}>
+                <div className={styles.homeHHPill}>Active</div>
+                <span style={{fontSize:18,color:'#4db88a',fontWeight:600}}>›</span>
+              </div>
             </div>
           ) : (
             <div id="tour-home-household" className={`${styles.homeHHBox} ${styles.homeHHEmpty} ${styles.homeHHJade}`}>
@@ -1523,6 +1585,25 @@ export default function PantryPal() {
       {toast&&<div className={styles.toast}>{toast}</div>}
 
       {activeTour && <Tour steps={activeTour} onComplete={completeTour} onSkip={skipTour} />}
+
+      {showHouseholdWarning && (
+        <div className={styles.confirmOverlay}>
+          <div className={styles.usernamePromptBox}>
+            <div style={{fontSize:32,textAlign:'center',marginBottom:10}}>⚠️</div>
+            <div className={styles.promptTitle}>Before you join…</div>
+            <div className={styles.whyBox} style={{background:'#fff8e6',border:'1px solid #f5d87a'}}>
+              <div className={styles.whyItem} style={{color:'#6b4a00'}}>🏠 You'll use the household pantry instead of your personal one</div>
+              <div className={styles.whyItem} style={{color:'#6b4a00'}}>📦 Your items move to "{profile?.display_name}'s Items" category in the shared pantry</div>
+              <div className={styles.whyItem} style={{color:'#6b4a00'}}>🔀 You can drag them into existing categories anytime</div>
+              <div className={styles.whyItem} style={{color:'#6b4a00'}}>↩ If you leave, your items come back to your personal pantry</div>
+            </div>
+            <div style={{display:'flex',gap:8,marginTop:4}}>
+              <button className={styles.promptSkip} style={{flex:1,padding:10,border:'1px solid #e8d8c0',borderRadius:10,color:'#555'}} onClick={()=>setShowHouseholdWarning(null)}>Cancel</button>
+              <button className={styles.promptBtn} style={{flex:1,margin:0}} onClick={confirmJoinHousehold}>Join household →</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showUsernamePrompt && (
         <div className={styles.confirmOverlay}>
