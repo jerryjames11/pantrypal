@@ -509,3 +509,7 @@
 .nudgeTitle { font-size: 13px; font-weight: 700; color: #145040; margin-bottom: 3px; }
 .nudgeSub { font-size: 11px; color: #7a6a52; line-height: 1.4; }
 .nudgeArrow { font-size: 20px; color: #4db88a; margin-left: auto; flex-shrink: 0; font-weight: 600; }
+
+/* ── Copy username button ────────────────────────────────────────────── */
+.copyUsernameBtn { background: none; border: 1px solid #c8b89a; border-radius: 5px; padding: 2px 5px; cursor: pointer; color: #7a6a52; display: flex; align-items: center; transition: all .15s; }
+.copyUsernameBtn:hover { background: #e8f5f0; border-color: #4db88a; color: #2d8a6b; }
