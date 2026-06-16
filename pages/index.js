@@ -213,7 +213,7 @@ export default function PantryPal() {
   }, [])
 
   async function signInWithGoogle() {
-    await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } })
+    await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: 'https://pantrypal-green.vercel.app' } })
   }
   async function signOut() {
     await supabase.auth.signOut(); setPantry([]); setReceipts([]); setCart([]); reset(); showToast('Signed out')
