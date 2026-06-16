@@ -389,7 +389,7 @@
 .coachMarkBtn:hover { background: rgba(255,255,255,0.35); }
 
 /* ── Jade green header text image ────────────────────────────────────── */
-.headerTitleImg { height: 40px; object-fit: contain; filter: brightness(0) invert(1); display: block; }
+.headerTitleImg { height: 40px; object-fit: contain; filter: brightness(0) invert(1); display: block; margin-top: 3px; }
 .headerBasket { width: 48px; height: 48px; object-fit: contain; filter: brightness(0) invert(1); flex-shrink: 0; display: block; margin-top: -2px; }
 .brandBtnHome { background: none; border: none; cursor: pointer; padding: 0; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; height: 40px; }
 .brandBtnHome:hover { background: rgba(255,255,255,0.12); }
