@@ -138,12 +138,14 @@ function CategoryIllustration({ categoryName, status }) {
 // Individual draggable category item
 function ShelfItem({ cat, shelfIndex, onTap, onDragStart, isDragging }) {
   const pressTimer = useRef(null)
+  const didDrag = useRef(false)
   const [pressing, setPressing] = useState(false)
 
   const handlePointerDown = useCallback((e) => {
-    e.preventDefault()
+    didDrag.current = false
     setPressing(true)
     pressTimer.current = setTimeout(() => {
+      didDrag.current = true
       setPressing(false)
       onDragStart(e, cat, shelfIndex)
     }, 500)
@@ -154,29 +156,31 @@ function ShelfItem({ cat, shelfIndex, onTap, onDragStart, isDragging }) {
       clearTimeout(pressTimer.current)
       pressTimer.current = null
     }
-    if (pressing) {
-      setPressing(false)
+    setPressing(false)
+    if (!didDrag.current) {
       onTap(cat)
     }
-  }, [pressing, cat, onTap])
+    didDrag.current = false
+  }, [cat, onTap])
 
-  const handlePointerLeave = useCallback(() => {
+  const handlePointerCancel = useCallback(() => {
     if (pressTimer.current) {
       clearTimeout(pressTimer.current)
       pressTimer.current = null
     }
     setPressing(false)
+    didDrag.current = false
   }, [])
 
-  const status = cat._status // 'low' | 'out' | 'ok'
+  const status = cat._status
 
   return (
     <div
       className={`${styles.shelfItem} ${pressing ? styles.pressing : ''} ${isDragging ? styles.dragging : ''}`}
-      style={{ left: `calc(${cat.shelf_x * 100}% )`, transform: 'translateX(-50%)' }}
+      style={{ left: `calc(${(cat.shelf_x || 0.1) * 100}%)`, transform: 'translateX(-50%)' }}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
-      onPointerLeave={handlePointerLeave}
+      onPointerCancel={handlePointerCancel}
       data-cat-id={cat.id}
     >
       {status !== 'ok' && <div className={`${styles.statusDot} ${styles[status]}`} />}
@@ -232,8 +236,8 @@ export default function PantryShelf({ categories, pantryItems, onCategoryTap, on
   })
 
   const handleDragStart = useCallback((e, cat, shelfIndex) => {
-    const rect = e.currentTarget.getBoundingClientRect()
-    setDragging({ cat, originShelf: shelfIndex, startX: e.clientX, startY: e.clientY })
+    e.currentTarget?.setPointerCapture?.(e.pointerId)
+    setDragging({ cat, originShelf: shelfIndex, pointerId: e.pointerId })
     setGhostPos({ x: e.clientX, y: e.clientY })
   }, [])
 

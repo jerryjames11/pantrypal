@@ -1,5 +1,5 @@
 /* Pantry wrap */
-.pantryWrap { padding: 0 6px 8px; background: #f5e8d0; touch-action: none; user-select: none; }
+.pantryWrap { padding: 0 6px 8px; background: #f5e8d0; touch-action: manipulation; user-select: none; -webkit-user-select: none; position: relative; }
 
 /* Pantry unit */
 .pantry { background: linear-gradient(180deg,#7a4f2e,#8B5030); border-radius: 10px; border-left: 10px solid #5a3820; border-right: 10px solid #5a3820; border-bottom: 12px solid #4a2810; box-shadow: 3px 4px 14px rgba(0,0,0,0.35), inset 0 1px 3px rgba(255,255,255,0.08); position: relative; }
