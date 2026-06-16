@@ -299,8 +299,9 @@ export default function PantryPal() {
     const data = await res.json()
     if (data.error) { showToast(data.error); setProfileSaving(false); return }
     setProfile(data.profile)
-    showToast('Profile updated!')
     setProfileSaving(false)
+    setProfilePanel(null)
+    showToast('Profile updated!')
   }
 
   async function saveUsernameAndContinue() {
@@ -807,7 +808,7 @@ export default function PantryPal() {
                 <>
                   <div className={styles.profileMenuName}>{profile?.display_name || user.email}</div>
                   {profile?.username && (
-                    <div style={{display:'flex',alignItems:'center',gap:6}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8,padding:'4px 16px 10px',background:'#f5ede0'}}>
                       <div className={styles.profileMenuUsername}>@{profile.username}</div>
                       <button
                         className={styles.copyUsernameBtn}
