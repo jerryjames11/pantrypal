@@ -193,13 +193,15 @@ export default function PantryPal() {
 
   useEffect(() => {
     if (!user || !tab || !profileLoaded) return
+    // Don't show tour until user has dismissed the username prompt
+    if (showUsernamePrompt) return
     const tourKey = `tour_${tab}`
     const hasSeenAnyTour = Object.values(seenTours).some(v => v === true)
     // Only auto-start tour for brand new users who haven't seen any tour yet
     if (!hasSeenAnyTour && !seenTours[tourKey] && TOURS[tab]) {
       setTimeout(() => startTour(tab), 800)
     }
-  }, [tab, user, seenTours, profileLoaded])
+  }, [tab, user, seenTours, profileLoaded, showUsernamePrompt])
 
   useEffect(() => {
     function handleClick(e) {
@@ -1506,26 +1508,6 @@ export default function PantryPal() {
       {toast&&<div className={styles.toast}>{toast}</div>}
 
       {activeTour && <Tour steps={activeTour} onComplete={completeTour} onSkip={skipTour} />}
-
-      {showTutorial && (
-        <div className={styles.confirmOverlay}>
-          <div className={styles.tutorialBox}>
-            <div className={styles.tutorialLogo}>
-              <img src="/logo.png" alt="PantryPal" style={{width:80,height:80,objectFit:'contain'}} />
-            </div>
-            <h2 className={styles.tutorialTitle}>Welcome to PantryPal! 🎉</h2>
-            <p className={styles.tutorialSub}>Here's what you can do:</p>
-            <div className={styles.tutorialSteps}>
-              <div className={styles.tutorialStep}><span className={styles.tutorialIcon}>📋</span><div><strong>My Pantry</strong><p>Track everything in your home. Add items manually or scan a receipt.</p></div></div>
-              <div className={styles.tutorialStep}><span className={styles.tutorialIcon}>📷</span><div><strong>Scan</strong><p>Photograph or paste a receipt and it reads it and adds items to your pantry automatically.</p></div></div>
-              <div className={styles.tutorialStep}><span className={styles.tutorialIcon}>🛒</span><div><strong>Cart</strong><p>Build your shopping list. Low or out-of-stock items can be pulled in automatically.</p></div></div>
-              <div className={styles.tutorialStep}><span className={styles.tutorialIcon}>🍳</span><div><strong>Recipes</strong><p>Get recipe suggestions based on what's in your pantry. Save favorites and share with friends.</p></div></div>
-              <div className={styles.tutorialStep}><span className={styles.tutorialIcon}>👤</span><div><strong>Profile</strong><p>Add friends, create a household to share your pantry, and manage notifications.</p></div></div>
-            </div>
-            <button className={styles.tutorialBtn} onClick={completeTutorial}>Got it, let's go! →</button>
-          </div>
-        </div>
-      )}
 
       {showUsernamePrompt && (
         <div className={styles.confirmOverlay}>
