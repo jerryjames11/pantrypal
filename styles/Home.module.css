@@ -221,7 +221,7 @@
 .moveCatBtn:hover { background: #b8e0d0; color: #1f6b52; font-weight: 500; }
 
 /* ── New header layout ───────────────────────────────────────────────── */
-.header { display: flex; flex-direction: row; align-items: center; justify-content: space-between; padding: 6px 12px; background: linear-gradient(135deg, #4db88a 0%, #2d8a6b 100%); border-radius: 0; box-shadow: 0 2px 8px rgba(77,184,138,0.25); gap: 8px; }
+.header { display: flex; flex-direction: row; align-items: center; justify-content: space-between; padding: 6px 12px; background: linear-gradient(135deg, #4db88a 0%, #2d8a6b 100%); border-radius: 0; box-shadow: 0 2px 8px rgba(77,184,138,0.25); gap: 8px; position: relative; height: 56px; }
 .content { padding: 1.25rem 1rem 5.5rem; background: #fdf8f0; }
 /* header nav removed — moved to bottom */
 
