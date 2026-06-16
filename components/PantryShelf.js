@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
+import React, { useState, useRef, useCallback, useEffect } from 'react'
 import styles from '../styles/PantryShelf.module.css'
 
 // SVG product illustrations per category name keyword
@@ -185,7 +185,7 @@ function ShelfItem({ cat, shelfIndex, onTap, onDragStart, isDragging }) {
     >
       {status !== 'ok' && <div className={`${styles.statusDot} ${styles[status]}`} />}
       <CategoryIllustration categoryName={cat.name} status={status} />
-      <div className={styles.catLabel}>{cat.emoji} {cat.name}</div>
+      <div className={styles.catLabel}>{cat.name}</div>
     </div>
   )
 }
@@ -204,36 +204,34 @@ export default function PantryShelf({ categories, pantryItems, onCategoryTap, on
     return { ...cat, _status: hasOut ? 'out' : hasLow ? 'low' : 'ok', _count: items.length }
   })
 
-  // Always auto-spread categories across shelves initially
-  // Only use saved position if user has explicitly dragged (shelf_x !== default 0.1 or shelf_number > 1)
-  const hasCustomPosition = (c) => c.shelf_number > 1 || (c.shelf_number === 1 && c.shelf_x !== null && c.shelf_x !== undefined && c.shelf_x !== 0.1)
-  
-  const placed = catsWithStatus.filter(c => hasCustomPosition(c))
-  const unplaced = catsWithStatus.filter(c => !hasCustomPosition(c))
+  // Stable shelf layout — memoized so items don't jump on re-render
+  const shelves = React.useMemo(() => {
+    const xPositions = [0.12, 0.45, 0.78]
+    const hasCustom = (c) => c.shelf_number > 1 || 
+      (c.shelf_number === 1 && c.shelf_x !== null && c.shelf_x !== undefined && c.shelf_x !== 0.1 && c.shelf_x !== 0)
 
-  // Build shelves from placed items
-  const shelves = Array.from({ length: 6 }, (_, i) => ({
-    index: i + 1,
-    items: placed
-      .filter(c => c.shelf_number === i + 1)
-      .sort((a, b) => (a.shelf_x || 0) - (b.shelf_x || 0))
-  }))
+    const placed = catsWithStatus.filter(c => hasCustom(c))
+    const unplaced = catsWithStatus.filter(c => !hasCustom(c))
 
-  // Auto-place unplaced categories spread evenly across all 6 shelves
-  const xPositions = [0.12, 0.45, 0.78]
-  unplaced.forEach(cat => {
-    for (let s = 0; s < 6; s++) {
-      if (shelves[s].items.length < 3) {
-        const slotIndex = shelves[s].items.length
-        shelves[s].items.push({ 
-          ...cat, 
-          shelf_number: s + 1, 
-          shelf_x: xPositions[slotIndex] 
-        })
-        break
+    const s = Array.from({ length: 6 }, (_, i) => ({
+      index: i + 1,
+      items: placed
+        .filter(c => c.shelf_number === i + 1)
+        .sort((a, b) => (a.shelf_x || 0) - (b.shelf_x || 0))
+    }))
+
+    unplaced.forEach(cat => {
+      for (let i = 0; i < 6; i++) {
+        if (s[i].items.length < 3) {
+          s[i].items.push({ ...cat, shelf_number: i + 1, shelf_x: xPositions[s[i].items.length] })
+          break
+        }
       }
-    }
-  })
+    })
+
+    return s
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categories, pantryItems])
 
   const handleDragStart = useCallback((e, cat, shelfIndex) => {
     e.currentTarget?.setPointerCapture?.(e.pointerId)
