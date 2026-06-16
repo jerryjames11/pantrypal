@@ -38,6 +38,17 @@ export default async function handler(req, res) {
     return res.status(200).json({ category: data })
   }
 
+  if (req.method === 'PATCH') {
+    const { id, shelf_number, shelf_x } = req.body
+    if (!id) return res.status(400).json({ error: 'id required' })
+    const update = {}
+    if (shelf_number !== undefined) update.shelf_number = shelf_number
+    if (shelf_x !== undefined) update.shelf_x = shelf_x
+    const { data, error } = await sb.from('categories').update(update).eq('id', id).eq('user_id', user_id).select().single()
+    if (error) return res.status(500).json({ error: error.message })
+    return res.status(200).json({ category: data })
+  }
+
   if (req.method === 'DELETE') {
     const { id } = req.body
     await sb.from('categories').delete().eq('id', id).eq('user_id', user_id)

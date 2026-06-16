@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { supabase } from '../lib/supabase'
 import styles from '../styles/Home.module.css'
 import Tour from '../components/Tour'
+import PantryShelf from '../components/PantryShelf'
 import { TOURS } from '../lib/tourSteps'
 
 function fmt(n) { return n != null ? `$${Number(n).toFixed(2)}` : '' }
@@ -72,6 +73,7 @@ export default function PantryPal() {
   const [showActions, setShowActions] = useState(false)
   const [openCatMenu, setOpenCatMenu] = useState(null)
   const [showAddItem, setShowAddItem] = useState(false)
+  const [pantryViewMode, setPantryViewMode] = useState(() => { if (typeof window !== 'undefined') return localStorage.getItem('pantryViewMode') || 'list'; return 'list' })
   const [collapsedCats, setCollapsedCats] = useState({})
   const [manualName, setManualName] = useState('')
   const [manualStatus, setManualStatus] = useState('fresh')
@@ -237,6 +239,17 @@ export default function PantryPal() {
     await fetch(`/api/profile?user_id=${user.id}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tutorial_completed: true })
+    })
+  }
+
+  // ── Shelf position update ────────────────────────────────────────────────────
+  async function updateCategoryPosition(catId, shelfNumber, shelfX) {
+    // Optimistic update
+    setCategories(cs => cs.map(c => c.id === catId ? { ...c, shelf_number: shelfNumber, shelf_x: shelfX } : c))
+    await fetch(`/api/categories?user_id=${user.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: catId, shelf_number: shelfNumber, shelf_x: shelfX })
     })
   }
 
@@ -1220,7 +1233,28 @@ export default function PantryPal() {
             <div className={styles.statCard}><div className={styles.statVal}>{stats.out}</div><div className={styles.statLbl}>Out of stock</div></div>
           </div>
 
-          <div id="tour-filters" style={{display:'flex',alignItems:'center',gap:6,marginBottom:10,flexWrap:'nowrap'}}>
+          {/* View toggle */}
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
+            <span style={{fontSize:12,fontWeight:600,color:'#7a6a52'}}>My Pantry</span>
+            <div style={{display:'flex',gap:4,background:'#f5ede0',borderRadius:8,padding:2}}>
+              <button onClick={()=>{setPantryViewMode('list');localStorage.setItem('pantryViewMode','list')}} style={{padding:'4px 8px',borderRadius:6,border:'none',background:pantryViewMode==='list'?'#2d8a6b':'transparent',color:pantryViewMode==='list'?'#fff':'#7a6a52',fontSize:11,cursor:'pointer',fontFamily:'inherit'}}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              </button>
+              <button onClick={()=>{setPantryViewMode('shelf');localStorage.setItem('pantryViewMode','shelf')}} style={{padding:'4px 8px',borderRadius:6,border:'none',background:pantryViewMode==='shelf'?'#2d8a6b':'transparent',color:pantryViewMode==='shelf'?'#fff':'#7a6a52',fontSize:11,cursor:'pointer',fontFamily:'inherit'}}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="2" y="3" width="20" height="4" rx="1"/><rect x="2" y="10" width="20" height="4" rx="1"/><rect x="2" y="17" width="20" height="4" rx="1"/></svg>
+              </button>
+            </div>
+          </div>
+
+          {pantryViewMode === 'shelf' ? (
+            <PantryShelf
+              categories={categories}
+              pantryItems={pantry}
+              onCategoryTap={(cat) => setExpandedCat(expandedCat === cat.name ? null : cat.name)}
+              onPositionUpdate={updateCategoryPosition}
+            />
+          ) : null}
+          {pantryViewMode === 'list' && <div id="tour-filters" style={{display:'flex',alignItems:'center',gap:6,marginBottom:10,flexWrap:'nowrap'}}>
             <div style={{display:'flex',gap:4,flex:1,flexWrap:'nowrap'}}>
               {['all','fresh','low','out'].map(f => (
                 <button key={f} className={pantryFilter===f?`${styles.chip} ${styles.chipOn}`:styles.chip} onClick={()=>setPantryFilter(f)} style={{padding:'5px 9px',fontSize:11}}>
@@ -1241,6 +1275,7 @@ export default function PantryPal() {
             </div>
           </div>
 
+          }
           {showAddItem && (
             <div className={styles.manualAddBox}>
               <div className={styles.manualRow1}>

@@ -1,0 +1,41 @@
+/* Pantry wrap */
+.pantryWrap { padding: 0 6px 8px; background: #f5e8d0; touch-action: none; user-select: none; }
+
+/* Pantry unit */
+.pantry { background: linear-gradient(180deg,#7a4f2e,#8B5030); border-radius: 10px; border-left: 10px solid #5a3820; border-right: 10px solid #5a3820; border-bottom: 12px solid #4a2810; box-shadow: 3px 4px 14px rgba(0,0,0,0.35), inset 0 1px 3px rgba(255,255,255,0.08); position: relative; }
+.pantryTop { height: 14px; background: linear-gradient(180deg,#d89040,#b87020); border-radius: 6px 6px 0 0; border-bottom: 2px solid #8a4410; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+.pantryBase { height: 14px; background: linear-gradient(180deg,#6b3d1e,#4a2810); border-radius: 0 0 6px 6px; margin-top: 2px; box-shadow: 0 -1px 3px rgba(0,0,0,0.2); }
+
+/* Shelf structure */
+.shelfRow { display: flex; }
+.postLeft { width: 10px; background: linear-gradient(90deg,#4a2810,#6b3d1e,#4a2810); border-radius: 2px 0 0 2px; flex-shrink: 0; }
+.postRight { width: 10px; background: linear-gradient(90deg,#4a2810,#6b3d1e,#4a2810); border-radius: 0 2px 2px 0; flex-shrink: 0; }
+.shelfArea { flex: 1; display: flex; flex-direction: column; }
+
+/* Shelf plank */
+.shelfPlank { background: linear-gradient(180deg,#fdf0dc 0%,#f5e4c0 85%,#e8d0a0 100%); min-height: 82px; position: relative; display: block; overflow: visible; }
+.shelfBoard { height: 10px; background: linear-gradient(180deg,#c89050,#a06820); border-top: 1.5px solid #d8a060; box-shadow: 0 3px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.12); }
+
+/* Category item on shelf */
+.shelfItem { position: absolute; bottom: 4px; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.15s; z-index: 2; }
+.shelfItem:active { transform: scale(0.96); }
+.pressing { transform: scale(0.97); }
+.dragging { opacity: 0; }
+
+/* Status dot */
+.statusDot { position: absolute; top: -2px; right: -2px; width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid #fdf0dc; z-index: 10; }
+.low { background: #f59e0b; }
+.out { background: #ef4444; }
+
+/* Category label */
+.catLabel { font-size: 7px; font-weight: 600; color: #5a3010; text-align: center; margin-top: 2px; max-width: 52px; line-height: 1.2; word-break: break-word; text-shadow: 0 1px 2px rgba(255,255,255,0.8); }
+
+/* Illustration wrapper */
+.illustration { display: flex; align-items: flex-end; justify-content: center; filter: drop-shadow(1px 2px 4px rgba(0,0,0,0.22)); }
+
+/* Add slot */
+.addSlot { position: absolute; bottom: 8px; right: 8px; display: flex; flex-direction: column; align-items: center; opacity: 0.35; cursor: pointer; }
+.addSlotInner { width: 36px; height: 36px; border: 1.5px dashed #b89060; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #b89060; background: rgba(255,255,255,0.3); }
+
+/* Drag ghost */
+.dragGhost { position: fixed; pointer-events: none; z-index: 1000; transform: translate(-50%, -110%); filter: drop-shadow(0 8px 16px rgba(0,0,0,0.35)); opacity: 0.9; display: flex; flex-direction: column; align-items: center; }
