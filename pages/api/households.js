@@ -6,25 +6,49 @@ export default async function handler(req, res) {
   if (!user_id) return res.status(401).json({ error: 'Unauthorized' })
 
   if (req.method === 'GET') {
+    // Step 1: find the user's active membership
     const { data: membership } = await sb.from('household_members')
-      .select('*, household:households(*)')
-      .eq('user_id', user_id).eq('status', 'active').single()
+      .select('*').eq('user_id', user_id).eq('status', 'active').single()
     if (!membership) return res.status(200).json({ household: null, members: [], pendingRequests: [] })
 
-    const { data: members } = await sb.from('household_members')
-      .select('*, profile:profiles(id,display_name,username,avatar_url)')
-      .eq('household_id', membership.household_id).eq('status', 'active')
+    // Step 2: get household details
+    const { data: household } = await sb.from('households')
+      .select('*').eq('id', membership.household_id).single()
 
-    // Get pending join requests (only for owner)
+    // Step 3: get all active members
+    const { data: memberRows } = await sb.from('household_members')
+      .select('*').eq('household_id', membership.household_id).eq('status', 'active')
+
+    // Step 4: fetch profiles for all members separately
+    const memberIds = (memberRows || []).map(m => m.user_id)
+    let memberProfileMap = {}
+    if (memberIds.length > 0) {
+      const { data: profiles } = await sb.from('profiles')
+        .select('id,username,display_name,avatar_url').in('id', memberIds)
+      profiles?.forEach(p => { memberProfileMap[p.id] = p })
+    }
+    const members = (memberRows || []).map(m => ({
+      ...m, profile: memberProfileMap[m.user_id] || null
+    }))
+
+    // Step 5: pending join requests (owner only)
     let pendingRequests = []
-    if (membership.household?.owner_id === user_id) {
-      const { data: pending } = await sb.from('household_members')
-        .select('*, profile:profiles(id,display_name,username,avatar_url)')
-        .eq('household_id', membership.household_id).eq('status', 'pending_approval')
-      pendingRequests = pending || []
+    if (household?.owner_id === user_id) {
+      const { data: pendingRows } = await sb.from('household_members')
+        .select('*').eq('household_id', membership.household_id).eq('status', 'pending_approval')
+      const pendingIds = (pendingRows || []).map(m => m.user_id)
+      let pendingProfileMap = {}
+      if (pendingIds.length > 0) {
+        const { data: pendingProfiles } = await sb.from('profiles')
+          .select('id,username,display_name,avatar_url').in('id', pendingIds)
+        pendingProfiles?.forEach(p => { pendingProfileMap[p.id] = p })
+      }
+      pendingRequests = (pendingRows || []).map(m => ({
+        ...m, profile: pendingProfileMap[m.user_id] || null
+      }))
     }
 
-    return res.status(200).json({ household: membership.household, members: members || [], pendingRequests })
+    return res.status(200).json({ household, members, pendingRequests })
   }
 
   if (req.method === 'POST') {
