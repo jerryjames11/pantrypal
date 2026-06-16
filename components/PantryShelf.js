@@ -248,40 +248,54 @@ export default function PantryShelf({ categories, pantryItems, onCategoryTap, on
 
   const handlePointerUp = useCallback((e) => {
     if (!dragging) return
-    
-    // Find which shelf we're over
-    let targetShelf = dragging.originShelf
-    let targetX = dragging.cat.shelf_x || 0.1
+
+    // Find which shelf we dropped on
+    let targetShelf = null
+    let targetX = null
 
     shelfRefs.current.forEach((ref, idx) => {
       if (!ref) return
       const rect = ref.getBoundingClientRect()
       if (e.clientY >= rect.top && e.clientY <= rect.bottom) {
+        // Check not on the posts (first/last 10px of shelf area)
+        const relX = e.clientX - rect.left
+        if (relX < 5 || relX > rect.width - 5) return // on post/separator — revert
         targetShelf = idx + 1
-        // Calculate x position as fraction of shelf width
-        const rawX = (e.clientX - rect.left) / rect.width
-        targetX = Math.max(0.02, Math.min(0.85, rawX))
+        targetX = relX / rect.width
       }
     })
 
-    // Check if shelf has room (max 3, excluding dragged item)
-    const shelfItems = shelves[targetShelf - 1]?.items.filter(c => c.id !== dragging.cat.id) || []
-    if (shelfItems.length >= 3) {
-      // No room — return to origin
+    // Revert if dropped outside any shelf
+    if (targetShelf === null) {
       setDragging(null)
       setGhostPos(null)
       return
     }
 
-    // Avoid overlap — nudge if too close to another item
-    let finalX = targetX
-    shelfItems.forEach(other => {
+    // Get other items on the target shelf (excluding the dragged item)
+    const shelfItems = shelves[targetShelf - 1]?.items.filter(c => c.id !== dragging.cat.id) || []
+
+    // Revert if shelf is full (max 3)
+    if (shelfItems.length >= 3) {
+      setDragging(null)
+      setGhostPos(null)
+      return
+    }
+
+    // Revert if too close to another item (within 14% of shelf width)
+    const tooClose = shelfItems.some(other => {
       const ox = other.shelf_x || 0.1
-      if (Math.abs(finalX - ox) < 0.15) {
-        finalX = finalX < ox ? ox - 0.16 : ox + 0.16
-      }
+      return Math.abs(targetX - ox) < 0.14
     })
-    finalX = Math.max(0.02, Math.min(0.82, finalX))
+
+    if (tooClose) {
+      setDragging(null)
+      setGhostPos(null)
+      return
+    }
+
+    // Clamp to valid range (keep item within shelf bounds)
+    const finalX = Math.max(0.04, Math.min(0.88, targetX))
 
     onPositionUpdate(dragging.cat.id, targetShelf, finalX)
     setDragging(null)
