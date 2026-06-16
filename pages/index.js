@@ -173,14 +173,15 @@ export default function PantryPal() {
 
   useEffect(() => {
     if (user) {
-      loadCategoriesThenPantry()
+      // Load household first so pantry loads with correct household_id
+      loadCategories()
+      loadHousehold().then(hhId => loadPantry(hhId))
       loadReceipts()
       loadCart()
       loadSavedRecipes()
       loadProfile()
       loadNotifications()
       loadFriends()
-      loadHousehold()
       loadShares()
       // Identify user in PostHog
       identify(user.id, { email: user.email, name: user.user_metadata?.full_name })
@@ -449,8 +450,10 @@ export default function PantryPal() {
     setPendingJoinRequests(data.pendingRequests || [])
     if (data.household) {
       setPantryView('household')
+      return data.household.id // return id so callers can use it immediately
     } else {
       setPantryView('personal')
+      return null
     }
   }
 
@@ -598,11 +601,14 @@ export default function PantryPal() {
   }
 
   // ── Pantry ────────────────────────────────────────────────────────────────
-  async function loadPantry() {
+  async function loadPantry(overrideHouseholdId) {
     if (!user) return
     setPantryLoading(true)
     try {
-      const hid = pantryView === 'household' && household ? household.id : null
+      // Use override if provided, otherwise fall back to current state
+      const hid = overrideHouseholdId !== undefined
+        ? overrideHouseholdId
+        : (pantryView === 'household' && household ? household.id : null)
       const res = await fetch(`/api/pantry?user_id=${user.id}${hid ? `&household_id=${hid}` : ''}`)
       const data = await res.json()
       const items = data.items || []
