@@ -500,7 +500,7 @@ export default function PantryPal() {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'accept_invite', household_id })
     })
-    showToast('Joined household!'); loadHousehold(); loadNotifications()
+    showToast('Joined household!')
   }
 
   async function declineHouseholdInvite(household_id) {
@@ -1023,13 +1023,15 @@ export default function PantryPal() {
                           n.data?.accepted
                             ? <div style={{fontSize:11,color:'#2d8a6b',fontWeight:600,marginTop:6}}>✓ Friend added</div>
                             : <div style={{display:'flex',gap:6,marginTop:6}}>
-                                <button className={styles.panelBtnSm} onClick={()=>{
+                                <button className={styles.panelBtnSm} onClick={async()=>{
                                   setNotifications(ns=>ns.map(x=>x.id===n.id?{...x,data:{...x.data,accepted:true}}:x))
-                                  respondToFriendRequest(n.data.from_user,'accept')
+                                  await respondToFriendRequest(n.data.from_user,'accept')
+                                  loadFriends()
                                 }}>Accept</button>
-                                <button className={styles.panelBtnSmDanger} onClick={()=>{
+                                <button className={styles.panelBtnSmDanger} onClick={async()=>{
                                   setNotifications(ns=>ns.filter(x=>x.id!==n.id))
-                                  respondToFriendRequest(n.data.from_user,'decline')
+                                  await respondToFriendRequest(n.data.from_user,'decline')
+                                  loadFriends()
                                 }}>Decline</button>
                               </div>
                         )}
@@ -1037,11 +1039,13 @@ export default function PantryPal() {
                           n.data?.joined
                             ? <div style={{fontSize:11,color:'#2d8a6b',fontWeight:600,marginTop:6}}>✓ Joined household</div>
                             : <div style={{display:'flex',gap:6,marginTop:6}}>
-                                <button className={styles.panelBtnSm} onClick={()=>{
+                                <button className={styles.panelBtnSm} onClick={async()=>{
                                   setNotifications(ns=>ns.map(x=>x.id===n.id?{...x,data:{...x.data,joined:true}}:x))
-                                  acceptHouseholdInvite(n.data.household_id)
+                                  await acceptHouseholdInvite(n.data.household_id)
+                                  await loadHousehold()
+                                  await loadPantry()
                                 }}>Join</button>
-                                <button className={styles.panelBtnSmDanger} onClick={()=>{
+                                <button className={styles.panelBtnSmDanger} onClick={async()=>{
                                   setNotifications(ns=>ns.filter(x=>x.id!==n.id))
                                   declineHouseholdInvite(n.data.household_id)
                                 }}>Decline</button>
