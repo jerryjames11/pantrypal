@@ -173,7 +173,7 @@ function ShelfItem({ cat, shelfIndex, onTap, onDragStart, isDragging }) {
   return (
     <div
       className={`${styles.shelfItem} ${pressing ? styles.pressing : ''} ${isDragging ? styles.dragging : ''}`}
-      style={{ left: `${cat.shelf_x * 100}%` }}
+      style={{ left: `calc(${cat.shelf_x * 100}% )`, transform: 'translateX(-50%)' }}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerLeave}
@@ -200,23 +200,29 @@ export default function PantryShelf({ categories, pantryItems, onCategoryTap, on
     return { ...cat, _status: hasOut ? 'out' : hasLow ? 'low' : 'ok', _count: items.length }
   })
 
-  // Group into shelves (1-6)
+  // Split into placed (have shelf_number) and unplaced
+  const placed = catsWithStatus.filter(c => c.shelf_number && c.shelf_x !== null && c.shelf_x !== undefined)
+  const unplaced = catsWithStatus.filter(c => !c.shelf_number || c.shelf_x === null || c.shelf_x === undefined)
+
+  // Build shelves from placed items
   const shelves = Array.from({ length: 6 }, (_, i) => ({
     index: i + 1,
-    items: catsWithStatus
-      .filter(c => (c.shelf_number || 1) === i + 1)
+    items: placed
+      .filter(c => c.shelf_number === i + 1)
       .sort((a, b) => (a.shelf_x || 0) - (b.shelf_x || 0))
   }))
 
-  // Find unplaced categories and assign to shelves with space
-  const placed = new Set(catsWithStatus.filter(c => c.shelf_number).map(c => c.id))
-  const unplaced = catsWithStatus.filter(c => !placed.has(c.id) || !c.shelf_number)
-  
+  // Auto-place unplaced categories spread across shelves
+  const xPositions = [0.08, 0.38, 0.68] // left, center, right
   unplaced.forEach(cat => {
     for (let s = 0; s < 6; s++) {
       if (shelves[s].items.length < 3) {
-        const spacing = 0.1 + shelves[s].items.length * 0.3
-        shelves[s].items.push({ ...cat, shelf_number: s + 1, shelf_x: spacing })
+        const slotIndex = shelves[s].items.length
+        shelves[s].items.push({ 
+          ...cat, 
+          shelf_number: s + 1, 
+          shelf_x: xPositions[slotIndex] 
+        })
         break
       }
     }
