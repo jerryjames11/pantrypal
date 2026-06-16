@@ -348,6 +348,7 @@ export default function PantryPal() {
     if (!user) return
     const res = await fetch(`/api/notifications?user_id=${user.id}`)
     const data = await res.json()
+    // Preserve accepted/joined flags — they're saved to DB so they come back automatically
     setNotifications(data.notifications || [])
     setUnreadCount(data.unread || 0)
   }
@@ -871,7 +872,7 @@ export default function PantryPal() {
                     👥 Friends {pendingReceived.length > 0 && <span className={styles.menuBadge}>{pendingReceived.length}</span>}
                   </button>
                   <button className={styles.profileMenuItem} onClick={() => { setProfilePanel('household'); loadHousehold() }}>🏠 My Household</button>
-                  <button className={styles.profileMenuItem} onClick={() => { setProfilePanel('notifications'); loadNotifications() }}>
+                  <button className={styles.profileMenuItem} onClick={() => { setProfilePanel('notifications'); loadNotifications().then(() => markAllNotificationsRead()) }}>
                     🔔 Notifications {unreadCount > 0 && <span className={styles.menuBadge}>{unreadCount}</span>}
                   </button>
                   <button className={styles.profileMenuItem} onClick={() => { setProfilePanel('shares'); loadShares() }}>📬 Shared with me</button>
