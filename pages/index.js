@@ -158,7 +158,9 @@ export default function PantryPal() {
   function confirmNo() { setConfirmDialog(null) }
 
   // Current household_id for pantry queries
-  const activeHouseholdId = pantryView === 'household' && household ? household.id : null
+  // While in a household, ALWAYS use household view — personal pantry is inaccessible
+  const activeHouseholdId = household ? household.id : null
+  const effectivePantryView = household ? 'household' : 'personal'
 
   // ── Auth ──────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -193,8 +195,8 @@ export default function PantryPal() {
   }, [user, authLoading])
 
   useEffect(() => {
-    if (user) loadPantry()
-  }, [pantryView, household])
+    if (user) loadPantry(household ? household.id : null)
+  }, [household])
 
   useEffect(() => {
     if (!user || !tab || !profileLoaded) return
@@ -605,10 +607,10 @@ export default function PantryPal() {
     if (!user) return
     setPantryLoading(true)
     try {
-      // Use override if provided, otherwise fall back to current state
+      // While in a household, ALWAYS load household pantry — personal is inaccessible
       const hid = overrideHouseholdId !== undefined
         ? overrideHouseholdId
-        : (pantryView === 'household' && household ? household.id : null)
+        : (household ? household.id : null)
       const res = await fetch(`/api/pantry?user_id=${user.id}${hid ? `&household_id=${hid}` : ''}`)
       const data = await res.json()
       const items = data.items || []
@@ -1125,17 +1127,7 @@ export default function PantryPal() {
 
       <div className={styles.content}>
 
-      {/* HOUSEHOLD / PERSONAL TAB ROW */}
-      {household && tab === 'pantry' && (
-        <div className={styles.viewTabs}>
-          <button className={pantryView==='household'?`${styles.viewTab} ${styles.viewTabOn}`:styles.viewTab} onClick={() => setPantryView('household')}>
-            🏠 {household.name}
-          </button>
-          <button className={pantryView==='personal'?`${styles.viewTab} ${styles.viewTabOn}`:styles.viewTab} onClick={() => setPantryView('personal')}>
-            👤 My Personal
-          </button>
-        </div>
-      )}
+      {/* When in a household, only the household pantry is shown — personal pantry is hidden until they leave */}
 
       {/* ══ HOME ══ */}
       {tab === 'home' && (
