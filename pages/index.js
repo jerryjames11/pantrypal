@@ -507,6 +507,27 @@ export default function PantryPal() {
     setShares(data.shares || [])
   }
 
+  const [shareLinkModal, setShareLinkModal] = useState(null) // { url, type }
+
+  async function generateShareLink(share_type, content, title) {
+    try {
+      const res = await fetch('/api/share-links', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'create', user_id: user.id, share_type, title, content })
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        showToast(data.error || 'Failed to create share link')
+        return
+      }
+      const url = `https://pantrypal-green.vercel.app/invite/${data.token}`
+      setShareLinkModal({ url, type: share_type })
+    } catch (err) {
+      console.error('generateShareLink error:', err)
+      showToast('Something went wrong creating the link')
+    }
+  }
+
   async function shareRecipeWithFriend(recipe, friend_id) {
     try {
       const res = await fetch(`/api/shares?user_id=${user.id}`, {
@@ -1847,6 +1868,8 @@ export default function PantryPal() {
                               return <button key={fid} className={styles.actionItem} onClick={()=>{shareRecipeWithFriend(r,fid);setShowActions(false)}}>{friend?.display_name||friend?.username}</button>
                             })
                         }
+                        <div className={styles.catGearDivider} />
+                        <button className={styles.actionItem} style={{color:'#2d8a6b',fontWeight:600}} onClick={()=>{generateShareLink('recipe',r,r.title);setShowActions(false)}}>Share via link</button>
                       </div>
                     )}
                   </div>
@@ -1881,6 +1904,8 @@ export default function PantryPal() {
                           return <button key={fid} className={styles.actionItem} onClick={()=>{shareCartWithFriend(fid);setShowActions(false)}}>{friend?.display_name||friend?.username}</button>
                         })
                     }
+                    <div className={styles.catGearDivider} />
+                    <button className={styles.actionItem} style={{color:'#2d8a6b',fontWeight:600}} onClick={()=>{generateShareLink('cart',{items:cart},'Shopping cart');setShowActions(false)}}>Share via link</button>
                   </div>
                 )}
               </div>
@@ -1956,6 +1981,23 @@ export default function PantryPal() {
       {toast&&<div className={styles.toast}>{toast}</div>}
 
       {activeTour && <Tour steps={activeTour} onComplete={completeTour} onSkip={skipTour} />}
+
+      {shareLinkModal && (
+        <div className={styles.confirmOverlay}>
+          <div className={styles.usernamePromptBox} style={{maxWidth:360,textAlign:'center'}}>
+            <div style={{fontSize:32,textAlign:'center',marginBottom:8}}>🔗</div>
+            <div className={styles.promptTitle}>Link ready to share</div>
+            <div style={{fontSize:11,color:'#888',marginBottom:14}}>
+              Anyone with this link can claim your {shareLinkModal.type === 'recipe' ? 'recipe' : 'shopping cart'} — even if they don't have PantryPal yet. Expires in 3 days, usable once.
+            </div>
+            <div style={{display:'flex',gap:6,marginBottom:14}}>
+              <input readOnly value={shareLinkModal.url} onClick={e=>e.target.select()} style={{flex:1,padding:'9px 10px',border:'1.5px solid #4db88a',borderRadius:8,fontSize:11,fontFamily:'inherit',background:'#fff',color:'#555'}} />
+              <button onClick={()=>{navigator.clipboard.writeText(shareLinkModal.url);showToast('Link copied!')}} style={{padding:'9px 12px',background:'#2d8a6b',color:'#fff',border:'none',borderRadius:8,fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>Copy</button>
+            </div>
+            <button style={{width:'100%',padding:9,border:'none',borderRadius:8,background:'#f5ede0',color:'#555',fontSize:12,cursor:'pointer',fontFamily:'inherit'}} onClick={()=>setShareLinkModal(null)}>Done</button>
+          </div>
+        </div>
+      )}
 
       {categorizeReview && (
         <div className={styles.confirmOverlay}>
