@@ -466,12 +466,15 @@ export default function PantryPal() {
       body: JSON.stringify({ action: 'create', name: householdName.trim() })
     })
     const data = await res.json()
-    setHousehold(data.household)
-    setPantryView('household')
+    if (data.error || !data.household) {
+      showToast(data.error || 'Failed to create household — please try again')
+      return
+    }
     setHouseholdName('')
     track('household_created')
     showToast(`"${data.household.name}" created!`)
-    loadHousehold()
+    const hhId = await loadHousehold()
+    await loadPantry(hhId)
   }
 
   async function searchHouseholdInvite() {

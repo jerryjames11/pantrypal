@@ -58,7 +58,12 @@ export default async function handler(req, res) {
       const { name } = req.body
       const { data: hh, error } = await sb.from('households').insert({ name, owner_id: user_id }).select().single()
       if (error) return res.status(500).json({ error: error.message })
-      await sb.from('household_members').insert({ household_id: hh.id, user_id, role: 'owner', status: 'active', joined_at: new Date().toISOString() })
+      const { error: memberError } = await sb.from('household_members').insert({ household_id: hh.id, user_id, role: 'owner', status: 'active', joined_at: new Date().toISOString() })
+      if (memberError) {
+        // Roll back the household if we couldn't add the owner as a member
+        await sb.from('households').delete().eq('id', hh.id)
+        return res.status(500).json({ error: `Failed to set up household membership: ${memberError.message}` })
+      }
       return res.status(200).json({ household: hh })
     }
 
