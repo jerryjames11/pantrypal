@@ -1381,7 +1381,7 @@ export default function PantryPal() {
           {/* Household */}
           {household ? (
             <div id="tour-home-household" className={`${styles.homeHHBox} ${styles.homeHHActive} ${styles.homeHHJade}`}>
-              <div onClick={()=>setHomeHHExpanded(v=>!v)} style={{cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+              <div onClick={()=>setHomeHHExpanded(v=>!v)} style={{cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'space-between',minHeight:32}}>
                 <div>
                   <div className={styles.homeHHName}>🏠 {household.name}</div>
                   <div className={styles.homeHHSub}>{householdMembers.length} member{householdMembers.length!==1?'s':''}</div>
