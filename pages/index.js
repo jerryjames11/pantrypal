@@ -130,6 +130,9 @@ export default function PantryPal() {
   const [cartItemName, setCartItemName] = useState('')
   const [cartItemQty, setCartItemQty] = useState('')
   const [cartAddTarget, setCartAddTarget] = useState('personal') // 'personal' | 'household' | shared_list_id
+  const [addItemModal, setAddItemModal] = useState(null) // { target: 'personal'|'household'|friendId, label }
+  const [addItemModalName, setAddItemModalName] = useState('')
+  const [addItemModalQty, setAddItemModalQty] = useState('')
 
   // Profile / social
   const [profileOpen, setProfileOpen] = useState(false)
@@ -206,7 +209,10 @@ export default function PantryPal() {
   }, [user, authLoading])
 
   useEffect(() => {
-    if (user) loadPantry(household ? household.id : null)
+    if (user) {
+      loadCategories()
+      loadPantry(household ? household.id : null)
+    }
   }, [household])
 
   useEffect(() => {
@@ -311,7 +317,8 @@ export default function PantryPal() {
   async function updateCategoryPosition(catId, shelfNumber, shelfX) {
     // Optimistic update
     setCategories(cs => cs.map(c => c.id === catId ? { ...c, shelf_number: shelfNumber, shelf_x: shelfX } : c))
-    await fetch(`/api/categories?user_id=${user.id}`, {
+    const hidParam = household ? `&household_id=${household.id}` : ''
+    await fetch(`/api/categories?user_id=${user.id}${hidParam}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: catId, shelf_number: shelfNumber, shelf_x: shelfX })
@@ -765,7 +772,8 @@ export default function PantryPal() {
 
   async function loadCategories() {
     if (!user) return
-    const res = await fetch(`/api/categories?user_id=${user.id}`)
+    const hidParam = household ? `&household_id=${household.id}` : ''
+    const res = await fetch(`/api/categories?user_id=${user.id}${hidParam}`)
     const data = await res.json()
     const cats = data.categories || []
     setCategories(cats)
@@ -778,11 +786,13 @@ export default function PantryPal() {
 
   async function addCategory() {
     if (!newCatName.trim() || !user) return
-    const res = await fetch(`/api/categories?user_id=${user.id}`, {
+    const hidParam = household ? `&household_id=${household.id}` : ''
+    const res = await fetch(`/api/categories?user_id=${user.id}${hidParam}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: newCatName.trim(), emoji: newCatEmoji })
     })
     const data = await res.json()
+    if (!res.ok || data.error) { showToast(data.error || 'Failed to add category'); return }
     setCategories(c => [...c, data.category])
     setCollapsedCats(c => ({ ...c, [newCatName.trim()]: true }))
     setNewCatName(''); setNewCatEmoji('📦'); setShowAddCat(false)
@@ -799,7 +809,8 @@ export default function PantryPal() {
     }
     setCategories(c => c.filter(x => x.id !== id))
     setPantry(p => p.map(i => i.category === catName ? { ...i, category: 'Uncategorized' } : i))
-    await fetch(`/api/categories?user_id=${user.id}`, {
+    const hidParam = household ? `&household_id=${household.id}` : ''
+    await fetch(`/api/categories?user_id=${user.id}${hidParam}`, {
       method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id })
     })
     showToast('Category deleted')
@@ -1013,6 +1024,23 @@ export default function PantryPal() {
     setCartLoading(false)
   }
 
+  async function submitAddItemModal() {
+    if (!addItemModalName.trim() || !user || !addItemModal) return
+    const body = { items: [{ name: addItemModalName.trim(), qty: addItemModalQty, category: 'Other', source: 'manual' }] }
+    if (addItemModal.target === 'household' && household) body.household_id = household.id
+    else if (addItemModal.target !== 'personal' && addItemModal.target !== 'household') body.friend_id = addItemModal.target
+    try {
+      const res = await fetch(`/api/cart?user_id=${user.id}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) { showToast(data.error || 'Failed to add item'); return }
+      showToast(`Added: ${addItemModalName}`)
+      setAddItemModalName(''); setAddItemModalQty(''); setAddItemModal(null)
+      loadCart()
+    } catch (err) { console.error('submitAddItemModal error:', err); showToast('Something went wrong') }
+  }
+
   async function addToCart() {
     if (!cartItemName.trim() || !user) return
     const body = { items: [{ name: cartItemName.trim(), qty: cartItemQty, category: 'Other', source: 'manual' }] }
@@ -1155,7 +1183,7 @@ export default function PantryPal() {
           )}
         </div>
         <div className={styles.profileArea} data-profile>
-          <button className={styles.avatarBtn} onClick={() => { setProfileOpen(o => !o); if (profileOpen) setProfilePanel(null) }}>
+          <button className={styles.avatarBtn} onClick={() => { setProfileOpen(o => !o); setProfilePanel(null) }}>
             {unreadCount > 0 && <span className={styles.notifDot}>{unreadCount > 9 ? '9+' : unreadCount}</span>}
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
           </button>
@@ -1667,15 +1695,9 @@ export default function PantryPal() {
       {/* ══ PANTRY ══ */}
       {tab === 'pantry' && (
         <section>
-          <div className={styles.statsRow} id="tour-stats">
-            <div className={styles.statCard}><div className={styles.statVal}>{stats.fresh}</div><div className={styles.statLbl}>In stock</div></div>
-            <div className={styles.statCard}><div className={styles.statVal}>{stats.low}</div><div className={styles.statLbl}>Running low</div></div>
-            <div className={styles.statCard}><div className={styles.statVal}>{stats.out}</div><div className={styles.statLbl}>Out of stock</div></div>
-          </div>
-
           {/* View toggle */}
-          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
-            <span style={{fontSize:12,fontWeight:600,color:'#7a6a52'}}>My Pantry</span>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
+            <span style={{fontSize:14,fontWeight:600,color:'#145040'}}>My Pantry</span>
             <div style={{display:'flex',gap:4,background:'#f5ede0',borderRadius:8,padding:2}}>
               <button onClick={()=>{setPantryViewMode('list');localStorage.setItem('pantryViewMode','list')}} style={{padding:'4px 8px',borderRadius:6,border:'none',background:pantryViewMode==='list'?'#2d8a6b':'transparent',color:pantryViewMode==='list'?'#fff':'#7a6a52',fontSize:11,cursor:'pointer',fontFamily:'inherit'}}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
@@ -1694,28 +1716,47 @@ export default function PantryPal() {
               onPositionUpdate={updateCategoryPosition}
             />
           ) : null}
-          {pantryViewMode === 'list' && <div id="tour-filters" style={{display:'flex',alignItems:'center',gap:6,marginBottom:10,flexWrap:'nowrap'}}>
-            <div style={{display:'flex',gap:4,flex:1,flexWrap:'nowrap'}}>
-              {['all','fresh','low','out'].map(f => (
-                <button key={f} className={pantryFilter===f?`${styles.chip} ${styles.chipOn}`:styles.chip} onClick={()=>setPantryFilter(f)} style={{padding:'5px 9px',fontSize:11}}>
-                  {f==='all'?'All':f==='fresh'?'✓ Stock':f==='low'?'↓ Low':'✕ Out'}
-                </button>
-              ))}
-            </div>
-            <div style={{display:'flex',gap:6,flexShrink:0}}>
-            <div style={{position:'relative'}} data-actions>
-              <button className={styles.chip} onClick={()=>setShowActions(a=>!a)} style={{fontSize:11}}>⚙ Actions</button>
-              {showActions && (
-                <div className={styles.actionsDropdown}>
-                  <button className={styles.actionItem} onClick={()=>{addLowItemsToCart();setShowActions(false)}}>🛒 Add low/out to cart</button>
-                  <button className={`${styles.actionItem} ${styles.actionDanger}`} onClick={()=>{setShowActions(false);confirm('Clear your entire pantry? This cannot be undone.',clearPantry)}}>🗑 Clear entire pantry</button>
-                </div>
-              )}
-            </div>
-            </div>
-          </div>
 
-          }
+          {pantryViewMode === 'list' && (
+            <>
+              {/* Stat cards that double as filters */}
+              <div id="tour-stats" style={{display:'grid',gridTemplateColumns:`repeat(${stats.out>0?4:3},1fr)`,gap:6,marginBottom:10}}>
+                <button onClick={()=>setPantryFilter('all')} style={{padding:'8px 4px',borderRadius:8,border:'none',cursor:'pointer',fontFamily:'inherit',background:pantryFilter==='all'?'#1a1a1a':'#f5ede0',textAlign:'center'}}>
+                  <div style={{fontSize:15,fontWeight:800,color:pantryFilter==='all'?'#fff':'#3d2b0e'}}>{pantry.length}</div>
+                  <div style={{fontSize:9,color:pantryFilter==='all'?'#fff':'#7a6a52'}}>All</div>
+                </button>
+                <button onClick={()=>setPantryFilter('fresh')} style={{padding:'8px 4px',borderRadius:8,border:'none',cursor:'pointer',fontFamily:'inherit',background:pantryFilter==='fresh'?'#1a1a1a':'#e8f5f0',textAlign:'center'}}>
+                  <div style={{fontSize:15,fontWeight:800,color:pantryFilter==='fresh'?'#fff':'#2d8a6b'}}>{stats.fresh}</div>
+                  <div style={{fontSize:9,color:pantryFilter==='fresh'?'#fff':'#5a7a6a'}}>In stock</div>
+                </button>
+                <button onClick={()=>setPantryFilter('low')} style={{padding:'8px 4px',borderRadius:8,border:'none',cursor:'pointer',fontFamily:'inherit',background:pantryFilter==='low'?'#1a1a1a':'#fff8e6',textAlign:'center'}}>
+                  <div style={{fontSize:15,fontWeight:800,color:pantryFilter==='low'?'#fff':'#856404'}}>{stats.low}</div>
+                  <div style={{fontSize:9,color:pantryFilter==='low'?'#fff':'#a07820'}}>Low</div>
+                </button>
+                {stats.out>0 && (
+                  <button onClick={()=>setPantryFilter('out')} style={{padding:'8px 4px',borderRadius:8,border:'none',cursor:'pointer',fontFamily:'inherit',background:pantryFilter==='out'?'#1a1a1a':'#fee2e2',textAlign:'center'}}>
+                    <div style={{fontSize:15,fontWeight:800,color:pantryFilter==='out'?'#fff':'#991b1b'}}>{stats.out}</div>
+                    <div style={{fontSize:9,color:pantryFilter==='out'?'#fff':'#b91c1c'}}>Out</div>
+                  </button>
+                )}
+              </div>
+
+              {/* Actions + Add item row */}
+              <div id="tour-filters" style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
+                <div style={{position:'relative'}} data-actions>
+                  <button className={styles.chip} onClick={()=>setShowActions(a=>!a)} style={{fontSize:11}}>⚙ Actions</button>
+                  {showActions && (
+                    <div className={styles.actionsDropdown}>
+                      <button className={styles.actionItem} onClick={()=>{addLowItemsToCart();setShowActions(false)}}>🛒 Add low/out to cart</button>
+                      <button className={`${styles.actionItem} ${styles.actionDanger}`} onClick={()=>{setShowActions(false);confirm('Clear your entire pantry? This cannot be undone.',clearPantry)}}>🗑 Clear entire pantry</button>
+                    </div>
+                  )}
+                </div>
+                <button id="tour-add-item" onClick={()=>setShowAddItem(a=>!a)} style={{display:'flex',alignItems:'center',gap:5,padding:'7px 13px',fontSize:12,fontWeight:600,color:'#fff',background:'#1a1a1a',border:'none',borderRadius:8,cursor:'pointer',fontFamily:'inherit'}}>+ Add item</button>
+              </div>
+            </>
+          )}
+
           {showAddItem && (
             <div className={styles.manualAddBox}>
               <div className={styles.manualRow1}>
@@ -1741,7 +1782,6 @@ export default function PantryPal() {
             <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
               <span className={styles.sectionLabel} style={{margin:0}}>Categories</span>
               <button className={styles.chip} onClick={()=>setShowAddCat(!showAddCat)}>+ Add category</button>
-              <button id="tour-add-item" className={styles.addItemBtnJade} onClick={()=>setShowAddItem(a=>!a)}>+ Add item</button>
             </div>
             {showAddCat && (
               <div style={{display:'flex',gap:6,marginBottom:8}}>
@@ -2030,17 +2070,6 @@ export default function PantryPal() {
             </div>
           )}
 
-          {/* Add item row — target picker */}
-          <div id="tour-cart-input" style={{display:'flex',gap:6,marginBottom:10,flexWrap:'wrap'}}>
-            <select value={cartAddTarget} onChange={e=>setCartAddTarget(e.target.value)} style={{padding:'9px 8px',border:'1px solid #e0e0e0',borderRadius:8,fontSize:13,fontFamily:'inherit',background:'#fff'}}>
-              <option value="personal">Personal</option>
-              {household && <option value="household">Household</option>}
-              {sharedLists.map(l => <option key={l.friend_id} value={l.friend_id}>With {l.friend_name}</option>)}
-            </select>
-            <input type="text" value={cartItemName} placeholder="Add item…" onChange={e=>setCartItemName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&addToCart()} style={{flex:1,padding:'9px 11px',border:'1px solid #e0e0e0',borderRadius:8,fontSize:14,fontFamily:'inherit',minWidth:90}} />
-            <input type="text" value={cartItemQty} placeholder="Qty" onChange={e=>setCartItemQty(e.target.value)} style={{width:56,padding:'9px 8px',border:'1px solid #e0e0e0',borderRadius:8,fontSize:14,fontFamily:'inherit'}} />
-            <button className={styles.addBtn} onClick={addToCart}>+ Add</button>
-          </div>
           <button id="tour-cart-pull" className={styles.chip} style={{marginBottom:14}} onClick={addLowItemsToCart}>↓ Pull in low/out pantry items</button>
 
           {cartLoading ? <div className={styles.loadRow}><Spinner /> Loading…</div> : (
@@ -2055,7 +2084,10 @@ export default function PantryPal() {
                       <span style={{fontSize:13,fontWeight:700,color:'#145040'}}>{household.name}</span>
                       <span style={{fontSize:11,color:'#5a7a6a'}}>{householdCart.filter(i=>i.checked).length}/{householdCart.length}</span>
                     </div>
-                    <span style={{fontSize:13,color:'#4db88a',transform:openCartSections.household?'rotate(180deg)':'none',display:'inline-block',transition:'transform .15s'}}>▾</span>
+                    <div style={{display:'flex',alignItems:'center',gap:10}}>
+                      <button onClick={(e)=>{e.stopPropagation();setAddItemModal({target:'household',label:household.name})}} style={{display:'flex',alignItems:'center',gap:4,padding:'4px 10px',fontSize:11,fontWeight:600,color:'#fff',background:'#1a1a1a',border:'none',borderRadius:7,cursor:'pointer',fontFamily:'inherit'}}>+ Add</button>
+                      <span style={{fontSize:13,color:'#4db88a',transform:openCartSections.household?'rotate(180deg)':'none',display:'inline-block',transition:'transform .15s'}}>▾</span>
+                    </div>
                   </div>
                   {openCartSections.household && (
                     <div className={styles.cartSectionBody}>
@@ -2086,7 +2118,10 @@ export default function PantryPal() {
                       <span style={{fontSize:13,fontWeight:700,color:'#1a4a8a'}}>With {list.friend_name}</span>
                       <span style={{fontSize:11,color:'#5a7aa0'}}>{list.items.filter(i=>i.checked).length}/{list.items.length}</span>
                     </div>
-                    <span style={{fontSize:13,color:'#6090d0',transform:openCartSections[list.friend_id]?'rotate(180deg)':'none',display:'inline-block',transition:'transform .15s'}}>▾</span>
+                    <div style={{display:'flex',alignItems:'center',gap:10}}>
+                      <button onClick={(e)=>{e.stopPropagation();setAddItemModal({target:list.friend_id,label:`With ${list.friend_name}`})}} style={{display:'flex',alignItems:'center',gap:4,padding:'4px 10px',fontSize:11,fontWeight:600,color:'#fff',background:'#1a1a1a',border:'none',borderRadius:7,cursor:'pointer',fontFamily:'inherit'}}>+ Add</button>
+                      <span style={{fontSize:13,color:'#6090d0',transform:openCartSections[list.friend_id]?'rotate(180deg)':'none',display:'inline-block',transition:'transform .15s'}}>▾</span>
+                    </div>
                   </div>
                   {openCartSections[list.friend_id] && (
                     <div className={styles.cartSectionBody}>
@@ -2116,7 +2151,10 @@ export default function PantryPal() {
                     <span style={{fontSize:13,fontWeight:700,color:'#333'}}>Personal</span>
                     <span style={{fontSize:11,color:'#999'}}>{cart.filter(i=>i.checked).length}/{cart.length}</span>
                   </div>
-                  <span style={{fontSize:13,color:'#999',transform:openCartSections.personal?'rotate(180deg)':'none',display:'inline-block',transition:'transform .15s'}}>▾</span>
+                  <div style={{display:'flex',alignItems:'center',gap:10}}>
+                    <button onClick={(e)=>{e.stopPropagation();setAddItemModal({target:'personal',label:'Personal'})}} style={{display:'flex',alignItems:'center',gap:4,padding:'4px 10px',fontSize:11,fontWeight:600,color:'#fff',background:'#1a1a1a',border:'none',borderRadius:7,cursor:'pointer',fontFamily:'inherit'}}>+ Add</button>
+                    <span style={{fontSize:13,color:'#999',transform:openCartSections.personal?'rotate(180deg)':'none',display:'inline-block',transition:'transform .15s'}}>▾</span>
+                  </div>
                 </div>
                 {openCartSections.personal && (
                   <div className={styles.cartSectionBody}>
@@ -2188,6 +2226,26 @@ export default function PantryPal() {
       {toast&&<div className={styles.toast}>{toast}</div>}
 
       {activeTour && <Tour steps={activeTour} onComplete={completeTour} onSkip={skipTour} />}
+
+      {addItemModal && (
+        <div className={styles.confirmOverlay} onClick={()=>setAddItemModal(null)}>
+          <div className={styles.usernamePromptBox} style={{maxWidth:340}} onClick={e=>e.stopPropagation()}>
+            <div style={{fontSize:13,fontWeight:700,color:'#145040',marginBottom:14}}>Add to {addItemModal.label}</div>
+            <div style={{marginBottom:10}}>
+              <label style={{fontSize:11,color:'#888',display:'block',marginBottom:4}}>Item name</label>
+              <input autoFocus value={addItemModalName} onChange={e=>setAddItemModalName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&submitAddItemModal()} placeholder="e.g. Paper towels" style={{width:'100%',padding:'9px 11px',border:'1px solid #e0e0e0',borderRadius:8,fontSize:14,fontFamily:'inherit'}} />
+            </div>
+            <div style={{marginBottom:16}}>
+              <label style={{fontSize:11,color:'#888',display:'block',marginBottom:4}}>Quantity (optional)</label>
+              <input value={addItemModalQty} onChange={e=>setAddItemModalQty(e.target.value)} onKeyDown={e=>e.key==='Enter'&&submitAddItemModal()} placeholder="e.g. 2 bunches" style={{width:'100%',padding:'9px 11px',border:'1px solid #e0e0e0',borderRadius:8,fontSize:14,fontFamily:'inherit'}} />
+            </div>
+            <div style={{display:'flex',gap:8}}>
+              <button onClick={()=>setAddItemModal(null)} style={{flex:1,padding:9,border:'none',borderRadius:8,background:'#f5ede0',color:'#555',fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>Cancel</button>
+              <button onClick={submitAddItemModal} style={{flex:1,padding:9,border:'none',borderRadius:8,background:'#1a1a1a',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>Add item</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {sharedActionSheet && (
         <div className={styles.confirmOverlay} onClick={()=>setSharedActionSheet(null)}>
