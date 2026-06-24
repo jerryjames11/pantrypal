@@ -59,6 +59,12 @@ export default async function handler(req, res) {
 
     if (action === 'create') {
       const { name } = req.body
+      // Guard: don't allow creating a second household while already in one
+      const { data: existing } = await sb.from('household_members')
+        .select('household_id').eq('user_id', user_id).eq('status', 'active').maybeSingle()
+      if (existing) {
+        return res.status(409).json({ error: 'You are already in a household. Leave it first to create a new one.' })
+      }
       console.log('Creating household:', name, 'for user:', user_id)
       const { data: hh, error } = await sb.from('households').insert({ name, owner_id: user_id }).select().single()
       if (error) {
@@ -81,15 +87,32 @@ export default async function handler(req, res) {
       const { household_id, invitee_id } = req.body
       const { data: hh } = await sb.from('households').select('name,owner_id').eq('id', household_id).single()
       if (hh?.owner_id !== user_id) return res.status(403).json({ error: 'Only the owner can invite' })
-      const { error } = await sb.from('household_members').upsert({ household_id, user_id: invitee_id, role: 'member', status: 'pending' })
-      if (error) return res.status(500).json({ error: error.message })
+
+      console.log('Inviting:', invitee_id, 'to household:', household_id)
+      const { data: upsertResult, error } = await sb.from('household_members')
+        .upsert(
+          { household_id, user_id: invitee_id, role: 'member', status: 'pending' },
+          { onConflict: 'household_id,user_id' }
+        )
+        .select()
+      if (error) {
+        console.error('Invite upsert error:', error)
+        return res.status(500).json({ error: error.message })
+      }
+      console.log('Invite upsert result:', upsertResult)
+
       const { data: inviterProfile } = await sb.from('profiles').select('display_name').eq('id', user_id).single()
-      await sb.from('notifications').insert({
+      const { error: notifError } = await sb.from('notifications').insert({
         user_id: invitee_id, type: 'household_invite',
         title: 'Household invitation',
         body: `${inviterProfile?.display_name || 'Someone'} invited you to join "${hh.name}"`,
         data: { household_id, household_name: hh.name, from_user: user_id }
       })
+      if (notifError) {
+        console.error('Invite notification insert error:', notifError)
+        return res.status(500).json({ error: `Member added but notification failed: ${notifError.message}` })
+      }
+      console.log('Invite notification sent to:', invitee_id)
       return res.status(200).json({ ok: true })
     }
 
@@ -128,29 +151,53 @@ export default async function handler(req, res) {
 
     if (action === 'accept_invite') {
       const { household_id } = req.body
-      const { data: profile } = await sb.from('profiles').select('display_name').eq('id', user_id).single()
-      const userName = profile?.display_name || 'User'
+      try {
+        // Guard: don't allow joining a second household while already in one
+        const { data: existing } = await sb.from('household_members')
+          .select('household_id').eq('user_id', user_id).eq('status', 'active').neq('household_id', household_id).maybeSingle()
+        if (existing) {
+          return res.status(409).json({ error: 'You are already in a household. Leave it first to join a new one.' })
+        }
 
-      // Migrate personal pantry items to household pantry as "[Name]'s Items" category
-      const { data: personalItems } = await sb.from('pantry_items')
-        .select('*').eq('user_id', user_id).is('household_id', null)
+        const { data: profile } = await sb.from('profiles').select('display_name').eq('id', user_id).single()
+        const userName = profile?.display_name || 'User'
 
-      if (personalItems?.length > 0) {
-        const migratedItems = personalItems.map(item => ({
-          ...item,
-          id: undefined,
-          household_id,
-          category: `${userName}'s Items`,
-          updated_at: new Date().toISOString()
-        }))
-        await sb.from('pantry_items').insert(migratedItems)
-        // Mark personal items as migrated (set a flag via category name)
-        await sb.from('pantry_items').update({ category: `__migrated_${household_id}` })
-          .eq('user_id', user_id).is('household_id', null)
+        // Migrate personal pantry items to household pantry as "[Name]'s Items" category
+        const { data: personalItems, error: fetchErr } = await sb.from('pantry_items')
+          .select('*').eq('user_id', user_id).is('household_id', null)
+        if (fetchErr) console.error('Fetch personal items error:', fetchErr)
+
+        if (personalItems?.length > 0) {
+          const migratedItems = personalItems.map(item => {
+            const { id, ...rest } = item // properly strip id instead of setting to undefined
+            return {
+              ...rest,
+              household_id,
+              category: `${userName}'s Items`,
+              updated_at: new Date().toISOString()
+            }
+          })
+          const { error: insertErr } = await sb.from('pantry_items').insert(migratedItems)
+          if (insertErr) console.error('Migrate items insert error:', insertErr)
+
+          const { error: updateErr } = await sb.from('pantry_items').update({ category: `__migrated_${household_id}` })
+            .eq('user_id', user_id).is('household_id', null)
+          if (updateErr) console.error('Mark migrated error:', updateErr)
+        }
+
+        const { error: memberErr } = await sb.from('household_members')
+          .update({ status: 'active', joined_at: new Date().toISOString() })
+          .eq('household_id', household_id).eq('user_id', user_id)
+        if (memberErr) {
+          console.error('Member activation error:', memberErr)
+          return res.status(500).json({ error: memberErr.message })
+        }
+
+        return res.status(200).json({ ok: true })
+      } catch (err) {
+        console.error('accept_invite crashed:', err)
+        return res.status(500).json({ error: 'Failed to join household' })
       }
-
-      await sb.from('household_members').update({ status: 'active', joined_at: new Date().toISOString() }).eq('household_id', household_id).eq('user_id', user_id)
-      return res.status(200).json({ ok: true })
     }
 
     if (action === 'decline_invite') {

@@ -494,11 +494,23 @@ export default function PantryPal() {
   }
 
   async function inviteToHousehold(invitee_id) {
-    await fetch(`/api/households?user_id=${user.id}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'invite', household_id: household.id, invitee_id })
-    })
-    showToast('Invitation sent!'); setHouseholdInviteResults([])
+    try {
+      const res = await fetch(`/api/households?user_id=${user.id}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'invite', household_id: household.id, invitee_id })
+      })
+      const data = await res.json()
+      console.log('inviteToHousehold response:', res.status, data)
+      if (!res.ok || data.error) {
+        showToast(data.error || 'Failed to send invitation')
+        return
+      }
+      showToast('Invitation sent!')
+      setHouseholdInviteResults([])
+    } catch (err) {
+      console.error('inviteToHousehold error:', err)
+      showToast('Something went wrong sending the invitation')
+    }
   }
 
   async function approveJoinRequest(memberId) {
@@ -531,15 +543,58 @@ export default function PantryPal() {
   async function acceptHouseholdInvite(household_id, notif_id) {
     if (pantry.length > 0) {
       setShowHouseholdWarning({ householdId: household_id, notifId: notif_id })
-      return
+      return false // warning modal will handle the actual join + notification update
     }
-    await fetch(`/api/households?user_id=${user.id}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'accept_invite', household_id })
-    })
-    await loadHousehold()
-    await loadPantry()
-    showToast('Joined household!')
+    try {
+      const res = await fetch(`/api/households?user_id=${user.id}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'accept_invite', household_id })
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        showToast(data.error || 'Failed to join household')
+        return false
+      }
+      await loadHousehold()
+      await loadPantry()
+      showToast('Joined household!')
+      return true
+    } catch (err) {
+      console.error('acceptHouseholdInvite error:', err)
+      showToast('Something went wrong joining the household')
+      return false
+    }
+  }
+
+  async function confirmJoinHousehold() {
+    if (!showHouseholdWarning) return
+    const { householdId, notifId } = showHouseholdWarning
+    setShowHouseholdWarning(null)
+    try {
+      const res = await fetch(`/api/households?user_id=${user.id}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'accept_invite', household_id: householdId })
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        showToast(data.error || 'Failed to join household')
+        return
+      }
+      // Only mark joined in the notification once we know it actually succeeded
+      if (notifId) {
+        setNotifications(ns => ns.map(n => n.id === notifId ? {...n, data:{...n.data, joined:true}} : n))
+        await fetch(`/api/notifications?user_id=${user.id}`, {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: notifId, data: { joined: true } })
+        })
+      }
+      await loadHousehold()
+      await loadPantry()
+      showToast('Joined household! Your items were added to the shared pantry.')
+    } catch (err) {
+      console.error('confirmJoinHousehold error:', err)
+      showToast('Something went wrong joining the household')
+    }
   }
 
   async function declineHouseholdInvite(household_id) {
@@ -1084,12 +1139,12 @@ export default function PantryPal() {
                             ? <div style={{fontSize:11,color:'#2d8a6b',fontWeight:600,marginTop:6}}>✓ Joined household</div>
                             : <div style={{display:'flex',gap:6,marginTop:6}}>
                                 <button className={styles.panelBtnSm} onClick={async()=>{
-                                  const newData = {...n.data, joined:true}
-                                  setNotifications(ns=>ns.map(x=>x.id===n.id?{...x,data:newData}:x))
-                                  await fetch(`/api/notifications?user_id=${user.id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:n.id,data:newData})})
-                                  await acceptHouseholdInvite(n.data.household_id, n.id)
-                                  await loadHousehold()
-                                  await loadPantry()
+                                  const ok = await acceptHouseholdInvite(n.data.household_id, n.id)
+                                  if (ok) {
+                                    const newData = {...n.data, joined:true}
+                                    setNotifications(ns=>ns.map(x=>x.id===n.id?{...x,data:newData}:x))
+                                    await fetch(`/api/notifications?user_id=${user.id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:n.id,data:newData})})
+                                  }
                                 }}>Join</button>
                                 <button className={styles.panelBtnSmDanger} onClick={async()=>{
                                   setNotifications(ns=>ns.filter(x=>x.id!==n.id))
