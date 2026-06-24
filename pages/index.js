@@ -461,20 +461,25 @@ export default function PantryPal() {
 
   async function createHousehold() {
     if (!householdName.trim()) return
-    const res = await fetch(`/api/households?user_id=${user.id}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'create', name: householdName.trim() })
-    })
-    const data = await res.json()
-    if (data.error || !data.household) {
-      showToast(data.error || 'Failed to create household — please try again')
-      return
+    try {
+      const res = await fetch(`/api/households?user_id=${user.id}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'create', name: householdName.trim() })
+      })
+      const data = await res.json()
+      console.log('createHousehold response:', res.status, data)
+      if (!res.ok || data.error || !data.household) {
+        showToast(data.error || `Failed to create household (status ${res.status})`)
+        return
+      }
+      setHouseholdName('')
+      showToast(`"${data.household.name}" created!`)
+      const hhId = await loadHousehold()
+      await loadPantry(hhId)
+    } catch (err) {
+      console.error('createHousehold error:', err)
+      showToast('Something went wrong creating the household')
     }
-    setHouseholdName('')
-    track('household_created')
-    showToast(`"${data.household.name}" created!`)
-    const hhId = await loadHousehold()
-    await loadPantry(hhId)
   }
 
   async function searchHouseholdInvite() {
