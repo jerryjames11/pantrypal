@@ -120,10 +120,15 @@ export default function PantryPal() {
   const [showSaved, setShowSaved] = useState(false)
 
   // Cart
-  const [cart, setCart] = useState([])
+  const [cart, setCart] = useState([]) // personal items only now
+  const [householdCart, setHouseholdCart] = useState([])
+  const [sharedLists, setSharedLists] = useState([]) // [{id, friend_id, friend_name, items}]
+  const [openCartSections, setOpenCartSections] = useState({ household: true })
+  const [showFriendListPicker, setShowFriendListPicker] = useState(false)
   const [cartLoading, setCartLoading] = useState(false)
   const [cartItemName, setCartItemName] = useState('')
   const [cartItemQty, setCartItemQty] = useState('')
+  const [cartAddTarget, setCartAddTarget] = useState('personal') // 'personal' | 'household' | shared_list_id
 
   // Profile / social
   const [profileOpen, setProfileOpen] = useState(false)
@@ -996,35 +1001,79 @@ export default function PantryPal() {
   async function loadCart() {
     if (!user) return
     setCartLoading(true)
-    try { const res = await fetch(`/api/cart?user_id=${user.id}`); const data = await res.json(); setCart(data.items || []) } catch(e){}
+    try {
+      const res = await fetch(`/api/cart?user_id=${user.id}`)
+      const data = await res.json()
+      console.log('loadCart response:', res.status, data)
+      setCart(data.personal || [])
+      setHouseholdCart(data.household || [])
+      setSharedLists(data.sharedLists || [])
+    } catch(e) { console.error('loadCart error:', e) }
     setCartLoading(false)
   }
+
   async function addToCart() {
     if (!cartItemName.trim() || !user) return
-    await fetch(`/api/cart?user_id=${user.id}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items: [{ name: cartItemName.trim(), qty: cartItemQty, category: 'Other', source: 'manual' }] })
-    })
-    setCartItemName(''); setCartItemQty(''); showToast(`Added: ${cartItemName}`); loadCart()
+    const body = { items: [{ name: cartItemName.trim(), qty: cartItemQty, category: 'Other', source: 'manual' }] }
+    if (cartAddTarget === 'household' && household) body.household_id = household.id
+    else if (cartAddTarget !== 'personal' && cartAddTarget !== 'household') body.friend_id = cartAddTarget
+    try {
+      const res = await fetch(`/api/cart?user_id=${user.id}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) { showToast(data.error || 'Failed to add item'); return }
+      setCartItemName(''); setCartItemQty(''); showToast(`Added: ${cartItemName}`); loadCart()
+    } catch (err) { console.error('addToCart error:', err); showToast('Something went wrong') }
   }
-  async function toggleCartItem(id, checked) {
-    setCart(c => c.map(i => i.id === id ? { ...i, checked } : i))
-    await fetch(`/api/cart?user_id=${user.id}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, checked })
-    })
+
+  async function toggleCartItem(id, checked, listType) {
+    const updateLocal = (list) => list.map(i => i.id === id ? { ...i, checked, bought_by_name: checked ? (profile?.display_name || profile?.username) : null } : i)
+    if (listType === 'personal') setCart(updateLocal)
+    else if (listType === 'household') setHouseholdCart(updateLocal)
+    else setSharedLists(ls => ls.map(l => ({ ...l, items: updateLocal(l.items) })))
+    try {
+      await fetch(`/api/cart?user_id=${user.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, checked })
+      })
+    } catch (err) { console.error('toggleCartItem error:', err) }
   }
-  async function removeCartItem(id) {
-    setCart(c => c.filter(i => i.id !== id))
-    await fetch(`/api/cart?user_id=${user.id}`, {
-      method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id })
-    })
+
+  async function removeCartItem(id, listType) {
+    if (listType === 'personal') setCart(c => c.filter(i => i.id !== id))
+    else if (listType === 'household') setHouseholdCart(c => c.filter(i => i.id !== id))
+    else setSharedLists(ls => ls.map(l => ({ ...l, items: l.items.filter(i => i.id !== id) })))
+    try {
+      await fetch(`/api/cart?user_id=${user.id}`, {
+        method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id })
+      })
+    } catch (err) { console.error('removeCartItem error:', err) }
   }
-  async function clearCheckedCart() {
-    setCart(c => c.filter(i => !i.checked))
-    await fetch(`/api/cart?user_id=${user.id}`, {
-      method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clearChecked: true })
+
+  async function clearCheckedCart(listType, listId) {
+    if (listType === 'personal') setCart(c => c.filter(i => !i.checked))
+    else if (listType === 'household') setHouseholdCart(c => c.filter(i => !i.checked))
+    else setSharedLists(ls => ls.map(l => l.id === listId ? { ...l, items: l.items.filter(i => !i.checked) } : l))
+    const body = { clearChecked: true }
+    if (listType === 'household') body.household_id = household?.id
+    if (listType === 'shared') body.shared_list_id = listId
+    try {
+      await fetch(`/api/cart?user_id=${user.id}`, {
+        method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+      })
+      showToast('Checked items removed')
+    } catch (err) { console.error('clearCheckedCart error:', err) }
+  }
+
+  function startSharedListWith(friendId, friendName) {
+    setShowFriendListPicker(false)
+    setCartAddTarget(friendId)
+    // If a section for this friend doesn't exist yet locally, add a placeholder so it shows immediately
+    setSharedLists(ls => {
+      if (ls.some(l => l.friend_id === friendId)) return ls
+      return [...ls, { id: `pending-${friendId}`, friend_id: friendId, friend_name: friendName, items: [] }]
     })
-    showToast('Checked items removed')
+    setOpenCartSections(s => ({ ...s, [friendId]: true }))
   }
 
   // ── Derived ───────────────────────────────────────────────────────────────
@@ -1036,6 +1085,7 @@ export default function PantryPal() {
   if (orphans.length) groupedPantry['Uncategorized'] = [...(groupedPantry['Uncategorized']||[]), ...orphans]
   const savedIds = new Set(savedRecipes.map(r => r.title))
   const cartCheckedCount = cart.filter(i => i.checked).length
+  const totalCartItems = cart.length + householdCart.length + sharedLists.reduce((sum, l) => sum + l.items.length, 0)
   const acceptedFriends = [...(friendsData.sent||[]).filter(f=>f.status==='accepted'), ...(friendsData.received||[]).filter(f=>f.status==='accepted')]
   const pendingReceived = (friendsData.received||[]).filter(f=>f.status==='pending')
 
@@ -1404,10 +1454,10 @@ export default function PantryPal() {
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2d8a6b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
                 Shopping List
               </div>
-              {cart.length > 0 && <div className={styles.homeShopBadge}>{cart.length}</div>}
+              {totalCartItems > 0 && <div className={styles.homeShopBadge}>{totalCartItems}</div>}
               <span className={styles.homeShopArrow}>›</span>
             </div>
-            {cart.length === 0 ? (
+            {totalCartItems === 0 ? (
               <div className={styles.homeShopEmpty}>No items yet — add from your pantry or manually</div>
             ) : (
               <div className={styles.homeShopItems}>
@@ -1889,58 +1939,142 @@ export default function PantryPal() {
       {/* ══ CART ══ */}
       {tab==='cart'&&(
         <section>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12,flexWrap:'wrap',gap:6}}>
-            <div className={styles.sectionLabel} style={{margin:0}}>Shopping cart — {cart.length} item{cart.length!==1?'s':''}</div>
-            <div style={{display:'flex',gap:6}}>
-              {cartCheckedCount>0&&<button className={styles.chip} onClick={clearCheckedCart}>🗑 Remove checked ({cartCheckedCount})</button>}
-              <div id="tour-cart-share" style={{position:'relative'}} data-actions>
-                <button className={styles.chip} onClick={()=>setShowActions(a=>a==='share-cart'?false:'share-cart')}>📤 Share cart</button>
-                {showActions==='share-cart'&&(
-                  <div className={styles.actionsDropdown}>
-                    {acceptedFriends.length===0
-                      ? <div className={styles.actionItem} style={{color:'#888',cursor:'default'}}>Add friends first to share</div>
-                      : acceptedFriends.map(f=>{
-                          const isSender = f.requester_id === user.id
-                          const friend = isSender ? f.addressee : f.requester
-                          const fid = isSender ? f.addressee_id : f.requester_id
-                          return <button key={fid} className={styles.actionItem} onClick={()=>{shareCartWithFriend(fid);setShowActions(false)}}>{friend?.display_name||friend?.username}</button>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+            <div className={styles.sectionLabel} style={{margin:0}}>Shopping lists</div>
+            <button className={styles.chip} onClick={()=>setShowFriendListPicker(v=>!v)}>+ Shared list with friend</button>
+          </div>
+
+          {showFriendListPicker && (
+            <div className={styles.actionsDropdown} style={{position:'relative',marginBottom:12,width:'100%'}}>
+              {acceptedFriends.length===0
+                ? <div className={styles.actionItem} style={{color:'#888',cursor:'default'}}>Add friends first to start a shared list</div>
+                : acceptedFriends.map(f=>{
+                    const isSender = f.requester_id === user.id
+                    const friend = isSender ? f.addressee : f.requester
+                    const fid = isSender ? f.addressee_id : f.requester_id
+                    const already = sharedLists.some(l => l.friend_id === fid)
+                    return <button key={fid} className={styles.actionItem} onClick={()=>startSharedListWith(fid, friend?.display_name||friend?.username)}>{friend?.display_name||friend?.username}{already?' (open)':''}</button>
+                  })
+              }
+            </div>
+          )}
+
+          {/* Add item row — target picker */}
+          <div id="tour-cart-input" style={{display:'flex',gap:6,marginBottom:10,flexWrap:'wrap'}}>
+            <select value={cartAddTarget} onChange={e=>setCartAddTarget(e.target.value)} style={{padding:'9px 8px',border:'1px solid #e0e0e0',borderRadius:8,fontSize:13,fontFamily:'inherit',background:'#fff'}}>
+              <option value="personal">Personal</option>
+              {household && <option value="household">Household</option>}
+              {sharedLists.map(l => <option key={l.friend_id} value={l.friend_id}>With {l.friend_name}</option>)}
+            </select>
+            <input type="text" value={cartItemName} placeholder="Add item…" onChange={e=>setCartItemName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&addToCart()} style={{flex:1,padding:'9px 11px',border:'1px solid #e0e0e0',borderRadius:8,fontSize:14,fontFamily:'inherit',minWidth:90}} />
+            <input type="text" value={cartItemQty} placeholder="Qty" onChange={e=>setCartItemQty(e.target.value)} style={{width:56,padding:'9px 8px',border:'1px solid #e0e0e0',borderRadius:8,fontSize:14,fontFamily:'inherit'}} />
+            <button className={styles.addBtn} onClick={addToCart}>+ Add</button>
+          </div>
+          <button id="tour-cart-pull" className={styles.chip} style={{marginBottom:14}} onClick={addLowItemsToCart}>↓ Pull in low/out pantry items</button>
+
+          {cartLoading ? <div className={styles.loadRow}><Spinner /> Loading…</div> : (
+            <div style={{display:'flex',flexDirection:'column',gap:8}}>
+
+              {/* Household section */}
+              {household && (
+                <div className={styles.cartSection} style={{background:'#e8f5f0',border:'1.5px solid #4db88a'}}>
+                  <div className={styles.cartSectionHdr} onClick={()=>setOpenCartSections(s=>({...s,household:!s.household}))}>
+                    <div style={{display:'flex',alignItems:'center',gap:6}}>
+                      <span style={{fontSize:14}}>🏠</span>
+                      <span style={{fontSize:13,fontWeight:700,color:'#145040'}}>{household.name}</span>
+                      <span style={{fontSize:11,color:'#5a7a6a'}}>{householdCart.filter(i=>i.checked).length}/{householdCart.length}</span>
+                    </div>
+                    <span style={{fontSize:13,color:'#4db88a',transform:openCartSections.household?'rotate(180deg)':'none',display:'inline-block',transition:'transform .15s'}}>▾</span>
+                  </div>
+                  {openCartSections.household && (
+                    <div className={styles.cartSectionBody}>
+                      {householdCart.length===0
+                        ? <div className={styles.empty} style={{padding:'8px 0'}}>No items yet</div>
+                        : householdCart.map(item=>(
+                          <div key={item.id} className={`${styles.cartItem} ${item.checked?styles.cartItemChecked:''}`}>
+                            <input type="checkbox" checked={item.checked} onChange={e=>toggleCartItem(item.id,e.target.checked,'household')} className={styles.cartCheck} />
+                            <span className={styles.cartItemName}>{item.name}</span>
+                            {item.qty&&<span className={styles.cartItemQty}>{item.qty}</span>}
+                            <span style={{fontSize:10,color:'#5a7a6a',marginLeft:4}}>{item.checked ? `Bought by ${item.bought_by_name||'?'}` : (item.added_by_name?`Added by ${item.added_by_name}`:'')}</span>
+                            <button className={styles.iconBtn} onClick={()=>removeCartItem(item.id,'household')}>✕</button>
+                          </div>
+                        ))
+                      }
+                      {householdCart.some(i=>i.checked) && <button className={styles.chip} style={{marginTop:6}} onClick={()=>clearCheckedCart('household')}>Remove checked</button>}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Friend shared lists */}
+              {sharedLists.map(list => (
+                <div key={list.id} className={styles.cartSection} style={{background:'#e8f0ff',border:'1.5px solid #6090d0'}}>
+                  <div className={styles.cartSectionHdr} onClick={()=>setOpenCartSections(s=>({...s,[list.friend_id]:!s[list.friend_id]}))}>
+                    <div style={{display:'flex',alignItems:'center',gap:6}}>
+                      <div style={{width:16,height:16,borderRadius:'50%',background:'#fff',border:'1.5px solid #6090d0',display:'flex',alignItems:'center',justifyContent:'center',fontSize:9,fontWeight:700,color:'#1a4a8a'}}>{(list.friend_name||'?').charAt(0).toUpperCase()}</div>
+                      <span style={{fontSize:13,fontWeight:700,color:'#1a4a8a'}}>With {list.friend_name}</span>
+                      <span style={{fontSize:11,color:'#5a7aa0'}}>{list.items.filter(i=>i.checked).length}/{list.items.length}</span>
+                    </div>
+                    <span style={{fontSize:13,color:'#6090d0',transform:openCartSections[list.friend_id]?'rotate(180deg)':'none',display:'inline-block',transition:'transform .15s'}}>▾</span>
+                  </div>
+                  {openCartSections[list.friend_id] && (
+                    <div className={styles.cartSectionBody}>
+                      {list.items.length===0
+                        ? <div className={styles.empty} style={{padding:'8px 0'}}>No items yet — add one above</div>
+                        : list.items.map(item=>(
+                          <div key={item.id} className={`${styles.cartItem} ${item.checked?styles.cartItemChecked:''}`}>
+                            <input type="checkbox" checked={item.checked} onChange={e=>toggleCartItem(item.id,e.target.checked,'shared')} className={styles.cartCheck} />
+                            <span className={styles.cartItemName}>{item.name}</span>
+                            {item.qty&&<span className={styles.cartItemQty}>{item.qty}</span>}
+                            <span style={{fontSize:10,color:'#5a7aa0',marginLeft:4}}>{item.checked ? `Bought by ${item.bought_by_name||'?'}` : (item.added_by_name?`Added by ${item.added_by_name}`:'')}</span>
+                            <button className={styles.iconBtn} onClick={()=>removeCartItem(item.id,'shared')}>✕</button>
+                          </div>
+                        ))
+                      }
+                      {list.items.some(i=>i.checked) && <button className={styles.chip} style={{marginTop:6}} onClick={()=>clearCheckedCart('shared',list.id)}>Remove checked</button>}
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {/* Personal section */}
+              <div className={styles.cartSection} style={{background:'#fff',border:'1.5px solid #e0e0e0'}}>
+                <div className={styles.cartSectionHdr} onClick={()=>setOpenCartSections(s=>({...s,personal:!s.personal}))}>
+                  <div style={{display:'flex',alignItems:'center',gap:6}}>
+                    <span style={{fontSize:14}}>👤</span>
+                    <span style={{fontSize:13,fontWeight:700,color:'#333'}}>Personal</span>
+                    <span style={{fontSize:11,color:'#999'}}>{cart.filter(i=>i.checked).length}/{cart.length}</span>
+                  </div>
+                  <span style={{fontSize:13,color:'#999',transform:openCartSections.personal?'rotate(180deg)':'none',display:'inline-block',transition:'transform .15s'}}>▾</span>
+                </div>
+                {openCartSections.personal && (
+                  <div className={styles.cartSectionBody}>
+                    {cart.length===0
+                      ? <div className={styles.empty} style={{padding:'8px 0'}}>Cart is empty — add items above or pull from pantry</div>
+                      : ['manual','pantry','recipe'].map(source=>{
+                          const sourceItems=cart.filter(i=>i.source===source)
+                          if(!sourceItems.length)return null
+                          const label=source==='manual'?'Added manually':source==='pantry'?'From pantry':'From recipe'
+                          return(
+                            <div key={source} style={{marginBottom:6}}>
+                              <div style={{fontSize:10,fontWeight:600,color:'#999',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:4}}>{label}</div>
+                              {sourceItems.map(item=>(
+                                <div key={item.id} className={`${styles.cartItem} ${item.checked?styles.cartItemChecked:''}`}>
+                                  <input type="checkbox" checked={item.checked} onChange={e=>toggleCartItem(item.id,e.target.checked,'personal')} className={styles.cartCheck} />
+                                  <span className={styles.cartItemName}>{item.name}</span>
+                                  {item.qty&&<span className={styles.cartItemQty}>{item.qty}</span>}
+                                  <button className={styles.iconBtn} onClick={()=>removeCartItem(item.id,'personal')}>✕</button>
+                                </div>
+                              ))}
+                            </div>
+                          )
                         })
                     }
-                    <div className={styles.catGearDivider} />
-                    <button className={styles.actionItem} style={{color:'#2d8a6b',fontWeight:600}} onClick={()=>{generateShareLink('cart',{items:cart},'Shopping cart');setShowActions(false)}}>Share via link</button>
+                    {cartCheckedCount>0 && <button className={styles.chip} style={{marginTop:6}} onClick={()=>clearCheckedCart('personal')}>Remove checked ({cartCheckedCount})</button>}
                   </div>
                 )}
               </div>
-            </div>
-          </div>
-          <div id="tour-cart-input" style={{display:'flex',gap:8,marginBottom:16}}>
-            <input type="text" value={cartItemName} placeholder="Add item…" onChange={e=>setCartItemName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&addToCart()} style={{flex:2,padding:'9px 11px',border:'1px solid #e0e0e0',borderRadius:8,fontSize:14,fontFamily:'inherit',minWidth:0}} />
-            <input type="text" value={cartItemQty} placeholder="Qty" onChange={e=>setCartItemQty(e.target.value)} style={{width:64,padding:'9px 8px',border:'1px solid #e0e0e0',borderRadius:8,fontSize:14,fontFamily:'inherit'}} />
-            <button className={styles.addBtn} onClick={addToCart}>+ Add</button>
-          </div>
-          <button id="tour-cart-pull" className={styles.chip} style={{marginBottom:12}} onClick={addLowItemsToCart}>↓ Pull in low/out pantry items</button>
-          {cartLoading?<div className={styles.loadRow}><Spinner /> Loading cart…</div>
-          :cart.length===0?<div className={styles.empty}>Cart is empty — add items above or pull from pantry</div>
-          :(
-            <div id="tour-cart-list" style={{display:'flex',flexDirection:'column',gap:6}}>
-              {['manual','pantry','recipe'].map(source=>{
-                const sourceItems=cart.filter(i=>i.source===source)
-                if(!sourceItems.length)return null
-                const label=source==='manual'?'✏️ Added manually':source==='pantry'?'🧺 From pantry':'🍳 From recipe'
-                return(
-                  <div key={source}>
-                    <div style={{fontSize:11,fontWeight:600,color:'#999',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:4}}>{label}</div>
-                    {sourceItems.map(item=>(
-                      <div key={item.id} className={`${styles.cartItem} ${item.checked?styles.cartItemChecked:''}`}>
-                        <input type="checkbox" checked={item.checked} onChange={e=>toggleCartItem(item.id,e.target.checked)} className={styles.cartCheck} />
-                        <span className={styles.cartItemName}>{item.name}</span>
-                        {item.qty&&<span className={styles.cartItemQty}>{item.qty}</span>}
-                        <button className={styles.iconBtn} onClick={()=>removeCartItem(item.id)}>✕</button>
-                      </div>
-                    ))}
-                  </div>
-                )
-              })}
+
             </div>
           )}
         </section>
@@ -1959,7 +2093,7 @@ export default function PantryPal() {
         <button className={tab==='cart'?`${styles.bottomNavItem} ${styles.bottomNavActive}`:styles.bottomNavItem} onClick={()=>setTab('cart')} style={{position:'relative'}}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
           <span className={styles.bottomNavLabel}>Shop</span>
-          {cart.length>0&&<span className={styles.cartBadge}>{cart.length}</span>}
+          {totalCartItems>0&&<span className={styles.cartBadge}>{totalCartItems}</span>}
         </button>
         {/* Scan — floating bump */}
         <button className={styles.bottomNavScanWrap} onClick={()=>setTab('scan')}>
