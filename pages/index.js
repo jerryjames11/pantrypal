@@ -74,7 +74,8 @@ export default function PantryPal() {
   const [openCatMenu, setOpenCatMenu] = useState(null)
   const [showAddItem, setShowAddItem] = useState(false)
   const [autoCategorizing, setAutoCategorizing] = useState(false)
-  const [categorizeReview, setCategorizeReview] = useState(null) // { results: [...], checked: {...} }
+  const [categorizeReview, setCategorizeReview] = useState(null)
+  const [homeHHExpanded, setHomeHHExpanded] = useState(false) // { results: [...], checked: {...} }
   const [pantryViewMode, setPantryViewMode] = useState(() => { if (typeof window !== 'undefined') return localStorage.getItem('pantryViewMode') || 'list'; return 'list' })
   const [collapsedCats, setCollapsedCats] = useState({})
   const [manualName, setManualName] = useState('')
@@ -1343,16 +1344,62 @@ export default function PantryPal() {
 
           {/* Household */}
           {household ? (
-            <div id="tour-home-household" className={`${styles.homeHHBox} ${styles.homeHHActive} ${styles.homeHHJade}`}
-              onClick={()=>{setTab('pantry');setPantryView('household')}} style={{cursor:'pointer'}}>
-              <div>
-                <div className={styles.homeHHName}>🏠 {household.name}</div>
-                <div className={styles.homeHHSub}>{householdMembers.length} member{householdMembers.length!==1?'s':''}</div>
+            <div id="tour-home-household" className={`${styles.homeHHBox} ${styles.homeHHActive} ${styles.homeHHJade}`}>
+              <div onClick={()=>setHomeHHExpanded(v=>!v)} style={{cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                <div>
+                  <div className={styles.homeHHName}>🏠 {household.name}</div>
+                  <div className={styles.homeHHSub}>{householdMembers.length} member{householdMembers.length!==1?'s':''}</div>
+                </div>
+                <div style={{display:'flex',alignItems:'center',gap:6}}>
+                  <div className={styles.homeHHPill}>Active</div>
+                  <span style={{fontSize:14,color:'#4db88a',fontWeight:600,transition:'transform .2s',transform: homeHHExpanded ? 'rotate(180deg)' : 'none',display:'inline-block'}}>▾</span>
+                </div>
               </div>
-              <div style={{display:'flex',alignItems:'center',gap:6}}>
-                <div className={styles.homeHHPill}>Active</div>
-                <span style={{fontSize:18,color:'#4db88a',fontWeight:600}}>›</span>
-              </div>
+
+              {homeHHExpanded && (
+                <div style={{marginTop:10,paddingTop:10,borderTop:'1px solid #c8ead8'}}>
+                  {householdMembers.map(m => (
+                    <div key={m.id} style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0',borderBottom:'0.5px solid #d4ede0'}}>
+                      <div style={{width:24,height:24,borderRadius:'50%',background:'#fff',border:'1.5px solid #4db88a',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700,color:'#2d8a6b',flexShrink:0}}>
+                        {(m.profile?.display_name || m.profile?.username || '?').charAt(0).toUpperCase()}
+                      </div>
+                      <div style={{fontSize:10,fontWeight:600,color:'#111',flex:1}}>{m.profile?.display_name || m.profile?.username}</div>
+                      {m.role==='owner' && <span style={{fontSize:7,background:'#fff',color:'#2d8a6b',borderRadius:4,padding:'1px 5px',fontWeight:600,border:'1px solid #a8d5c2'}}>Owner</span>}
+                    </div>
+                  ))}
+
+                  {household.owner_id === user.id && (
+                    <div style={{display:'flex',gap:5,marginTop:9,marginBottom:9}} onClick={e=>e.stopPropagation()}>
+                      <input
+                        value={householdInviteSearch}
+                        onChange={e=>setHouseholdInviteSearch(e.target.value)}
+                        onKeyDown={e=>e.key==='Enter'&&searchHouseholdInvite()}
+                        placeholder="Invite by username"
+                        style={{flex:1,padding:'6px 8px',border:'1.5px solid #4db88a',borderRadius:7,fontSize:10,background:'#fff',fontFamily:'inherit'}}
+                      />
+                      <button onClick={searchHouseholdInvite} style={{padding:'6px 10px',background:'#2d8a6b',color:'#fff',border:'none',borderRadius:7,fontSize:10,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>Invite</button>
+                    </div>
+                  )}
+
+                  {householdInviteResults.length > 0 && (
+                    <div onClick={e=>e.stopPropagation()} style={{marginBottom:9}}>
+                      {householdInviteResults.map(u => (
+                        <div key={u.id} style={{display:'flex',alignItems:'center',gap:6,padding:'4px 0',fontSize:10}}>
+                          <div style={{flex:1,fontWeight:600}}>{u.display_name || u.username}</div>
+                          <button onClick={() => inviteToHousehold(u.id)} style={{fontSize:9,background:'#2d8a6b',color:'#fff',border:'none',borderRadius:5,padding:'3px 8px',cursor:'pointer',fontFamily:'inherit'}}>Invite</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <button
+                    onClick={()=>{setTab('pantry');setPantryView('household')}}
+                    style={{width:'100%',padding:8,background:'linear-gradient(135deg,#4db88a,#2d8a6b)',color:'#fff',border:'none',borderRadius:8,fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}
+                  >
+                    View household pantry →
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <div id="tour-home-household" className={`${styles.homeHHBox} ${styles.homeHHEmpty} ${styles.homeHHJade}`}>
