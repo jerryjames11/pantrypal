@@ -1120,9 +1120,7 @@ export default function PantryPal() {
         <div className={styles.profileArea} data-profile>
           <button className={styles.avatarBtn} onClick={() => { setProfileOpen(o => !o); if (profileOpen) setProfilePanel(null) }}>
             {unreadCount > 0 && <span className={styles.notifDot}>{unreadCount > 9 ? '9+' : unreadCount}</span>}
-            {user.user_metadata?.avatar_url
-              ? <img src={user.user_metadata.avatar_url} alt="Profile" className={styles.avatarImg} />
-              : <div className={styles.avatarFallback}>👤</div>}
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
           </button>
 
           {profileOpen && (
@@ -1477,7 +1475,16 @@ export default function PantryPal() {
             <div id="tour-home-household" className={`${styles.homeHHBox} ${styles.homeHHActive} ${styles.homeHHJade}`}>
               <div onClick={()=>setHomeHHExpanded(v=>!v)} style={{cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'space-between',minHeight:32}}>
                 <div>
-                  <div className={styles.homeHHName}>🏠 {household.name}</div>
+                  <div className={styles.homeHHName} style={{display:'flex',alignItems:'center',gap:6}}>
+                    🏠 {household.name}
+                    <span
+                      onClick={(e)=>{ e.stopPropagation(); setProfileOpen(true); setProfilePanel('household') }}
+                      style={{display:'inline-flex',alignItems:'center',justifyContent:'center',cursor:'pointer',opacity:0.7}}
+                      title="Manage household"
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#145040" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    </span>
+                  </div>
                   <div className={styles.homeHHSub}>{householdMembers.length} member{householdMembers.length!==1?'s':''}</div>
                 </div>
                 <div style={{display:'flex',alignItems:'center',gap:6}}>
@@ -1945,7 +1952,7 @@ export default function PantryPal() {
           </div>
 
           {showFriendListPicker && (
-            <div className={styles.actionsDropdown} style={{position:'relative',marginBottom:12,width:'100%'}}>
+            <div className={styles.actionsDropdown} style={{position:'relative',marginBottom:12,width:'100%',maxHeight:220,overflowY:'auto'}}>
               {acceptedFriends.length===0
                 ? <div className={styles.actionItem} style={{color:'#888',cursor:'default'}}>Add friends first to start a shared list</div>
                 : acceptedFriends.map(f=>{
