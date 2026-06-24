@@ -1863,8 +1863,9 @@ export default function PantryPal() {
                         {acceptedFriends.length===0
                           ? <div className={styles.actionItem} style={{color:'#888',cursor:'default'}}>Add friends first to share</div>
                           : acceptedFriends.map(f=>{
-                              const friend = f.addressee||f.requester
-                              const fid = f.addressee_id||f.requester_id
+                              const isSender = f.requester_id === user.id
+                              const friend = isSender ? f.addressee : f.requester
+                              const fid = isSender ? f.addressee_id : f.requester_id
                               return <button key={fid} className={styles.actionItem} onClick={()=>{shareRecipeWithFriend(r,fid);setShowActions(false)}}>{friend?.display_name||friend?.username}</button>
                             })
                         }
@@ -1899,8 +1900,9 @@ export default function PantryPal() {
                     {acceptedFriends.length===0
                       ? <div className={styles.actionItem} style={{color:'#888',cursor:'default'}}>Add friends first to share</div>
                       : acceptedFriends.map(f=>{
-                          const friend=f.addressee||f.requester
-                          const fid=f.addressee_id||f.requester_id
+                          const isSender = f.requester_id === user.id
+                          const friend = isSender ? f.addressee : f.requester
+                          const fid = isSender ? f.addressee_id : f.requester_id
                           return <button key={fid} className={styles.actionItem} onClick={()=>{shareCartWithFriend(fid);setShowActions(false)}}>{friend?.display_name||friend?.username}</button>
                         })
                     }
