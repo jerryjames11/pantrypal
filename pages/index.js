@@ -296,6 +296,30 @@ export default function PantryPal() {
     const toApply = categorizeReview.results.filter(r => r.suggestedCategory && categorizeReview.checked[r.id])
     setCategorizeReview(null)
     if (toApply.length === 0) return
+
+    // Default emoji per standard category name, used only when creating a brand new category
+    const emojiMap = {
+      'Produce': '🥦', 'Meat & Seafood': '🥩', 'Dairy & Eggs': '🥛', 'Bakery': '🥖',
+      'Pantry & Dry Goods': '🥫', 'Frozen': '🧊', 'Toiletries': '🧴', 'Household': '🧹', 'Pet Supplies': '🐾'
+    }
+
+    // Create any suggested categories that don't already exist
+    const neededNames = [...new Set(toApply.map(r => r.suggestedCategory))]
+    const existingNames = new Set(categories.map(c => c.name))
+    const missingNames = neededNames.filter(n => !existingNames.has(n))
+
+    if (missingNames.length > 0) {
+      const hidParam = household ? `&household_id=${household.id}` : ''
+      const created = await Promise.all(missingNames.map(name =>
+        fetch(`/api/categories?user_id=${user.id}${hidParam}`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, emoji: emojiMap[name] || '📦' })
+        }).then(r => r.json())
+      ))
+      const newCats = created.map(d => d.category).filter(Boolean)
+      if (newCats.length) setCategories(c => [...c, ...newCats])
+    }
+
     await Promise.all(toApply.map(r =>
       fetch(`/api/pantry?user_id=${user.id}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
