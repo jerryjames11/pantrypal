@@ -503,23 +503,46 @@ export default function PantryPal() {
     if (!user) return
     const res = await fetch(`/api/shares?user_id=${user.id}`)
     const data = await res.json()
+    console.log('loadShares response:', res.status, data)
     setShares(data.shares || [])
   }
 
   async function shareRecipeWithFriend(recipe, friend_id) {
-    await fetch(`/api/shares?user_id=${user.id}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to_user: friend_id, share_type: 'recipe', title: recipe.title, content: recipe })
-    })
-    showToast(`Recipe shared!`)
+    try {
+      const res = await fetch(`/api/shares?user_id=${user.id}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to_user: friend_id, share_type: 'recipe', title: recipe.title, content: recipe })
+      })
+      const data = await res.json()
+      console.log('shareRecipeWithFriend response:', res.status, data)
+      if (!res.ok || data.error) {
+        showToast(data.error || 'Failed to share recipe')
+        return
+      }
+      showToast('Recipe shared!')
+    } catch (err) {
+      console.error('shareRecipeWithFriend error:', err)
+      showToast('Something went wrong sharing the recipe')
+    }
   }
 
   async function shareCartWithFriend(friend_id) {
-    await fetch(`/api/shares?user_id=${user.id}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to_user: friend_id, share_type: 'cart', title: 'Shopping cart', content: { items: cart } })
-    })
-    showToast('Cart shared!')
+    try {
+      const res = await fetch(`/api/shares?user_id=${user.id}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to_user: friend_id, share_type: 'cart', title: 'Shopping cart', content: { items: cart } })
+      })
+      const data = await res.json()
+      console.log('shareCartWithFriend response:', res.status, data)
+      if (!res.ok || data.error) {
+        showToast(data.error || 'Failed to share cart')
+        return
+      }
+      showToast('Cart shared!')
+    } catch (err) {
+      console.error('shareCartWithFriend error:', err)
+      showToast('Something went wrong sharing the cart')
+    }
   }
 
   // ── Household ─────────────────────────────────────────────────────────────
