@@ -808,6 +808,11 @@ export default function PantryPal() {
     const hidParam = household ? `&household_id=${household.id}` : ''
     const res = await fetch(`/api/categories?user_id=${user.id}${hidParam}`)
     const data = await res.json()
+    console.log('loadCategories response:', res.status, data)
+    if (!res.ok || data.error) {
+      showToast(data.error || 'Failed to load categories')
+      return []
+    }
     const cats = data.categories || []
     setCategories(cats)
     // Collapse ALL categories definitively — overwrite everything

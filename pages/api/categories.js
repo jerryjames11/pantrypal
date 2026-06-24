@@ -23,7 +23,10 @@ export default async function handler(req, res) {
     let query = sb.from('categories').select('*').order('sort_order')
     query = hid ? query.eq('household_id', hid) : query.eq('user_id', user_id).is('household_id', null)
     const { data, error } = await query
-    if (error) return res.status(500).json({ error: error.message })
+    if (error) {
+      console.error('Categories GET error:', error)
+      return res.status(500).json({ error: error.message })
+    }
 
     if (!data || data.length === 0) {
       // Seed defaults — for the household (once, shared) or for the personal user
@@ -33,7 +36,10 @@ export default async function handler(req, res) {
         name: d.name, emoji: d.emoji, sort_order: i
       }))
       const { data: seeded, error: seedErr } = await sb.from('categories').insert(rows).select()
-      if (seedErr) return res.status(500).json({ error: seedErr.message })
+      if (seedErr) {
+        console.error('Categories seed error:', seedErr)
+        return res.status(500).json({ error: seedErr.message })
+      }
       return res.status(200).json({ categories: seeded || [] })
     }
     return res.status(200).json({ categories: data })
