@@ -447,20 +447,44 @@ export default function PantryPal() {
   }
 
   async function sendFriendRequest(friend_id) {
-    await fetch(`/api/friends?user_id=${user.id}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'request', friend_id })
-    })
-    showToast('Friend request sent!'); loadFriends(); setFriendResults([])
+    try {
+      const res = await fetch(`/api/friends?user_id=${user.id}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'request', friend_id })
+      })
+      const data = await res.json()
+      console.log('sendFriendRequest response:', res.status, data)
+      if (!res.ok || data.error) {
+        showToast(data.error || 'Failed to send friend request')
+        return
+      }
+      showToast('Friend request sent!')
+      loadFriends()
+      setFriendResults([])
+    } catch (err) {
+      console.error('sendFriendRequest error:', err)
+      showToast('Something went wrong sending the request')
+    }
   }
 
   async function respondToFriendRequest(friend_id, action) {
-    await fetch(`/api/friends?user_id=${user.id}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action, friend_id })
-    })
-    if (action === 'accept') showToast('Friend added!')
-    await loadFriends()
+    try {
+      const res = await fetch(`/api/friends?user_id=${user.id}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, friend_id })
+      })
+      const data = await res.json()
+      console.log('respondToFriendRequest response:', res.status, data)
+      if (!res.ok || data.error) {
+        showToast(data.error || `Failed to ${action} friend request`)
+        return
+      }
+      if (action === 'accept') showToast('Friend added!')
+      await loadFriends()
+    } catch (err) {
+      console.error('respondToFriendRequest error:', err)
+      showToast('Something went wrong')
+    }
   }
 
   async function removeFriend(friend_id) {

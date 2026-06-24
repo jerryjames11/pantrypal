@@ -58,25 +58,40 @@ export default async function handler(req, res) {
     }
 
     if (action === 'request') {
+      console.log('Friend request:', user_id, '->', friend_id)
       const { error } = await sb.from('friendships').insert({ requester_id: user_id, addressee_id: friend_id })
-      if (error) return res.status(500).json({ error: error.message })
+      if (error) {
+        console.error('Friend request insert error:', error)
+        return res.status(500).json({ error: error.message })
+      }
       const { data: senderProfile } = await sb.from('profiles').select('display_name,username').eq('id', user_id).single()
-      await sb.from('notifications').insert({
+      const { error: notifError } = await sb.from('notifications').insert({
         user_id: friend_id, type: 'friend_request',
         title: 'New friend request',
         body: `${senderProfile?.display_name || 'Someone'} wants to be your friend on PantryPal`,
         data: { from_user: user_id }
       })
+      if (notifError) console.error('Friend request notification error:', notifError)
       return res.status(200).json({ ok: true })
     }
 
     if (action === 'accept') {
-      const { error } = await sb.from('friendships')
+      console.log('Accepting friend request:', friend_id, '->', user_id)
+      const { data: updated, error } = await sb.from('friendships')
         .update({ status: 'accepted', updated_at: new Date().toISOString() })
         .eq('requester_id', friend_id).eq('addressee_id', user_id)
-      if (error) return res.status(500).json({ error: error.message })
+        .select()
+      if (error) {
+        console.error('Friend accept update error:', error)
+        return res.status(500).json({ error: error.message })
+      }
+      if (!updated || updated.length === 0) {
+        console.error('Friend accept: no matching row found for', friend_id, user_id)
+        return res.status(404).json({ error: 'Friend request not found' })
+      }
+      console.log('Friend request accepted:', updated)
       const { data: accepterProfile } = await sb.from('profiles').select('display_name').eq('id', user_id).single()
-      await sb.from('notifications').insert({
+      const { error: notifError } = await sb.from('notifications').insert({
         user_id: friend_id, type: 'friend_accepted',
         title: 'Friend request accepted',
         body: `${accepterProfile?.display_name || 'Someone'} accepted your friend request`,
