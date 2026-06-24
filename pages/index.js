@@ -292,45 +292,54 @@ export default function PantryPal() {
   }
 
   async function applyCategorizeReview() {
-    if (!categorizeReview) return
+    if (!categorizeReview) { console.log('applyCategorizeReview: no categorizeReview state'); return }
     const toApply = categorizeReview.results.filter(r => r.suggestedCategory && categorizeReview.checked[r.id])
+    console.log('applyCategorizeReview: toApply=', toApply)
     setCategorizeReview(null)
-    if (toApply.length === 0) return
+    if (toApply.length === 0) { console.log('applyCategorizeReview: nothing to apply'); return }
 
-    // Default emoji per standard category name, used only when creating a brand new category
-    const emojiMap = {
-      'Produce': '🥦', 'Meat & Seafood': '🥩', 'Dairy & Eggs': '🥛', 'Bakery': '🥖',
-      'Pantry & Dry Goods': '🥫', 'Frozen': '🧊', 'Toiletries': '🧴', 'Household': '🧹', 'Pet Supplies': '🐾'
-    }
+    try {
+      // Default emoji per standard category name, used only when creating a brand new category
+      const emojiMap = {
+        'Produce': '🥦', 'Meat & Seafood': '🥩', 'Dairy & Eggs': '🥛', 'Bakery': '🥖',
+        'Pantry & Dry Goods': '🥫', 'Frozen': '🧊', 'Toiletries': '🧴', 'Household': '🧹', 'Pet Supplies': '🐾'
+      }
 
-    // Create any suggested categories that don't already exist
-    const neededNames = [...new Set(toApply.map(r => r.suggestedCategory))]
-    const existingNames = new Set(categories.map(c => c.name))
-    const missingNames = neededNames.filter(n => !existingNames.has(n))
+      // Create any suggested categories that don't already exist
+      const neededNames = [...new Set(toApply.map(r => r.suggestedCategory))]
+      const existingNames = new Set(categories.map(c => c.name))
+      const missingNames = neededNames.filter(n => !existingNames.has(n))
+      console.log('applyCategorizeReview: missingNames=', missingNames)
 
-    if (missingNames.length > 0) {
-      const hidParam = household ? `&household_id=${household.id}` : ''
-      const created = await Promise.all(missingNames.map(name =>
-        fetch(`/api/categories?user_id=${user.id}${hidParam}`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, emoji: emojiMap[name] || '📦' })
-        }).then(r => r.json())
+      if (missingNames.length > 0) {
+        const hidParam = household ? `&household_id=${household.id}` : ''
+        const created = await Promise.all(missingNames.map(name =>
+          fetch(`/api/categories?user_id=${user.id}${hidParam}`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, emoji: emojiMap[name] || '📦' })
+          }).then(async r => { const j = await r.json(); console.log('create category response:', r.status, j); return j })
+        ))
+        const newCats = created.map(d => d.category).filter(Boolean)
+        if (newCats.length) setCategories(c => [...c, ...newCats])
+      }
+
+      const patchResults = await Promise.all(toApply.map(r =>
+        fetch(`/api/pantry?user_id=${user.id}`, {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: r.id, category: r.suggestedCategory })
+        }).then(async resp => { const j = await resp.json().catch(()=>({})); return { status: resp.status, body: j, id: r.id } })
       ))
-      const newCats = created.map(d => d.category).filter(Boolean)
-      if (newCats.length) setCategories(c => [...c, ...newCats])
-    }
+      console.log('applyCategorizeReview: patchResults=', patchResults)
 
-    await Promise.all(toApply.map(r =>
-      fetch(`/api/pantry?user_id=${user.id}`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: r.id, category: r.suggestedCategory })
-      })
-    ))
-    setPantry(p => p.map(item => {
-      const match = toApply.find(r => r.id === item.id)
-      return match ? { ...item, category: match.suggestedCategory } : item
-    }))
-    showToast(`Categorized ${toApply.length} item${toApply.length !== 1 ? 's' : ''}`)
+      setPantry(p => p.map(item => {
+        const match = toApply.find(r => r.id === item.id)
+        return match ? { ...item, category: match.suggestedCategory } : item
+      }))
+      showToast(`Categorized ${toApply.length} item${toApply.length !== 1 ? 's' : ''}`)
+    } catch (err) {
+      console.error('applyCategorizeReview error:', err)
+      showToast('Something went wrong applying categories')
+    }
   }
 
   function toggleCategorizeCheck(id) {
