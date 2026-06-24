@@ -27,7 +27,18 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    const { to_user, share_type, title, content } = req.body
+    const { to_user, share_type, title, content, action, share_id } = req.body
+
+    if (action === 'dismiss') {
+      const { error } = await sb.from('friend_shares')
+        .update({ dismissed_from_home: true }).eq('id', share_id).eq('to_user', user_id)
+      if (error) {
+        console.error('Dismiss share error:', error)
+        return res.status(500).json({ error: error.message })
+      }
+      return res.status(200).json({ ok: true })
+    }
+
     if (!to_user || !share_type) return res.status(400).json({ error: 'to_user and share_type required' })
 
     try {

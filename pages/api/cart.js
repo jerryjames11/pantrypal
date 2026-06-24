@@ -36,6 +36,11 @@ export default async function handler(req, res) {
     const { data: lists } = await sb.from('shared_lists')
       .select('*').or(`user_a.eq.${user_id},user_b.eq.${user_id}`)
 
+    // Get this user's dismissals for the home page
+    const { data: dismissals } = await sb.from('shared_list_dismissals')
+      .select('shared_list_id').eq('user_id', user_id)
+    const dismissedIds = new Set((dismissals || []).map(d => d.shared_list_id))
+
     const sharedLists = []
     for (const list of (lists || [])) {
       const friendId = list.user_a === user_id ? list.user_b : list.user_a
@@ -61,7 +66,8 @@ export default async function handler(req, res) {
         id: list.id,
         friend_id: friendId,
         friend_name: friendProfile?.display_name || friendProfile?.username || 'Friend',
-        items: enrichedItems
+        items: enrichedItems,
+        dismissed_from_home: dismissedIds.has(list.id)
       })
     }
 
@@ -69,6 +75,19 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
+    const { action } = req.body
+
+    if (action === 'dismiss_shared_list') {
+      const { shared_list_id } = req.body
+      const { error } = await sb.from('shared_list_dismissals')
+        .upsert({ shared_list_id, user_id }, { onConflict: 'shared_list_id,user_id' })
+      if (error) {
+        console.error('Dismiss shared list error:', error)
+        return res.status(500).json({ error: error.message })
+      }
+      return res.status(200).json({ ok: true })
+    }
+
     const { items, household_id, shared_list_id, friend_id } = req.body
     if (!Array.isArray(items)) return res.status(400).json({ error: 'items array required' })
 

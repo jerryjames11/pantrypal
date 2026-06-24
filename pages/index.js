@@ -125,6 +125,7 @@ export default function PantryPal() {
   const [sharedLists, setSharedLists] = useState([]) // [{id, friend_id, friend_name, items}]
   const [openCartSections, setOpenCartSections] = useState({ household: true })
   const [showFriendListPicker, setShowFriendListPicker] = useState(false)
+  const [sharedActionSheet, setSharedActionSheet] = useState(null) // { type: 'recipe'|'list', item }
   const [cartLoading, setCartLoading] = useState(false)
   const [cartItemName, setCartItemName] = useState('')
   const [cartItemQty, setCartItemQty] = useState('')
@@ -1065,6 +1066,42 @@ export default function PantryPal() {
     } catch (err) { console.error('clearCheckedCart error:', err) }
   }
 
+  async function dismissRecipeShare(shareId) {
+    setShares(s => s.filter(x => x.id !== shareId))
+    setSharedActionSheet(null)
+    try {
+      await fetch(`/api/shares?user_id=${user.id}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'dismiss', share_id: shareId })
+      })
+    } catch (err) { console.error('dismissRecipeShare error:', err) }
+  }
+
+  async function dismissSharedListCard(sharedListId) {
+    setSharedLists(ls => ls.map(l => l.id === sharedListId ? { ...l, dismissed_from_home: true } : l))
+    setSharedActionSheet(null)
+    try {
+      await fetch(`/api/cart?user_id=${user.id}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'dismiss_shared_list', shared_list_id: sharedListId })
+      })
+    } catch (err) { console.error('dismissSharedListCard error:', err) }
+  }
+
+  async function addSharedListToCart(list) {
+    setSharedActionSheet(null)
+    try {
+      const res = await fetch(`/api/cart?user_id=${user.id}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: list.items.map(i => ({ name: i.name, qty: i.qty, category: i.category, source: 'manual' })) })
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) { showToast(data.error || 'Failed to add items'); return }
+      showToast('Items added to your cart!')
+      loadCart()
+    } catch (err) { console.error('addSharedListToCart error:', err); showToast('Something went wrong') }
+  }
+
   function startSharedListWith(friendId, friendName) {
     setShowFriendListPicker(false)
     setCartAddTarget(friendId)
@@ -1369,24 +1406,30 @@ export default function PantryPal() {
                 <div className={styles.panelInner}>
                   <button className={styles.panelBack} onClick={() => setProfilePanel(null)}>← Back</button>
                   <div className={styles.panelTitle}>Shared with me</div>
-                  {shares.length === 0 ? <div className={styles.panelNote}>Nothing shared with you yet.</div> : shares.map(s => (
-                    <div key={s.id} className={styles.shareRow}>
-                      <div className={styles.shareIcon}>{s.share_type === 'recipe' ? '🍳' : '🛒'}</div>
-                      <div style={{flex:1,minWidth:0}}>
-                        <div className={styles.shareTitle}>{s.title}</div>
-                        <div className={styles.shareFrom}>from {s.sender?.display_name || s.sender?.username}</div>
-                      </div>
-                      {s.share_type === 'recipe' && (
-                        <button className={styles.panelBtnSm} onClick={() => { saveRecipe(s.content); showToast('Recipe saved!') }}>Save</button>
-                      )}
-                      {s.share_type === 'cart' && (
-                        <button className={styles.panelBtnSm} onClick={() => {
-                          fetch(`/api/cart?user_id=${user.id}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ items: s.content?.items || [] }) })
-                          loadCart(); showToast('Cart items added!')
-                        }}>Add to cart</button>
-                      )}
-                    </div>
-                  ))}
+                  {shares.length === 0 && sharedLists.length === 0 ? <div className={styles.panelNote}>Nothing shared with you yet.</div> : (
+                    <>
+                      {shares.map(s => (
+                        <div key={`recipe-${s.id}`} className={styles.shareRow}>
+                          <div className={styles.shareIcon}>🍳</div>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div className={styles.shareTitle}>{s.title}</div>
+                            <div className={styles.shareFrom}>Recipe from {s.sender?.display_name || s.sender?.username}</div>
+                          </div>
+                          <button className={styles.panelBtnSm} onClick={() => { saveRecipe(s.content); showToast('Recipe saved!') }}>Save</button>
+                        </div>
+                      ))}
+                      {sharedLists.map(l => (
+                        <div key={`list-${l.id}`} className={styles.shareRow}>
+                          <div className={styles.shareIcon}>🛒</div>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div className={styles.shareTitle}>Shared list with {l.friend_name}</div>
+                            <div className={styles.shareFrom}>{l.items.filter(i=>i.checked).length} of {l.items.length} done</div>
+                          </div>
+                          <button className={styles.panelBtnSm} onClick={() => { setTab('cart'); setOpenCartSections(s=>({...s,[l.friend_id]:true})); setProfileOpen(false) }}>Open</button>
+                        </div>
+                      ))}
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -1563,40 +1606,61 @@ export default function PantryPal() {
           )}
 
           {/* Shared with me */}
-          <div className={styles.homeSectionHeader}>
-            <div className={styles.homeSectionTitle}>Shared with you</div>
-            {shares.length > 0 && <div className={styles.homeSectionCount}>{shares.length} item{shares.length!==1?'s':''}</div>}
-          </div>
-          {shares.length === 0 ? (
-            !profile?.username ? (
-              <div id="tour-home-shared" className={styles.homeUsernameNudge} onClick={() => { setProfileOpen(true); setProfilePanel('edit') }}>
-                <div className={styles.nudgeIcon}>👤</div>
-                <div style={{flex:1}}>
-                  <div className={styles.nudgeTitle}>Set your username</div>
-                  <div className={styles.nudgeSub}>Friends need it to find you and share with you</div>
+          {(() => {
+            const visibleShares = shares.filter(s => !s.dismissed_from_home)
+            const visibleLists = sharedLists.filter(l => !l.dismissed_from_home)
+            const totalShared = visibleShares.length + visibleLists.length
+            return (
+              <>
+                <div className={styles.homeSectionHeader}>
+                  <div className={styles.homeSectionTitle}>Shared with you</div>
+                  {totalShared > 0 && <div className={styles.homeSectionCount}>{totalShared} item{totalShared!==1?'s':''}</div>}
                 </div>
-                <span className={styles.nudgeArrow}>›</span>
-              </div>
-            ) : (
-              <div id="tour-home-shared" className={styles.homeShareEmptyJade}>Nothing shared with you yet</div>
-            )
-          ) : (
-            <div id="tour-home-shared" className={styles.homeSharesScrollJade}>
-              {shares.map(s => (
-                <div key={s.id} className={styles.homeShareCard}>
-                  <span className={styles.homeShareIcon}>{s.share_type==='recipe'?'🍳':'🛒'}</span>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div className={styles.homeShareTitle}>{s.title}</div>
-                    <div className={styles.homeShareFrom}>from {s.sender?.display_name || s.sender?.username}</div>
+                {totalShared === 0 ? (
+                  !profile?.username ? (
+                    <div id="tour-home-shared" className={styles.homeUsernameNudge} onClick={() => { setProfileOpen(true); setProfilePanel('edit') }}>
+                      <div className={styles.nudgeIcon}>👤</div>
+                      <div style={{flex:1}}>
+                        <div className={styles.nudgeTitle}>Set your username</div>
+                        <div className={styles.nudgeSub}>Friends need it to find you and share with you</div>
+                      </div>
+                      <span className={styles.nudgeArrow}>›</span>
+                    </div>
+                  ) : (
+                    <div id="tour-home-shared" className={styles.homeShareEmptyJade}>Nothing shared with you yet</div>
+                  )
+                ) : (
+                  <div id="tour-home-shared" className={styles.homeSharesScrollJade}>
+                    {visibleShares.map(s => (
+                      <div key={`recipe-${s.id}`} className={styles.homeShareCard} style={{background:'#e8f0ff',cursor:'pointer'}} onClick={()=>setSharedActionSheet({type:'recipe',item:s})}>
+                        <span className={styles.homeShareIcon}>🍳</span>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div className={styles.homeShareTitle}>{s.title}</div>
+                          <div className={styles.homeShareFrom}>Recipe from {s.sender?.display_name || s.sender?.username}</div>
+                        </div>
+                        <span style={{fontSize:14,color:'#aaa'}}>›</span>
+                      </div>
+                    ))}
+                    {visibleLists.map(l => {
+                      const total = l.items.length
+                      const done = l.items.filter(i=>i.checked).length
+                      const allDone = total > 0 && done === total
+                      return (
+                        <div key={`list-${l.id}`} className={styles.homeShareCard} style={{background: allDone ? '#e8f5f0' : '#f5ede0', cursor:'pointer'}} onClick={()=>setSharedActionSheet({type:'list',item:l})}>
+                          <span className={styles.homeShareIcon}>🛒</span>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div className={styles.homeShareTitle}>Shared list with {l.friend_name}</div>
+                            <div className={styles.homeShareFrom} style={allDone?{color:'#2d8a6b',fontWeight:600}:{}}>{total===0?'No items yet':allDone?'All items done':`${done} of ${total} done`}</div>
+                          </div>
+                          <span style={{fontSize:14,color:'#aaa'}}>›</span>
+                        </div>
+                      )
+                    })}
                   </div>
-                  {s.share_type==='recipe'
-                    ? <button className={styles.homeShareBtn} onClick={()=>{saveRecipe(s.content);showToast('Recipe saved!')}}>Save</button>
-                    : <button className={styles.homeShareBtn} onClick={()=>{fetch(`/api/cart?user_id=${user.id}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:s.content?.items||[]})});loadCart();showToast('Cart items added!')}}>Add to cart</button>
-                  }
-                </div>
-              ))}
-            </div>
-          )}
+                )}
+              </>
+            )
+          })()}
         </section>
       )}
 
@@ -2124,6 +2188,59 @@ export default function PantryPal() {
       {toast&&<div className={styles.toast}>{toast}</div>}
 
       {activeTour && <Tour steps={activeTour} onComplete={completeTour} onSkip={skipTour} />}
+
+      {sharedActionSheet && (
+        <div className={styles.confirmOverlay} onClick={()=>setSharedActionSheet(null)}>
+          <div className={styles.usernamePromptBox} style={{maxWidth:340,position:'fixed',bottom:0,left:0,right:0,margin:'0 auto',borderRadius:'18px 18px 0 0',maxHeight:'70vh'}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:14}}>
+              <span style={{fontSize:22}}>{sharedActionSheet.type==='recipe'?'🍳':'🛒'}</span>
+              <div>
+                <div style={{fontSize:14,fontWeight:700,color:'#145040'}}>
+                  {sharedActionSheet.type==='recipe' ? sharedActionSheet.item.title : `Shared list with ${sharedActionSheet.item.friend_name}`}
+                </div>
+                <div style={{fontSize:11,color:'#888'}}>
+                  {sharedActionSheet.type==='recipe'
+                    ? `Recipe from ${sharedActionSheet.item.sender?.display_name || sharedActionSheet.item.sender?.username}`
+                    : `${sharedActionSheet.item.items.filter(i=>i.checked).length} of ${sharedActionSheet.item.items.length} items checked off`
+                  }
+                </div>
+              </div>
+            </div>
+
+            <button
+              style={{width:'100%',textAlign:'left',padding:'12px 4px',border:'none',background:'none',fontSize:13,fontWeight:600,color:'#145040',cursor:'pointer',fontFamily:'inherit',borderBottom:'0.5px solid #f0e6d0'}}
+              onClick={()=>{
+                if (sharedActionSheet.type==='recipe') { setTab('recipes'); setSharedActionSheet(null) }
+                else { setTab('cart'); setOpenCartSections(s=>({...s,[sharedActionSheet.item.friend_id]:true})); setSharedActionSheet(null) }
+              }}
+            >Open</button>
+
+            <button
+              style={{width:'100%',textAlign:'left',padding:'12px 4px',border:'none',background:'none',fontSize:13,fontWeight:600,color:'#145040',cursor:'pointer',fontFamily:'inherit',borderBottom:'0.5px solid #f0e6d0'}}
+              onClick={()=>{
+                if (sharedActionSheet.type==='recipe') {
+                  const ingredients = (sharedActionSheet.item.content?.ingredients || []).map(i => ({ name: i.name || i, qty: i.qty || '', category: 'Other', source: 'recipe' }))
+                  fetch(`/api/cart?user_id=${user.id}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:ingredients})})
+                    .then(()=>{ showToast('Ingredients added to cart!'); loadCart() })
+                  setSharedActionSheet(null)
+                } else {
+                  addSharedListToCart(sharedActionSheet.item)
+                }
+              }}
+            >Add to cart</button>
+
+            <button
+              style={{width:'100%',textAlign:'left',padding:'12px 4px',border:'none',background:'none',fontSize:13,fontWeight:600,color:'#c0392b',cursor:'pointer',fontFamily:'inherit'}}
+              onClick={()=>{
+                if (sharedActionSheet.type==='recipe') dismissRecipeShare(sharedActionSheet.item.id)
+                else dismissSharedListCard(sharedActionSheet.item.id)
+              }}
+            >Clear from list</button>
+
+            <div style={{fontSize:10,color:'#aaa',marginTop:10,textAlign:'center'}}>This only removes it from your home page — it stays in Shared with me.</div>
+          </div>
+        </div>
+      )}
 
       {shareLinkModal && (
         <div className={styles.confirmOverlay}>
