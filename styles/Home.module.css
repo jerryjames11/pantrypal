@@ -556,3 +556,7 @@
 .bottomNavScanBump { width: 54px; height: 54px; border-radius: 50%; background: linear-gradient(135deg, #4db88a, #1f6b52); border: 3px solid #2d8a6b; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(0,0,0,0.3); transition: transform .15s; }
 .bottomNavScanBump:hover { transform: scale(1.05); }
 .bottomNavScanActive { background: linear-gradient(135deg, #5dd4a0, #2d8a6b); box-shadow: 0 4px 18px rgba(77,184,138,0.5); }
+
+/* ── Auto-categorize button ──────────────────────────────────────────── */
+.autoCatBtn { background: #2d8a6b; color: #fff; border: none; border-radius: 6px; padding: 4px 9px; font-size: 10px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.autoCatBtn:disabled { opacity: 0.6; cursor: default; }

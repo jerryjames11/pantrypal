@@ -73,6 +73,8 @@ export default function PantryPal() {
   const [showActions, setShowActions] = useState(false)
   const [openCatMenu, setOpenCatMenu] = useState(null)
   const [showAddItem, setShowAddItem] = useState(false)
+  const [autoCategorizing, setAutoCategorizing] = useState(false)
+  const [categorizeReview, setCategorizeReview] = useState(null) // { results: [...], checked: {...} }
   const [pantryViewMode, setPantryViewMode] = useState(() => { if (typeof window !== 'undefined') return localStorage.getItem('pantryViewMode') || 'list'; return 'list' })
   const [collapsedCats, setCollapsedCats] = useState({})
   const [manualName, setManualName] = useState('')
@@ -245,7 +247,58 @@ export default function PantryPal() {
     })
   }
 
-  // ── Shelf position update ────────────────────────────────────────────────────
+  // ── Auto-categorize uncategorized items ─────────────────────────────────────
+  async function runAutoCategorize(items) {
+    setAutoCategorizing(true)
+    try {
+      const res = await fetch('/api/categorize-items', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: items.map(i => ({ id: i.id, name: i.name })),
+          categories: categories.map(c => c.name)
+        })
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        showToast(data.error || 'Failed to auto-categorize items')
+        setAutoCategorizing(false)
+        return
+      }
+      const results = data.results || []
+      // Default-check only items with a confident suggestion
+      const checked = {}
+      results.forEach(r => { if (r.suggestedCategory) checked[r.id] = true })
+      setCategorizeReview({ results, checked })
+    } catch (err) {
+      console.error('runAutoCategorize error:', err)
+      showToast('Something went wrong auto-categorizing items')
+    }
+    setAutoCategorizing(false)
+  }
+
+  async function applyCategorizeReview() {
+    if (!categorizeReview) return
+    const toApply = categorizeReview.results.filter(r => r.suggestedCategory && categorizeReview.checked[r.id])
+    setCategorizeReview(null)
+    if (toApply.length === 0) return
+    await Promise.all(toApply.map(r =>
+      fetch(`/api/pantry?user_id=${user.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: r.id, category: r.suggestedCategory })
+      })
+    ))
+    setPantry(p => p.map(item => {
+      const match = toApply.find(r => r.id === item.id)
+      return match ? { ...item, category: match.suggestedCategory } : item
+    }))
+    showToast(`Categorized ${toApply.length} item${toApply.length !== 1 ? 's' : ''}`)
+  }
+
+  function toggleCategorizeCheck(id) {
+    setCategorizeReview(prev => prev ? { ...prev, checked: { ...prev.checked, [id]: !prev.checked[id] } } : prev)
+  }
+
+
   async function updateCategoryPosition(catId, shelfNumber, shelfX) {
     // Optimistic update
     setCategories(cs => cs.map(c => c.id === catId ? { ...c, shelf_number: shelfNumber, shelf_x: shelfX } : c))
@@ -1421,6 +1474,11 @@ export default function PantryPal() {
                     <span className={styles.catName}>{emoji} {catName}</span>
                     <div className={styles.catRight} onClick={e=>e.stopPropagation()}>
                       <span className={styles.catItemCount}>Items: {items.length}</span>
+                      {catName==='Uncategorized' && items.length>0 && (
+                        <button className={styles.autoCatBtn} disabled={autoCategorizing} onClick={()=>runAutoCategorize(items)}>
+                          {autoCategorizing ? 'Categorizing…' : 'Auto-categorize'}
+                        </button>
+                      )}
                       <div style={{position:'relative'}} data-catmenu>
                         <button className={`${styles.catGearBtn} ${openCatMenu===catName?styles.catGearActive:''}`}
                           onClick={()=>setOpenCatMenu(openCatMenu===catName?null:catName)}>⚙</button>
@@ -1751,6 +1809,46 @@ export default function PantryPal() {
       {toast&&<div className={styles.toast}>{toast}</div>}
 
       {activeTour && <Tour steps={activeTour} onComplete={completeTour} onSkip={skipTour} />}
+
+      {categorizeReview && (
+        <div className={styles.confirmOverlay}>
+          <div className={styles.usernamePromptBox} style={{maxWidth:380,textAlign:'left'}}>
+            <div className={styles.promptTitle} style={{textAlign:'left'}}>Suggested categories</div>
+            <div style={{fontSize:11,color:'#888',marginBottom:10}}>Review before applying — uncheck any you don't want moved</div>
+            <div style={{maxHeight:300,overflowY:'auto',marginBottom:10}}>
+              {categorizeReview.results.map(r => (
+                <div key={r.id} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 0',borderBottom:'0.5px solid #f0e6d0'}}>
+                  <div
+                    onClick={()=>r.suggestedCategory && toggleCategorizeCheck(r.id)}
+                    style={{
+                      width:14,height:14,borderRadius:'50%',flexShrink:0,cursor:r.suggestedCategory?'pointer':'default',
+                      border: r.suggestedCategory ? '1.5px solid #4db88a' : '1.5px solid #ddd',
+                      background: r.suggestedCategory && categorizeReview.checked[r.id] ? '#4db88a' : 'transparent',
+                      display:'flex',alignItems:'center',justifyContent:'center',fontSize:9,color:'#fff'
+                    }}
+                  >
+                    {r.suggestedCategory && categorizeReview.checked[r.id] ? '✓' : ''}
+                  </div>
+                  <div style={{fontSize:11,fontWeight:600,color: r.suggestedCategory ? '#111' : '#aaa',flex:1}}>{r.name}</div>
+                  <span style={{fontSize:11,color:'#aaa'}}>→</span>
+                  <span style={{
+                    fontSize:10,fontWeight:600,padding:'3px 8px',borderRadius:6,
+                    background: r.suggestedCategory ? '#e8f5f0' : '#f5ede0',
+                    color: r.suggestedCategory ? '#1a5c45' : '#aaa',
+                    border: r.suggestedCategory ? '1px solid #a8d5c2' : '1px solid #e0d8c8'
+                  }}>{r.suggestedCategory || 'No match'}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{display:'flex',gap:8}}>
+              <button style={{flex:1,padding:9,border:'none',borderRadius:8,background:'#f5ede0',color:'#555',fontSize:11,cursor:'pointer',fontFamily:'inherit'}} onClick={()=>setCategorizeReview(null)}>Cancel</button>
+              <button style={{flex:1,padding:9,border:'none',borderRadius:8,background:'#2d8a6b',color:'#fff',fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}} onClick={applyCategorizeReview}>
+                Apply {Object.values(categorizeReview.checked).filter(Boolean).length} categor{Object.values(categorizeReview.checked).filter(Boolean).length===1?'y':'ies'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showHouseholdWarning && (
         <div className={styles.confirmOverlay}>
