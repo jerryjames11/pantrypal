@@ -447,6 +447,7 @@ export default function PantryPal() {
     if (!user) return
     const res = await fetch(`/api/households?user_id=${user.id}`)
     const data = await res.json()
+    console.log('loadHousehold response:', res.status, data)
     setHousehold(data.household || null)
     setHouseholdMembers(data.members || [])
     setPendingJoinRequests(data.pendingRequests || [])

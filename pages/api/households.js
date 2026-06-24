@@ -6,14 +6,17 @@ export default async function handler(req, res) {
   if (!user_id) return res.status(401).json({ error: 'Unauthorized' })
 
   if (req.method === 'GET') {
-    // Step 1: find the user's active membership
-    const { data: membership } = await sb.from('household_members')
-      .select('*').eq('user_id', user_id).eq('status', 'active').single()
+    // Step 1: find the user's active membership (use maybeSingle + order to handle stale dupes gracefully)
+    const { data: memberships, error: memErr } = await sb.from('household_members')
+      .select('*').eq('user_id', user_id).eq('status', 'active').order('joined_at', { ascending: false })
+    if (memErr) console.error('Membership lookup error:', memErr)
+    const membership = memberships?.[0] || null
     if (!membership) return res.status(200).json({ household: null, members: [], pendingRequests: [] })
 
     // Step 2: get household details
-    const { data: household } = await sb.from('households')
+    const { data: household, error: hhErr } = await sb.from('households')
       .select('*').eq('id', membership.household_id).single()
+    if (hhErr) console.error('Household lookup error:', hhErr)
 
     // Step 3: get all active members
     const { data: memberRows } = await sb.from('household_members')
