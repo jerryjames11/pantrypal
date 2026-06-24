@@ -75,7 +75,9 @@ export default function PantryPal() {
   const [showAddItem, setShowAddItem] = useState(false)
   const [autoCategorizing, setAutoCategorizing] = useState(false)
   const [categorizeReview, setCategorizeReview] = useState(null)
-  const [homeHHExpanded, setHomeHHExpanded] = useState(false) // { results: [...], checked: {...} }
+  const [homeHHExpanded, setHomeHHExpanded] = useState(false)
+  const [editingHHName, setEditingHHName] = useState(false)
+  const [hhNameInput, setHhNameInput] = useState('') // { results: [...], checked: {...} }
   const [pantryViewMode, setPantryViewMode] = useState(() => { if (typeof window !== 'undefined') return localStorage.getItem('pantryViewMode') || 'list'; return 'list' })
   const [collapsedCats, setCollapsedCats] = useState({})
   const [manualName, setManualName] = useState('')
@@ -589,6 +591,28 @@ export default function PantryPal() {
       console.error('inviteToHousehold error:', err)
       showToast('Something went wrong sending the invitation')
     }
+  }
+
+  async function renameHousehold(newName) {
+    if (!newName.trim() || newName.trim() === household?.name) { setEditingHHName(false); return }
+    try {
+      const res = await fetch(`/api/households?user_id=${user.id}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'rename', household_id: household.id, name: newName.trim() })
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        showToast(data.error || 'Failed to rename household')
+        setEditingHHName(false)
+        return
+      }
+      setHousehold(data.household)
+      showToast('Household renamed!')
+    } catch (err) {
+      console.error('renameHousehold error:', err)
+      showToast('Something went wrong renaming the household')
+    }
+    setEditingHHName(false)
   }
 
   async function approveJoinRequest(memberId) {
@@ -1131,7 +1155,19 @@ export default function PantryPal() {
                     </>
                   ) : (
                     <>
-                      <div className={styles.householdName}>🏠 {household.name}</div>
+                      {household.owner_id === user.id && editingHHName ? (
+                        <input
+                          autoFocus
+                          defaultValue={household.name}
+                          onBlur={e=>renameHousehold(e.target.value)}
+                          onKeyDown={e=>{ if(e.key==='Enter') renameHousehold(e.target.value); if(e.key==='Escape') setEditingHHName(false) }}
+                          style={{width:'100%',padding:'8px 10px',border:'1.5px solid #4db88a',borderRadius:8,fontSize:14,fontWeight:700,color:'#145040',fontFamily:'inherit',background:'#fff',marginBottom:10}}
+                        />
+                      ) : (
+                        <div className={styles.householdName} style={household.owner_id === user.id ? {cursor:'pointer'} : {}} onClick={()=>household.owner_id === user.id && setEditingHHName(true)}>
+                          🏠 {household.name}{household.owner_id === user.id && <span style={{fontSize:10,color:'#4db88a',marginLeft:6,fontWeight:600}}>Edit</span>}
+                        </div>
+                      )}
                       {/* Pending join requests — only for owner */}
                       {pendingJoinRequests.length > 0 && (
                         <>
@@ -1357,7 +1393,24 @@ export default function PantryPal() {
               </div>
 
               {homeHHExpanded && (
-                <div style={{marginTop:10,paddingTop:10,borderTop:'1px solid #c8ead8'}}>
+                <div style={{marginTop:10,paddingTop:10,borderTop:'1px solid #c8ead8'}} onClick={e=>e.stopPropagation()}>
+                  {household.owner_id === user.id && (
+                    <div style={{marginBottom:9}}>
+                      {editingHHName ? (
+                        <input
+                          autoFocus
+                          defaultValue={household.name}
+                          onBlur={e=>renameHousehold(e.target.value)}
+                          onKeyDown={e=>{ if(e.key==='Enter') renameHousehold(e.target.value); if(e.key==='Escape') setEditingHHName(false) }}
+                          style={{width:'100%',padding:'6px 8px',border:'1.5px solid #4db88a',borderRadius:7,fontSize:11,fontWeight:700,color:'#145040',fontFamily:'inherit',background:'#fff'}}
+                        />
+                      ) : (
+                        <div onClick={()=>setEditingHHName(true)} style={{fontSize:10,color:'#4db88a',fontWeight:600,cursor:'pointer'}}>
+                          Edit household name
+                        </div>
+                      )}
+                    </div>
+                  )}
                   {householdMembers.map(m => (
                     <div key={m.id} style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0',borderBottom:'0.5px solid #d4ede0'}}>
                       <div style={{width:24,height:24,borderRadius:'50%',background:'#fff',border:'1.5px solid #4db88a',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700,color:'#2d8a6b',flexShrink:0}}>

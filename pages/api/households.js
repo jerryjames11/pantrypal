@@ -241,6 +241,20 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true })
     }
 
+    if (action === 'rename') {
+      const { household_id, name } = req.body
+      if (!name || !name.trim()) return res.status(400).json({ error: 'Name cannot be empty' })
+      const { data: hh } = await sb.from('households').select('owner_id').eq('id', household_id).single()
+      if (hh?.owner_id !== user_id) return res.status(403).json({ error: 'Only the owner can rename the household' })
+      const { data: updated, error } = await sb.from('households')
+        .update({ name: name.trim() }).eq('id', household_id).select().single()
+      if (error) {
+        console.error('Household rename error:', error)
+        return res.status(500).json({ error: error.message })
+      }
+      return res.status(200).json({ household: updated })
+    }
+
     if (action === 'delete') {
       const { household_id } = req.body
       const { data: hh } = await sb.from('households').select('owner_id').eq('id', household_id).single()
