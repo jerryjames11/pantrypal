@@ -125,7 +125,8 @@ export default function PantryPal() {
   const [sharedLists, setSharedLists] = useState([]) // [{id, friend_id, friend_name, items}]
   const [openCartSections, setOpenCartSections] = useState({ household: true })
   const [showFriendListPicker, setShowFriendListPicker] = useState(false)
-  const [sharedActionSheet, setSharedActionSheet] = useState(null) // { type: 'recipe'|'list', item }
+  const [sharedActionSheet, setSharedActionSheet] = useState(null)
+  const [sharedRecipeDetail, setSharedRecipeDetail] = useState(null) // { type: 'recipe'|'list', item }
   const [cartLoading, setCartLoading] = useState(false)
   const [cartItemName, setCartItemName] = useState('')
   const [cartItemQty, setCartItemQty] = useState('')
@@ -2287,8 +2288,8 @@ export default function PantryPal() {
       )}
 
       {sharedActionSheet && (
-        <div className={styles.confirmOverlay} onClick={()=>setSharedActionSheet(null)}>
-          <div className={styles.usernamePromptBox} style={{maxWidth:340,position:'fixed',bottom:0,left:0,right:0,margin:'0 auto',borderRadius:'18px 18px 0 0',maxHeight:'70vh'}} onClick={e=>e.stopPropagation()}>
+        <div className={styles.confirmOverlay} style={{alignItems:'flex-end',padding:0}} onClick={()=>setSharedActionSheet(null)}>
+          <div className={styles.usernamePromptBox} style={{maxWidth:480,width:'100%',margin:'0 auto',borderRadius:'18px 18px 0 0',maxHeight:'80vh',boxSizing:'border-box'}} onClick={e=>e.stopPropagation()}>
             <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:14}}>
               <span style={{fontSize:22}}>{sharedActionSheet.type==='recipe'?'🍳':'🛒'}</span>
               <div>
@@ -2307,8 +2308,25 @@ export default function PantryPal() {
             <button
               style={{width:'100%',textAlign:'left',padding:'12px 4px',border:'none',background:'none',fontSize:13,fontWeight:600,color:'#145040',cursor:'pointer',fontFamily:'inherit',borderBottom:'0.5px solid #f0e6d0'}}
               onClick={()=>{
-                if (sharedActionSheet.type==='recipe') { setTab('recipes'); setSharedActionSheet(null) }
-                else { setTab('cart'); setOpenCartSections(s=>({...s,[sharedActionSheet.item.friend_id]:true})); setSharedActionSheet(null) }
+                if (sharedActionSheet.type==='recipe') {
+                  const r = sharedActionSheet.item.content || {}
+                  const allIngredients = [...(r.have||[]), ...(r.need||[])]
+                  const pantryNames = new Set(pantry.filter(i=>i.status!=='out').map(i=>i.name.toLowerCase()))
+                  const recomputedHave = allIngredients.filter(ing => pantryNames.has(ing.toLowerCase()))
+                  const recomputedNeed = allIngredients.filter(ing => !pantryNames.has(ing.toLowerCase()))
+                  setSharedRecipeDetail({
+                    title: sharedActionSheet.item.title,
+                    description: r.description,
+                    time: r.time,
+                    steps: r.steps,
+                    have: recomputedHave,
+                    need: recomputedNeed,
+                    sender: sharedActionSheet.item.sender
+                  })
+                  setSharedActionSheet(null)
+                } else {
+                  setTab('cart'); setOpenCartSections(s=>({...s,[sharedActionSheet.item.friend_id]:true})); setSharedActionSheet(null)
+                }
               }}
             >Open</button>
 
@@ -2335,6 +2353,52 @@ export default function PantryPal() {
             >Clear from list</button>
 
             <div style={{fontSize:10,color:'#aaa',marginTop:10,textAlign:'center'}}>This only removes it from your home page — it stays in Shared with me.</div>
+          </div>
+        </div>
+      )}
+
+      {sharedRecipeDetail && (
+        <div className={styles.confirmOverlay} onClick={()=>setSharedRecipeDetail(null)}>
+          <div className={styles.usernamePromptBox} style={{maxWidth:420,maxHeight:'80vh',overflowY:'auto'}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:4}}>
+              <div style={{fontSize:16,fontWeight:800,color:'#145040',flex:1}}>{sharedRecipeDetail.title}</div>
+              <span onClick={()=>setSharedRecipeDetail(null)} style={{fontSize:18,color:'#aaa',cursor:'pointer',padding:'0 0 0 10px'}}>✕</span>
+            </div>
+            <div style={{fontSize:11,color:'#888',marginBottom:2}}>Recipe from {sharedRecipeDetail.sender?.display_name || sharedRecipeDetail.sender?.username}</div>
+            {sharedRecipeDetail.time && <div style={{fontSize:11,color:'#888',marginBottom:10}}>⏱ {sharedRecipeDetail.time}</div>}
+            {sharedRecipeDetail.description && <div style={{fontSize:13,color:'#444',lineHeight:1.5,marginBottom:14}}>{sharedRecipeDetail.description}</div>}
+
+            <div className={styles.tags} style={{marginBottom:14}}>
+              {sharedRecipeDetail.have.map(x=><span key={x} className={`${styles.tag} ${styles.tagHave}`}>✓ {x}</span>)}
+              {sharedRecipeDetail.need.map(x=><span key={x} className={`${styles.tag} ${styles.tagNeed}`}>+ {x}</span>)}
+            </div>
+
+            {sharedRecipeDetail.steps && (
+              <div style={{marginBottom:14}}>
+                <div style={{fontSize:12,fontWeight:700,color:'#145040',marginBottom:6}}>Steps</div>
+                <div style={{fontSize:13,color:'#444',lineHeight:1.6,whiteSpace:'pre-line'}}>{sharedRecipeDetail.steps}</div>
+              </div>
+            )}
+
+            <div style={{display:'flex',gap:8}}>
+              <button onClick={()=>setSharedRecipeDetail(null)} style={{flex:1,padding:9,border:'none',borderRadius:8,background:'#f5ede0',color:'#555',fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>Close</button>
+              {sharedRecipeDetail.need.length > 0 ? (
+                <button
+                  onClick={async()=>{
+                    await fetch(`/api/cart?user_id=${user.id}`, {
+                      method:'POST', headers:{'Content-Type':'application/json'},
+                      body: JSON.stringify({ items: sharedRecipeDetail.need.map(n=>({ name:n, qty:'', category:'Other', source:'recipe' })) })
+                    })
+                    showToast(`${sharedRecipeDetail.need.length} ingredients added to cart`)
+                    loadCart()
+                    setSharedRecipeDetail(null)
+                  }}
+                  style={{flex:1,padding:9,border:'none',borderRadius:8,background:'#2d8a6b',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}
+                >Add {sharedRecipeDetail.need.length} missing to cart</button>
+              ) : (
+                <div style={{flex:1,padding:9,textAlign:'center',fontSize:12,color:'#2d8a6b',fontWeight:600}}>You have everything! ✓</div>
+              )}
+            </div>
           </div>
         </div>
       )}
