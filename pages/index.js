@@ -1468,13 +1468,15 @@ export default function PantryPal() {
               )}
 
               {/* Shared with me Panel */}
-              {profilePanel === 'shares' && (
+              {profilePanel === 'shares' && (() => {
+                const recipeShares = shares.filter(s => s.share_type === 'recipe')
+                return (
                 <div className={styles.panelInner}>
                   <button className={styles.panelBack} onClick={() => setProfilePanel(null)}>← Back</button>
                   <div className={styles.panelTitle}>Shared with me</div>
-                  {shares.length === 0 && sharedLists.length === 0 ? <div className={styles.panelNote}>Nothing shared with you yet.</div> : (
+                  {recipeShares.length === 0 && sharedLists.length === 0 ? <div className={styles.panelNote}>Nothing shared with you yet.</div> : (
                     <>
-                      {shares.map(s => (
+                      {recipeShares.map(s => (
                         <div key={`recipe-${s.id}`} className={styles.shareRow}>
                           <div className={styles.shareIcon}>🍳</div>
                           <div style={{flex:1,minWidth:0}}>
@@ -1497,7 +1499,7 @@ export default function PantryPal() {
                     </>
                   )}
                 </div>
-              )}
+              )})()}
             </div>
           )}
         </div>
@@ -1673,7 +1675,7 @@ export default function PantryPal() {
 
           {/* Shared with me */}
           {(() => {
-            const visibleShares = shares.filter(s => !s.dismissed_from_home)
+            const visibleShares = shares.filter(s => !s.dismissed_from_home && s.share_type === 'recipe')
             const visibleLists = sharedLists.filter(l => !l.dismissed_from_home)
             const totalShared = visibleShares.length + visibleLists.length
             return (
