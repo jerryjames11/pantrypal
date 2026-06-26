@@ -1216,13 +1216,15 @@ export default function PantryPal() {
   }
 
   // ── Derived ───────────────────────────────────────────────────────────────
-  const filtered = pantryFilter === 'all' ? pantry : pantry.filter(i => i.status === pantryFilter)
-  const stats = { fresh: pantry.filter(i=>i.status==='fresh').length, low: pantry.filter(i=>i.status==='low').length, out: pantry.filter(i=>i.status==='out').length }
+  const filtered = pantryFilter === 'all' ? pantry
+    : pantryFilter === 'expiring' ? pantry.filter(i => i.expiry_date && i.status !== 'out' && Math.ceil((new Date(i.expiry_date) - new Date()) / 86400000) <= 3)
+    : pantry.filter(i => i.status === pantryFilter)
   const expiringItems = pantry.filter(i => {
     if (!i.expiry_date || i.status === 'out') return false
     const daysLeft = Math.ceil((new Date(i.expiry_date) - new Date()) / 86400000)
     return daysLeft <= 3
   }).sort((a,b) => new Date(a.expiry_date) - new Date(b.expiry_date))
+  const stats = { fresh: pantry.filter(i=>i.status==='fresh').length, low: pantry.filter(i=>i.status==='low').length, out: pantry.filter(i=>i.status==='out').length, expiring: expiringItems.length }
   const catNames = ['Uncategorized', ...categories.map(c => c.name)]
   const groupedPantry = catNames.reduce((acc, cat) => { acc[cat] = filtered.filter(i => (i.category||'Uncategorized')===cat); return acc }, {})
   const orphans = filtered.filter(i => !new Set(catNames).has(i.category||'Uncategorized'))
@@ -1587,9 +1589,9 @@ export default function PantryPal() {
               <div className={styles.homeMiniStatVal}>{stats.fresh}</div>
               <div className={styles.homeMiniStatLbl}>In stock</div>
             </div>
-            <div className={`${styles.homeMiniStat} ${stats.low > 0 ? styles.homeMiniStatLow : ''}`} onClick={() => { setTab('pantry'); setPantryFilter('low') }}>
-              <div className={styles.homeMiniStatVal}>{stats.low}</div>
-              <div className={styles.homeMiniStatLbl}>Running low</div>
+            <div className={`${styles.homeMiniStat} ${stats.expiring > 0 ? styles.homeMiniStatLow : ''}`} onClick={() => { setTab('pantry'); setPantryFilter('expiring') }}>
+              <div className={styles.homeMiniStatVal}>{stats.expiring}</div>
+              <div className={styles.homeMiniStatLbl}>Expiring soon</div>
             </div>
             <div className={`${styles.homeMiniStat} ${stats.out > 0 ? styles.homeMiniStatOut : ''}`} onClick={() => { setTab('pantry'); setPantryFilter('out') }}>
               <div className={styles.homeMiniStatVal}>{stats.out}</div>
@@ -1822,26 +1824,23 @@ export default function PantryPal() {
           {pantryViewMode === 'list' && (
             <>
               {/* Stat cards that double as filters */}
-              <div id="tour-stats" style={{display:'grid',gridTemplateColumns:`repeat(${stats.out>0?4:3},1fr)`,gap:6,marginBottom:10}}>
-                <button onClick={()=>setPantryFilter('all')} style={{padding:'8px 4px',borderRadius:8,border:'none',cursor:'pointer',fontFamily:'inherit',background:pantryFilter==='all'?'#145040':'#f5ede0',textAlign:'center'}}>
-                  <div style={{fontSize:15,fontWeight:800,color:pantryFilter==='all'?'#fff':'#3d2b0e'}}>{pantry.length}</div>
-                  <div style={{fontSize:9,color:pantryFilter==='all'?'#fff':'#7a6a52'}}>All</div>
-                </button>
+              <div id="tour-stats" style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6,marginBottom:10}}>
                 <button onClick={()=>setPantryFilter('fresh')} style={{padding:'8px 4px',borderRadius:8,border:'none',cursor:'pointer',fontFamily:'inherit',background:pantryFilter==='fresh'?'#145040':'#e8f5f0',textAlign:'center'}}>
                   <div style={{fontSize:15,fontWeight:800,color:pantryFilter==='fresh'?'#fff':'#2d8a6b'}}>{stats.fresh}</div>
                   <div style={{fontSize:9,color:pantryFilter==='fresh'?'#fff':'#5a7a6a'}}>In stock</div>
                 </button>
-                <button onClick={()=>setPantryFilter('low')} style={{padding:'8px 4px',borderRadius:8,border:'none',cursor:'pointer',fontFamily:'inherit',background:pantryFilter==='low'?'#145040':'#fff8e6',textAlign:'center'}}>
-                  <div style={{fontSize:15,fontWeight:800,color:pantryFilter==='low'?'#fff':'#856404'}}>{stats.low}</div>
-                  <div style={{fontSize:9,color:pantryFilter==='low'?'#fff':'#a07820'}}>Low</div>
+                <button onClick={()=>setPantryFilter('expiring')} style={{padding:'8px 4px',borderRadius:8,border:'none',cursor:'pointer',fontFamily:'inherit',background:pantryFilter==='expiring'?'#145040':'#fff8e6',textAlign:'center'}}>
+                  <div style={{fontSize:15,fontWeight:800,color:pantryFilter==='expiring'?'#fff':'#856404'}}>{stats.expiring}</div>
+                  <div style={{fontSize:9,color:pantryFilter==='expiring'?'#fff':'#a07820'}}>Expiring soon</div>
                 </button>
-                {stats.out>0 && (
-                  <button onClick={()=>setPantryFilter('out')} style={{padding:'8px 4px',borderRadius:8,border:'none',cursor:'pointer',fontFamily:'inherit',background:pantryFilter==='out'?'#145040':'#fee2e2',textAlign:'center'}}>
-                    <div style={{fontSize:15,fontWeight:800,color:pantryFilter==='out'?'#fff':'#991b1b'}}>{stats.out}</div>
-                    <div style={{fontSize:9,color:pantryFilter==='out'?'#fff':'#b91c1c'}}>Out</div>
-                  </button>
-                )}
+                <button onClick={()=>setPantryFilter('out')} style={{padding:'8px 4px',borderRadius:8,border:'none',cursor:'pointer',fontFamily:'inherit',background:pantryFilter==='out'?'#145040':'#fee2e2',textAlign:'center'}}>
+                  <div style={{fontSize:15,fontWeight:800,color:pantryFilter==='out'?'#fff':'#991b1b'}}>{stats.out}</div>
+                  <div style={{fontSize:9,color:pantryFilter==='out'?'#fff':'#b91c1c'}}>Out of stock</div>
+                </button>
               </div>
+              {pantryFilter !== 'all' && (
+                <button onClick={()=>setPantryFilter('all')} style={{fontSize:10,color:'#4db88a',fontWeight:600,background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',marginBottom:8,padding:0}}>← Show all items</button>
+              )}
             </>
           )}
 
