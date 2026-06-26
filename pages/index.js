@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import styles from '../styles/Home.module.css'
 import Tour from '../components/Tour'
 import PantryShelf from '../components/PantryShelf'
+import PullToRefresh from '../components/PullToRefresh'
 import { TOURS } from '../lib/tourSteps'
 
 function fmt(n) { return n != null ? `$${Number(n).toFixed(2)}` : '' }
@@ -79,6 +80,15 @@ export default function PantryPal() {
   const [editingHHName, setEditingHHName] = useState(false)
   const [hhNameInput, setHhNameInput] = useState('') // { results: [...], checked: {...} }
   const [pantryViewMode, setPantryViewMode] = useState(() => { if (typeof window !== 'undefined') return localStorage.getItem('pantryViewMode') || 'list'; return 'list' })
+  const [pantryRefreshing, setPantryRefreshing] = useState(false)
+  const [cartRefreshing, setCartRefreshing] = useState(false)
+  const [pullHint, setPullHint] = useState(null) // 'pantry' | 'cart' | null — shown while pull gesture is active
+  const [appTheme, setAppTheme] = useState(() => { if (typeof window !== 'undefined') return localStorage.getItem('appTheme') || 'jade'; return 'jade' })
+
+  function changeAppTheme(theme) {
+    setAppTheme(theme)
+    localStorage.setItem('appTheme', theme)
+  }
   const [collapsedCats, setCollapsedCats] = useState({})
   const [manualName, setManualName] = useState('')
   const [manualStatus, setManualStatus] = useState('fresh')
@@ -1086,6 +1096,28 @@ export default function PantryPal() {
   }
 
   // ── Cart ──────────────────────────────────────────────────────────────────
+  async function refreshPantryTab() {
+    if (pantryRefreshing) return
+    setPantryRefreshing(true)
+    const started = Date.now()
+    await Promise.all([loadCategories(), loadPantry()])
+    const elapsed = Date.now() - started
+    if (elapsed < 500) await new Promise(r => setTimeout(r, 500 - elapsed)) // keep the spin visible briefly so it doesn't feel like a no-op
+    setPantryRefreshing(false)
+    showToast('Pantry refreshed')
+  }
+
+  async function refreshCartTab() {
+    if (cartRefreshing) return
+    setCartRefreshing(true)
+    const started = Date.now()
+    await loadCart()
+    const elapsed = Date.now() - started
+    if (elapsed < 500) await new Promise(r => setTimeout(r, 500 - elapsed))
+    setCartRefreshing(false)
+    showToast('Shopping lists refreshed')
+  }
+
   async function loadCart() {
     if (!user) return
     setCartLoading(true)
@@ -1274,7 +1306,7 @@ export default function PantryPal() {
   if (!user) return <LandingPage onSignIn={signInWithGoogle} />
 
   return (
-    <div className={styles.app}>
+    <div className={`${styles.app} ${appTheme!=='jade'?styles[`theme${appTheme.charAt(0).toUpperCase()}${appTheme.slice(1)}`]:''}`}>
 
       {/* HEADER */}
       <header id="tour-header" className={styles.header}>
@@ -1333,6 +1365,7 @@ export default function PantryPal() {
                     🔔 Notifications {unreadCount > 0 && <span className={styles.menuBadge}>{unreadCount}</span>}
                   </button>
                   <button className={styles.profileMenuItem} onClick={() => { setProfilePanel('shares'); loadShares() }}>📬 Shared with me</button>
+                  <button className={styles.profileMenuItem} onClick={() => setProfilePanel('theme')}>🎨 Theme</button>
                   <div className={styles.profileMenuDivider} />
                   <Link href="/privacy" className={styles.profileMenuItem} style={{textDecoration:'none',display:'block'}}>🔒 Privacy Policy</Link>
                   <button className={styles.profileMenuItemDanger} onClick={() => { signOut(); setProfileOpen(false) }}>🚪 Sign out</button>
@@ -1577,6 +1610,37 @@ export default function PantryPal() {
                   )}
                 </div>
               )})()}
+
+              {/* Theme Panel */}
+              {profilePanel === 'theme' && (
+                <div className={styles.panelInner}>
+                  <button className={styles.panelBack} onClick={() => setProfilePanel(null)}>← Back</button>
+                  <div className={styles.panelTitle}>Choose a theme</div>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:10}}>
+                    {[
+                      { key: 'jade', label: 'Jade green', grad: 'linear-gradient(135deg, #4db88a, #1f6b52)' },
+                      { key: 'blue', label: 'Ocean blue', grad: 'linear-gradient(135deg, #5b8def, #2c4ea0)' },
+                      { key: 'terracotta', label: 'Terracotta', grad: 'linear-gradient(135deg, #e2935a, #a8531f)' },
+                      { key: 'plum', label: 'Plum', grad: 'linear-gradient(135deg, #b07ad1, #6b3f96)' },
+                      { key: 'slate', label: 'Slate', grad: 'linear-gradient(135deg, #5a6a7d, #2a3744)' },
+                      { key: 'brick', label: 'Brick red', grad: 'linear-gradient(135deg, #e0574f, #a82e28)' },
+                    ].map(t => (
+                      <button
+                        key={t.key}
+                        onClick={()=>changeAppTheme(t.key)}
+                        style={{
+                          padding:'14px 10px', borderRadius:10, border: appTheme===t.key ? '2.5px solid #145040' : '1px solid transparent',
+                          background:t.grad, cursor:'pointer', textAlign:'left', position:'relative'
+                        }}
+                      >
+                        <div style={{fontSize:12,fontWeight:700,color:'#fff'}}>{t.label}</div>
+                        {appTheme===t.key && <div style={{position:'absolute',top:6,right:6,fontSize:12,color:'#fff'}}>✓</div>}
+                      </button>
+                    ))}
+                  </div>
+                  <div style={{fontSize:11,color:'#888',marginTop:12}}>Changes the header, bottom navigation, and scan button color throughout the app.</div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -1611,7 +1675,7 @@ export default function PantryPal() {
               <div className={styles.scanHeroTitle}>Scan a Receipt</div>
               <div className={styles.scanHeroSub}>Your pantry fills automatically</div>
             </div>
-            <div style={{width:54,height:54,borderRadius:'50%',background:'linear-gradient(135deg, #4db88a, #1f6b52)',border:'3px solid #2d8a6b',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 14px rgba(0,0,0,0.3)',flexShrink:0}}>
+            <div style={{width:54,height:54,borderRadius:'50%',background:'linear-gradient(135deg, var(--theme-light), var(--theme-dark))',border:'3px solid var(--theme-mid)',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 14px rgba(0,0,0,0.3)',flexShrink:0}}>
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             </div>
           </div>
@@ -1834,7 +1898,12 @@ export default function PantryPal() {
         <section>
           {/* View toggle */}
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
-            <span style={{fontSize:14,fontWeight:600,color:'#145040'}}>My Pantry</span>
+            <div style={{display:'flex',alignItems:'center',gap:6}}>
+              <span style={{fontSize:14,fontWeight:600,color:'#145040'}}>My Pantry</span>
+              <button onClick={()=>refreshPantryTab()} disabled={pantryRefreshing} aria-label="Refresh" style={{width:24,height:24,padding:0,border:'none',background:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'#7a6a52'}}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={pantryRefreshing?{animation:'spin 0.8s linear infinite'}:{}}><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              </button>
+            </div>
             <div style={{display:'flex',gap:4,background:'#f5ede0',borderRadius:8,padding:2}}>
               <button onClick={()=>{setPantryViewMode('list');localStorage.setItem('pantryViewMode','list')}} style={{padding:'4px 8px',borderRadius:6,border:'none',background:pantryViewMode==='list'?'#2d8a6b':'transparent',color:pantryViewMode==='list'?'#fff':'#7a6a52',fontSize:11,cursor:'pointer',fontFamily:'inherit'}}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
@@ -1845,6 +1914,7 @@ export default function PantryPal() {
             </div>
           </div>
 
+          <PullToRefresh onRefresh={refreshPantryTab} refreshing={pantryRefreshing}>
           {pantryViewMode === 'shelf' ? (
             <PantryShelf
               categories={categories}
@@ -2023,6 +2093,7 @@ export default function PantryPal() {
               )
             })
           )}
+          </PullToRefresh>
         </section>
       )}
 
@@ -2198,7 +2269,12 @@ export default function PantryPal() {
       {tab==='cart'&&(
         <section>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
-            <div className={styles.sectionLabel} style={{margin:0}}>Shopping lists</div>
+            <div style={{display:'flex',alignItems:'center',gap:6}}>
+              <div className={styles.sectionLabel} style={{margin:0}}>Shopping lists</div>
+              <button onClick={()=>refreshCartTab()} disabled={cartRefreshing} aria-label="Refresh" style={{width:24,height:24,padding:0,border:'none',background:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'#7a6a52'}}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={cartRefreshing?{animation:'spin 0.8s linear infinite'}:{}}><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              </button>
+            </div>
             <button className={styles.chip} onClick={()=>setShowFriendListPicker(v=>!v)}>+ Shared list with friend</button>
           </div>
 
@@ -2219,6 +2295,7 @@ export default function PantryPal() {
 
           <button id="tour-cart-pull" className={styles.chip} style={{marginBottom:14}} onClick={addLowItemsToCart}>↓ Pull in low/out pantry items</button>
 
+          <PullToRefresh onRefresh={refreshCartTab} refreshing={cartRefreshing}>
           {cartLoading ? <div className={styles.loadRow}><Spinner /> Loading…</div> : (
             <div style={{display:'flex',flexDirection:'column',gap:8}}>
 
@@ -2333,6 +2410,7 @@ export default function PantryPal() {
 
             </div>
           )}
+          </PullToRefresh>
         </section>
       )}
 

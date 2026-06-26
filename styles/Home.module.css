@@ -1,5 +1,10 @@
 /* ── Base ─────────────────────────────────────────────────────────────── */
-.app { max-width: 660px; margin: 0 auto; padding: 0; background: #fdf8f0; min-height: 100vh; box-shadow: 0 0 40px rgba(0,0,0,0.12); position: relative; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111; }
+.app { --theme-light: #4db88a; --theme-mid: #2d8a6b; --theme-dark: #1f6b52; --theme-darkest: #145040; max-width: 660px; margin: 0 auto; padding: 0; background: #fdf8f0; min-height: 100vh; box-shadow: 0 0 40px rgba(0,0,0,0.12); position: relative; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111; }
+.themeBlue { --theme-light: #5b8def; --theme-mid: #3a6bc4; --theme-dark: #2c4ea0; --theme-darkest: #1e3670; }
+.themeTerracotta { --theme-light: #e2935a; --theme-mid: #c46f38; --theme-dark: #a8531f; --theme-darkest: #7a3a13; }
+.themePlum { --theme-light: #b07ad1; --theme-mid: #8c58ad; --theme-dark: #6b3f96; --theme-darkest: #4a2a6e; }
+.themeSlate { --theme-light: #5a6a7d; --theme-mid: #3f4d5e; --theme-dark: #2a3744; --theme-darkest: #1a2630; }
+.themeBrick { --theme-light: #e0574f; --theme-mid: #c43d36; --theme-dark: #a82e28; --theme-darkest: #7a1f1a; }
 .centered { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
 
 /* ── Header ──────────────────────────────────────────────────────────── */
@@ -221,7 +226,7 @@
 .moveCatBtn:hover { background: #b8e0d0; color: #1f6b52; font-weight: 500; }
 
 /* ── New header layout ───────────────────────────────────────────────── */
-.header { display: flex; flex-direction: row; align-items: center; justify-content: space-between; padding: 6px 12px; background: linear-gradient(135deg, #4db88a 0%, #2d8a6b 100%); border-radius: 0; box-shadow: 0 2px 8px rgba(77,184,138,0.25); gap: 8px; position: relative; height: 56px; }
+.header { display: flex; flex-direction: row; align-items: center; justify-content: space-between; padding: 6px 12px; background: linear-gradient(135deg, var(--theme-light) 0%, var(--theme-mid) 100%); border-radius: 0; box-shadow: 0 2px 8px rgba(77,184,138,0.25); gap: 8px; position: relative; height: 56px; }
 .content { padding: 1.25rem 1rem 5.5rem; background: #fdf8f0; }
 /* header nav removed — moved to bottom */
 
@@ -249,7 +254,7 @@
 .landingLogo { width: 500px; height: 500px; object-fit: contain; max-width: 95vw; }
 
 /* ── Bottom navigation bar ───────────────────────────────────────────── */
-.bottomNav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 660px; background: linear-gradient(135deg, #2d8a6b 0%, #1f6b52 100%); display: flex; align-items: center; justify-content: space-around; padding: 8px 6px env(safe-area-inset-bottom, 12px); border-top: 1px solid rgba(255,255,255,0.15); z-index: 100; }
+.bottomNav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 660px; background: linear-gradient(135deg, var(--theme-mid) 0%, var(--theme-dark) 100%); display: flex; align-items: center; justify-content: space-around; padding: 8px 6px env(safe-area-inset-bottom, 12px); border-top: 1px solid rgba(255,255,255,0.15); z-index: 100; }
 .bottomNavItem { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0; border-radius: 12px; border: none; background: transparent; cursor: pointer; font-family: inherit; position: relative; flex: 1; }
 .bottomNavItem:hover { background: rgba(255,255,255,0.12); }
 .bottomNavItem svg { stroke: rgba(255,255,255,0.7); }
@@ -518,7 +523,7 @@
 .homeGreetingSub { font-size: 12px; color: #7a6a52; margin-bottom: 12px; }
 
 /* Scan hero */
-.scanHero { background: linear-gradient(135deg, #2d8a6b, #145040); border-radius: 14px; padding: 16px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; position: relative; overflow: hidden; }
+.scanHero { background: linear-gradient(135deg, var(--theme-mid), var(--theme-darkest)); border-radius: 14px; padding: 16px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; position: relative; overflow: hidden; }
 .scanHero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 80% 50%, rgba(77,184,138,0.25), transparent 65%); pointer-events: none; }
 .scanHeroLeft { flex: 1; }
 .scanHeroLabel { font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 4px; }
@@ -553,7 +558,7 @@
 
 /* ── Nav bar redesign ───────────────────────────────────────────────── */
 .bottomNavScanWrap { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1; padding: 0; border: none; background: transparent; cursor: pointer; font-family: inherit; position: relative; margin-top: -18px; }
-.bottomNavScanBump { width: 54px; height: 54px; border-radius: 50%; background: linear-gradient(135deg, #4db88a, #1f6b52); border: 3px solid #2d8a6b; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(0,0,0,0.3); transition: transform .15s; }
+.bottomNavScanBump { width: 54px; height: 54px; border-radius: 50%; background: linear-gradient(135deg, var(--theme-light), var(--theme-dark)); border: 3px solid var(--theme-mid); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(0,0,0,0.3); transition: transform .15s; }
 .bottomNavScanBump:hover { transform: scale(1.05); }
 .bottomNavScanActive { background: linear-gradient(135deg, #5dd4a0, #2d8a6b); box-shadow: 0 4px 18px rgba(77,184,138,0.5); }
 
@@ -565,3 +570,9 @@
 .cartSection { border-radius: 10px; padding: 10px 12px; }
 .cartSectionHdr { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
 .cartSectionBody { margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(0,0,0,0.06); display: flex; flex-direction: column; gap: 4px; }
+
+/* ── Refresh button spin ──────────────────────────────────────────────── */
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* ── Pull-to-refresh hint banner ──────────────────────────────────────── */
+.pullHintBanner { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; background: #e8f5f0; border-radius: 8px; margin-bottom: 12px; font-size: 12px; color: #2d8a6b; font-weight: 600; transition: opacity 0.2s, transform 0.2s; }
