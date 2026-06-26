@@ -1608,12 +1608,11 @@ export default function PantryPal() {
           {/* Scan hero */}
           <div className={styles.scanHero} onClick={() => setTab('scan')}>
             <div className={styles.scanHeroLeft}>
-              <div className={styles.scanHeroLabel}>Primary feature</div>
               <div className={styles.scanHeroTitle}>Scan a Receipt</div>
               <div className={styles.scanHeroSub}>Your pantry fills automatically</div>
             </div>
-            <div className={styles.scanHeroIcon}>
-              <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            <div style={{width:54,height:54,borderRadius:'50%',background:'linear-gradient(135deg, #4db88a, #1f6b52)',border:'3px solid #2d8a6b',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 14px rgba(0,0,0,0.3)',flexShrink:0}}>
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             </div>
           </div>
 
