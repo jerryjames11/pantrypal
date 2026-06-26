@@ -975,7 +975,7 @@ export default function PantryPal() {
     try {
       const res = await fetch('/api/parse-receipt', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...body, userId: user.id })
+        body: JSON.stringify({ ...body, userId: user.id, householdId: household ? household.id : null })
       })
       const data = await res.json()
       if (data.error) throw new Error(data.error)

@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { estimateExpiryDate } from '../../lib/expiry'
 
 const sb = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -47,8 +48,9 @@ Rules:
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  const { text, imageBase64, imageMime, userId } = req.body
+  const { text, imageBase64, imageMime, userId, householdId } = req.body
   if (!userId) return res.status(401).json({ error: 'Not authenticated' })
+  const hid = householdId && householdId !== 'null' ? parseInt(householdId) : null
 
   try {
     let messages
@@ -124,14 +126,15 @@ export default async function handler(req, res) {
       await sb.from('receipt_items').insert(rows)
     }
 
-    // Upsert pantry items — with AI category and last_purchased from receipt date
+    // Upsert pantry items — with AI category, last_purchased from receipt date, and estimated expiry.
+    // Scoped to household (shared pantry) when in one, otherwise personal.
     for (const item of enrichedItems) {
-      const { data: existing } = await sb
-        .from('pantry_items')
-        .select('id')
-        .eq('user_id', userId)
-        .ilike('name', item.name)
-        .single()
+      let existingQuery = sb.from('pantry_items').select('id').ilike('name', item.name)
+      existingQuery = hid
+        ? existingQuery.eq('household_id', hid)
+        : existingQuery.eq('user_id', userId).is('household_id', null)
+      const { data: existingRows } = await existingQuery.limit(1)
+      const existing = existingRows?.[0]
 
       const pantryData = {
         status: 'fresh',
@@ -145,14 +148,18 @@ export default async function handler(req, res) {
       if (existing) {
         await sb.from('pantry_items').update(pantryData).eq('id', existing.id)
       } else {
+        const expiryDate = await estimateExpiryDate(item.name)
         await sb.from('pantry_items').insert({
           user_id: userId,
+          household_id: hid,
           name: item.name,
           qty: item.qty || '',
           status: 'fresh',
           last_price: item.price,
           category: item.category || 'Uncategorized',
-          last_purchased: receiptDate
+          last_purchased: receiptDate,
+          expiry_date: expiryDate,
+          expiry_estimated: true
         })
       }
     }
