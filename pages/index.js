@@ -135,6 +135,8 @@ export default function PantryPal() {
   const [cartAddTarget, setCartAddTarget] = useState('personal') // 'personal' | 'household' | shared_list_id
   const [addItemModal, setAddItemModal] = useState(null) // { target: 'personal'|'household'|friendId, label }
   const [addItemModalName, setAddItemModalName] = useState('')
+  const [brandSuggestions, setBrandSuggestions] = useState([])
+  const [brandSuggestLoading, setBrandSuggestLoading] = useState(false)
   const [addItemModalQty, setAddItemModalQty] = useState('')
 
   // Profile / social
@@ -1096,6 +1098,38 @@ export default function PantryPal() {
       setSharedLists(data.sharedLists || [])
     } catch(e) { console.error('loadCart error:', e) }
     setCartLoading(false)
+  }
+
+  // Debounced brand suggestions as the user types in the add-item modal —
+  // purely an assist. If nothing is tapped, the user's own typed text is
+  // submitted exactly as-is.
+  useEffect(() => {
+    if (!addItemModal || !addItemModalName.trim() || addItemModalName.trim().length < 2) {
+      setBrandSuggestions([])
+      return
+    }
+    const timer = setTimeout(async () => {
+      setBrandSuggestLoading(true)
+      try {
+        const res = await fetch('/api/brand-suggestions', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ itemName: addItemModalName.trim() })
+        })
+        const data = await res.json()
+        setBrandSuggestions(data.brands || [])
+      } catch (err) {
+        console.error('brand-suggestions fetch error:', err)
+        setBrandSuggestions([])
+      }
+      setBrandSuggestLoading(false)
+    }, 450) // debounce — wait for a pause in typing before calling out
+    return () => clearTimeout(timer)
+  }, [addItemModalName, addItemModal])
+
+  function pickBrandSuggestion(brand) {
+    // Prefix the brand onto whatever the user already typed, e.g. "Milk" + "Horizon Organic" -> "Horizon Organic Milk"
+    setAddItemModalName(prev => `${brand} ${prev.trim()}`.trim())
+    setBrandSuggestions([])
   }
 
   async function submitAddItemModal() {
@@ -2348,13 +2382,28 @@ export default function PantryPal() {
             <div style={{marginBottom:10}}>
               <label style={{fontSize:11,color:'#888',display:'block',marginBottom:4}}>Item name</label>
               <input autoFocus value={addItemModalName} onChange={e=>setAddItemModalName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&submitAddItemModal()} placeholder="e.g. Paper towels" style={{width:'100%',padding:'9px 11px',border:'1px solid #e0e0e0',borderRadius:8,fontSize:14,fontFamily:'inherit'}} />
+              {brandSuggestLoading && (
+                <div style={{fontSize:10,color:'#aaa',marginTop:5}}>Looking up brands…</div>
+              )}
+              {!brandSuggestLoading && brandSuggestions.length > 0 && (
+                <div style={{display:'flex',flexWrap:'wrap',gap:5,marginTop:7}}>
+                  {brandSuggestions.map(brand => (
+                    <button
+                      key={brand}
+                      type="button"
+                      onClick={()=>pickBrandSuggestion(brand)}
+                      style={{fontSize:11,padding:'4px 10px',borderRadius:14,border:'1px solid #4db88a',background:'#e8f5f0',color:'#1a5c45',cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}}
+                    >{brand}</button>
+                  ))}
+                </div>
+              )}
             </div>
             <div style={{marginBottom:16}}>
               <label style={{fontSize:11,color:'#888',display:'block',marginBottom:4}}>Quantity (optional)</label>
               <input value={addItemModalQty} onChange={e=>setAddItemModalQty(e.target.value)} onKeyDown={e=>e.key==='Enter'&&submitAddItemModal()} placeholder="e.g. 2 bunches" style={{width:'100%',padding:'9px 11px',border:'1px solid #e0e0e0',borderRadius:8,fontSize:14,fontFamily:'inherit'}} />
             </div>
             <div style={{display:'flex',gap:8}}>
-              <button onClick={()=>setAddItemModal(null)} style={{flex:1,padding:9,border:'none',borderRadius:8,background:'#f5ede0',color:'#555',fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>Cancel</button>
+              <button onClick={()=>{setAddItemModal(null);setBrandSuggestions([])}} style={{flex:1,padding:9,border:'none',borderRadius:8,background:'#f5ede0',color:'#555',fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>Cancel</button>
               <button onClick={submitAddItemModal} style={{flex:1,padding:9,border:'none',borderRadius:8,background:'#145040',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>Add item</button>
             </div>
           </div>
