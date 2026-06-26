@@ -127,6 +127,8 @@ export default function PantryPal() {
   const [showFriendListPicker, setShowFriendListPicker] = useState(false)
   const [sharedActionSheet, setSharedActionSheet] = useState(null)
   const [sharedRecipeDetail, setSharedRecipeDetail] = useState(null) // { type: 'recipe'|'list', item }
+  const [expiringActionSheet, setExpiringActionSheet] = useState(null) // pantry item
+  const [expiryRecipes, setExpiryRecipes] = useState(null) // { item, recipes, loading }
   const [cartLoading, setCartLoading] = useState(false)
   const [cartItemName, setCartItemName] = useState('')
   const [cartItemQty, setCartItemQty] = useState('')
@@ -999,6 +1001,39 @@ export default function PantryPal() {
     showToast('Receipt deleted')
   }
 
+  // ── Expiry nudges ────────────────────────────────────────────────────────
+  async function getExpiryRecipes(item) {
+    const avail = pantry.filter(i => i.status !== 'out').map(i => i.name)
+    if (avail.length < 2) { showToast('Add at least 2 items to your pantry first'); return }
+    setExpiryRecipes({ item, recipes: [], loading: true })
+    try {
+      const res = await fetch('/api/recipes', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: avail, priorityItem: item.name })
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      setExpiryRecipes({ item, recipes: data.recipes || [], loading: false })
+    } catch (e) {
+      showToast('Could not load recipes. Try again.')
+      setExpiryRecipes(null)
+    }
+  }
+
+  async function addExpiringToCart(item) {
+    setExpiringActionSheet(null)
+    try {
+      const res = await fetch(`/api/cart?user_id=${user.id}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: [{ name: item.name, qty: '', category: item.category || 'Other', source: 'manual' }] })
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) { showToast(data.error || 'Failed to add item'); return }
+      showToast(`Added ${item.name} to shopping list`)
+      loadCart()
+    } catch (err) { console.error('addExpiringToCart error:', err); showToast('Something went wrong') }
+  }
+
   // ── Recipes ───────────────────────────────────────────────────────────────
   async function getRecipes() {
     const avail = pantry.filter(i => i.status !== 'out').map(i => i.name)
@@ -1183,6 +1218,11 @@ export default function PantryPal() {
   // ── Derived ───────────────────────────────────────────────────────────────
   const filtered = pantryFilter === 'all' ? pantry : pantry.filter(i => i.status === pantryFilter)
   const stats = { fresh: pantry.filter(i=>i.status==='fresh').length, low: pantry.filter(i=>i.status==='low').length, out: pantry.filter(i=>i.status==='out').length }
+  const expiringItems = pantry.filter(i => {
+    if (!i.expiry_date || i.status === 'out') return false
+    const daysLeft = Math.ceil((new Date(i.expiry_date) - new Date()) / 86400000)
+    return daysLeft <= 3
+  }).sort((a,b) => new Date(a.expiry_date) - new Date(b.expiry_date))
   const catNames = ['Uncategorized', ...categories.map(c => c.name)]
   const groupedPantry = catNames.reduce((acc, cat) => { acc[cat] = filtered.filter(i => (i.category||'Uncategorized')===cat); return acc }, {})
   const orphans = filtered.filter(i => !new Set(catNames).has(i.category||'Uncategorized'))
@@ -1557,6 +1597,27 @@ export default function PantryPal() {
             </div>
           </div>
 
+          {/* Expiring soon */}
+          {expiringItems.length > 0 && (
+            <div style={{background:'#fff8e6',border:'1.5px solid #f5d87a',borderRadius:12,padding:'10px 12px',marginBottom:10}}>
+              <div style={{fontSize:12,fontWeight:700,color:'#856404',marginBottom:6,display:'flex',alignItems:'center',gap:5}}>
+                ⚠ Expiring soon
+              </div>
+              <div style={{display:'flex',flexDirection:'column',gap:5}}>
+                {expiringItems.slice(0,3).map(item => {
+                  const daysLeft = Math.ceil((new Date(item.expiry_date) - new Date()) / 86400000)
+                  return (
+                    <div key={item.id} onClick={()=>setExpiringActionSheet(item)} style={{display:'flex',alignItems:'center',justifyContent:'space-between',cursor:'pointer',padding:'4px 0'}}>
+                      <span style={{fontSize:12,color:'#3d2b0e',fontWeight:600}}>{item.name}</span>
+                      <span style={{fontSize:11,color:daysLeft<0?'#991b1b':'#a07820',fontWeight:600}}>{daysLeft<0?`Expired ${Math.abs(daysLeft)}d ago`:daysLeft===0?'Expires today':`${daysLeft}d left`}</span>
+                    </div>
+                  )
+                })}
+                {expiringItems.length > 3 && <div style={{fontSize:10,color:'#a07820',marginTop:2}}>+ {expiringItems.length - 3} more expiring soon</div>}
+              </div>
+            </div>
+          )}
+
           {/* Shopping list preview */}
           <div className={styles.homeShopBox} id="tour-home-shortcuts" onClick={() => setTab('cart')}>
             <div className={styles.homeShopBoxHdr}>
@@ -1875,6 +1936,10 @@ export default function PantryPal() {
                               <div style={{display:'flex',flexDirection:'column',gap:4,flex:1}}>
                                 <input defaultValue={item.name} onBlur={e=>updateItem(item.id,{name:e.target.value})} style={{fontSize:13,fontWeight:600,padding:'3px 6px',border:'1px solid #3cb87a',borderRadius:5,width:'100%'}} autoFocus />
                                 <input defaultValue={item.qty} placeholder="Qty" onBlur={e=>updateItem(item.id,{qty:e.target.value})} style={{fontSize:12,padding:'3px 6px',border:'1px solid #e0e0e0',borderRadius:5,width:'100%'}} />
+                                <div style={{display:'flex',alignItems:'center',gap:5}}>
+                                  <span style={{fontSize:10,color:'#888',flexShrink:0}}>Expires:</span>
+                                  <input type="date" defaultValue={item.expiry_date||''} onBlur={e=>updateItem(item.id,{expiry_date:e.target.value})} style={{fontSize:11,padding:'3px 6px',border:'1px solid #e0e0e0',borderRadius:5,flex:1}} />
+                                </div>
                                 <button onClick={()=>setEditingItem(null)} style={{fontSize:11,padding:'3px 0',background:'#4db88a',color:'#fff',border:'none',borderRadius:5,cursor:'pointer'}}>Done</button>
                               </div>
                             ) : (
@@ -1885,6 +1950,16 @@ export default function PantryPal() {
                                     {item.qty||''}{item.qty&&item.last_price!=null?' · ':''}{item.last_price!=null?fmt(item.last_price):''}
                                     {item.last_purchased?` · 🗓 ${new Date(item.last_purchased).toLocaleDateString(undefined,{month:'short',day:'numeric'})}`:''}
                                   </div>
+                                  {item.expiry_date && (() => {
+                                    const daysLeft = Math.ceil((new Date(item.expiry_date) - new Date()) / 86400000)
+                                    const soon = daysLeft <= 3
+                                    const past = daysLeft < 0
+                                    return (
+                                      <div style={{fontSize:10,marginTop:2,fontWeight:600,color: past?'#991b1b':soon?'#a07820':'#4db88a'}}>
+                                        {past ? `⚠ Expired ${Math.abs(daysLeft)}d ago` : soon ? `⚠ Expires in ${daysLeft}d` : `Expires ${new Date(item.expiry_date).toLocaleDateString(undefined,{month:'short',day:'numeric'})}`}
+                                      </div>
+                                    )
+                                  })()}
                                 </div>
                                 <div className={styles.itemRight}>
                                   <select className={`${styles.statusSel} ${styles['s_'+item.status]}`} value={item.status} onChange={e=>updateItem(item.id,{status:e.target.value})}>
@@ -2353,6 +2428,71 @@ export default function PantryPal() {
             >Clear from list</button>
 
             <div style={{fontSize:10,color:'#aaa',marginTop:10,textAlign:'center'}}>This only removes it from your home page — it stays in Shared with me.</div>
+          </div>
+        </div>
+      )}
+
+      {expiringActionSheet && (
+        <div className={styles.confirmOverlay} onClick={()=>setExpiringActionSheet(null)}>
+          <div className={styles.usernamePromptBox} style={{maxWidth:340}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:14}}>
+              <span style={{fontSize:22}}>⚠️</span>
+              <div>
+                <div style={{fontSize:14,fontWeight:700,color:'#145040'}}>{expiringActionSheet.name}</div>
+                <div style={{fontSize:11,color:'#888'}}>
+                  {(() => {
+                    const d = Math.ceil((new Date(expiringActionSheet.expiry_date) - new Date()) / 86400000)
+                    return d<0?`Expired ${Math.abs(d)} days ago`:d===0?'Expires today':`Expires in ${d} day${d!==1?'s':''}`
+                  })()}
+                </div>
+              </div>
+            </div>
+            <button
+              style={{width:'100%',textAlign:'left',padding:'12px 4px',border:'none',background:'none',fontSize:13,fontWeight:600,color:'#145040',cursor:'pointer',fontFamily:'inherit',borderBottom:'0.5px solid #f0e6d0'}}
+              onClick={()=>{ getExpiryRecipes(expiringActionSheet); setExpiringActionSheet(null) }}
+            >Suggest recipes using this</button>
+            <button
+              style={{width:'100%',textAlign:'left',padding:'12px 4px',border:'none',background:'none',fontSize:13,fontWeight:600,color:'#145040',cursor:'pointer',fontFamily:'inherit',borderBottom:'0.5px solid #f0e6d0'}}
+              onClick={()=>addExpiringToCart(expiringActionSheet)}
+            >Add more to shopping list</button>
+            <button
+              style={{width:'100%',textAlign:'left',padding:'12px 4px',border:'none',background:'none',fontSize:13,fontWeight:600,color:'#888',cursor:'pointer',fontFamily:'inherit'}}
+              onClick={()=>setExpiringActionSheet(null)}
+            >Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {expiryRecipes && (
+        <div className={styles.confirmOverlay} onClick={()=>setExpiryRecipes(null)}>
+          <div className={styles.usernamePromptBox} style={{maxWidth:460,maxHeight:'80vh',overflowY:'auto'}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:10}}>
+              <div>
+                <div style={{fontSize:15,fontWeight:800,color:'#145040'}}>Recipes using {expiryRecipes.item.name}</div>
+                <div style={{fontSize:11,color:'#888'}}>Use it up before it expires</div>
+              </div>
+              <span onClick={()=>setExpiryRecipes(null)} style={{fontSize:18,color:'#aaa',cursor:'pointer'}}>✕</span>
+            </div>
+            {expiryRecipes.loading ? (
+              <div className={styles.loadRow}><Spinner /> Finding recipes…</div>
+            ) : expiryRecipes.recipes.length === 0 ? (
+              <div className={styles.empty}>No recipes found — try again later.</div>
+            ) : (
+              expiryRecipes.recipes.map((r,i) => (
+                <div key={i} className={styles.recipeCard} style={{marginBottom:8}}>
+                  <div className={styles.recipeTop}>
+                    <div><div className={styles.recipeName}>{r.title}</div><div className={styles.recipeTime}>⏱ {r.time}</div></div>
+                    <span className={styles.matchBadge}>{Math.round(r.match_pct)}%</span>
+                  </div>
+                  <div className={styles.recipeDesc}>{r.description}</div>
+                  <div className={styles.tags}>
+                    {r.have?.map(x=><span key={x} className={`${styles.tag} ${styles.tagHave}`}>✓ {x}</span>)}
+                    {r.need?.map(x=><span key={x} className={`${styles.tag} ${styles.tagNeed}`}>+ {x}</span>)}
+                  </div>
+                  {r.need?.length>0 && <button className={styles.chip} style={{marginTop:6}} onClick={()=>addRecipeIngredientsToCart(r)}>🛒 Add missing to cart</button>}
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}

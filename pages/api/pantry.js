@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { estimateExpiryDate } from '../../lib/expiry'
 const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
 
 export default async function handler(req, res) {
@@ -23,7 +24,7 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    const { name, qty, status, last_purchased, category } = req.body
+    const { name, qty, status, last_purchased, category, expiry_date } = req.body
 
     // Look for an existing item scoped to household OR personal — NEVER scoped to
     // the current user_id when in a household, since any member's prior add should match
@@ -41,16 +42,22 @@ export default async function handler(req, res) {
     const existing = existingRows?.[0]
 
     if (existing) {
-      const { error: updateErr } = await sb.from('pantry_items')
-        .update({ status, qty: qty || '', last_purchased: last_purchased || null, category: category || 'Other', updated_at: new Date().toISOString() })
-        .eq('id', existing.id)
+      const update = { status, qty: qty || '', last_purchased: last_purchased || null, category: category || 'Other', updated_at: new Date().toISOString() }
+      if (expiry_date !== undefined) { update.expiry_date = expiry_date || null; update.expiry_estimated = false }
+      const { error: updateErr } = await sb.from('pantry_items').update(update).eq('id', existing.id)
       if (updateErr) {
         console.error('Pantry POST update error:', updateErr)
         return res.status(500).json({ error: updateErr.message })
       }
     } else {
+      // New item — use provided expiry_date if given, otherwise estimate one
+      const finalExpiry = expiry_date || await estimateExpiryDate(name)
       const { error: insertErr } = await sb.from('pantry_items')
-        .insert({ user_id, name, qty: qty || '', status, last_purchased: last_purchased || null, category: category || 'Other', household_id: hid })
+        .insert({
+          user_id, name, qty: qty || '', status, last_purchased: last_purchased || null,
+          category: category || 'Other', household_id: hid,
+          expiry_date: finalExpiry, expiry_estimated: !expiry_date
+        })
       if (insertErr) {
         console.error('Pantry POST insert error:', insertErr)
         return res.status(500).json({ error: insertErr.message })
@@ -60,12 +67,13 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'PATCH') {
-    const { id, status, qty, name, category } = req.body
+    const { id, status, qty, name, category, expiry_date } = req.body
     const update = { updated_at: new Date().toISOString() }
     if (status !== undefined) update.status = status
     if (qty !== undefined) update.qty = qty
     if (name !== undefined) update.name = name
     if (category !== undefined) update.category = category
+    if (expiry_date !== undefined) { update.expiry_date = expiry_date || null; update.expiry_estimated = false }
     const { error } = await sb.from('pantry_items').update(update).eq('id', id)
     if (error) {
       console.error('Pantry PATCH error:', error)
