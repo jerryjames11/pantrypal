@@ -148,7 +148,7 @@ export default async function handler(req, res) {
       if (existing) {
         await sb.from('pantry_items').update(pantryData).eq('id', existing.id)
       } else {
-        const expiryDate = await estimateExpiryDate(item.name)
+        const expiryDate = await estimateExpiryDate(item.name, receiptDate)
         await sb.from('pantry_items').insert({
           user_id: userId,
           household_id: hid,
