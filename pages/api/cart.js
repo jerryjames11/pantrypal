@@ -22,14 +22,23 @@ export default async function handler(req, res) {
       .order('created_at', { ascending: false })
     if (e1) return res.status(500).json({ error: e1.message })
 
-    // Household items (if user is in an active household)
+    // Personal list color, stored on the requester's own profile
+    const { data: myProfile } = await sb.from('profiles').select('personal_list_color').eq('id', user_id).single()
+    const personalColor = myProfile?.personal_list_color || 'gray'
+
+    // Household items (if user is in an active household) + household color + ownership
     const { data: membership } = await sb.from('household_members')
       .select('household_id').eq('user_id', user_id).eq('status', 'active').maybeSingle()
     let household = []
+    let householdColor = 'green'
+    let isHouseholdOwner = false
     if (membership) {
       const { data: hhItems } = await sb.from('cart_items')
         .select('*').eq('household_id', membership.household_id).order('created_at', { ascending: false })
       household = hhItems || []
+      const { data: hh } = await sb.from('households').select('list_color,owner_id').eq('id', membership.household_id).single()
+      householdColor = hh?.list_color || 'green'
+      isHouseholdOwner = hh?.owner_id === user_id
     }
 
     // Friend shared lists — find all shared_lists rows this user is part of
@@ -44,6 +53,7 @@ export default async function handler(req, res) {
     const sharedLists = []
     for (const list of (lists || [])) {
       const friendId = list.user_a === user_id ? list.user_b : list.user_a
+      const myColor = list.user_a === user_id ? (list.color_a || 'blue') : (list.color_b || 'blue')
       const { data: friendProfile } = await sb.from('profiles')
         .select('display_name,username,avatar_url').eq('id', friendId).single()
       const { data: items } = await sb.from('cart_items')
@@ -67,11 +77,12 @@ export default async function handler(req, res) {
         friend_id: friendId,
         friend_name: friendProfile?.display_name || friendProfile?.username || 'Friend',
         items: enrichedItems,
-        dismissed_from_home: dismissedIds.has(list.id)
+        dismissed_from_home: dismissedIds.has(list.id),
+        color: myColor
       })
     }
 
-    return res.status(200).json({ personal, household, sharedLists })
+    return res.status(200).json({ personal, household, sharedLists, personalColor, householdColor, isHouseholdOwner })
   }
 
   if (req.method === 'POST') {
@@ -86,6 +97,41 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: error.message })
       }
       return res.status(200).json({ ok: true })
+    }
+
+    if (action === 'set_color') {
+      const { list_type, color, household_id, shared_list_id } = req.body
+      if (!color) return res.status(400).json({ error: 'color required' })
+
+      if (list_type === 'personal') {
+        const { error } = await sb.from('profiles').update({ personal_list_color: color }).eq('id', user_id)
+        if (error) return res.status(500).json({ error: error.message })
+        return res.status(200).json({ ok: true })
+      }
+
+      if (list_type === 'household') {
+        if (!household_id) return res.status(400).json({ error: 'household_id required' })
+        const { data: hh } = await sb.from('households').select('owner_id').eq('id', household_id).single()
+        if (hh?.owner_id !== user_id) return res.status(403).json({ error: 'Only the household creator can change this color' })
+        const { error } = await sb.from('households').update({ list_color: color }).eq('id', household_id)
+        if (error) return res.status(500).json({ error: error.message })
+        return res.status(200).json({ ok: true })
+      }
+
+      if (list_type === 'shared') {
+        if (!shared_list_id) return res.status(400).json({ error: 'shared_list_id required' })
+        const { data: list } = await sb.from('shared_lists').select('user_a,user_b').eq('id', shared_list_id).single()
+        if (!list) return res.status(404).json({ error: 'List not found' })
+        const isUserA = list.user_a === user_id
+        if (!isUserA && list.user_b !== user_id) return res.status(403).json({ error: 'Not a member of this list' })
+        const { error } = await sb.from('shared_lists')
+          .update(isUserA ? { color_a: color } : { color_b: color })
+          .eq('id', shared_list_id)
+        if (error) return res.status(500).json({ error: error.message })
+        return res.status(200).json({ ok: true })
+      }
+
+      return res.status(400).json({ error: 'Invalid list_type' })
     }
 
     const { items, household_id, shared_list_id, friend_id } = req.body

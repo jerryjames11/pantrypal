@@ -16,6 +16,17 @@ function PriceDelta({ delta }) {
 }
 function Spinner() { return <span className={styles.spinner} /> }
 
+// Light pastel palette for per-list header backgrounds — matches the existing
+// soft tint style already used for household (green) and shared lists (blue).
+const LIST_COLORS = {
+  green:      { bg: '#e8f5f0', border: '#4db88a', label: 'Green' },
+  blue:       { bg: '#e8f0ff', border: '#6090d0', label: 'Blue' },
+  peach:      { bg: '#fbe9e0', border: '#e0a070', label: 'Peach' },
+  lavender:   { bg: '#f0e8fb', border: '#b090d8', label: 'Lavender' },
+  gray:       { bg: '#f0eee8', border: '#a8a090', label: 'Gray' },
+  rose:       { bg: '#fbe8ec', border: '#d88098', label: 'Rose' },
+}
+
 function SplashScreen() {
   return (
     <div className={styles.splash}>
@@ -83,12 +94,6 @@ export default function PantryPal() {
   const [pantryRefreshing, setPantryRefreshing] = useState(false)
   const [cartRefreshing, setCartRefreshing] = useState(false)
   const [pullHint, setPullHint] = useState(null) // 'pantry' | 'cart' | null — shown while pull gesture is active
-  const [appTheme, setAppTheme] = useState(() => { if (typeof window !== 'undefined') return localStorage.getItem('appTheme') || 'jade'; return 'jade' })
-
-  function changeAppTheme(theme) {
-    setAppTheme(theme)
-    localStorage.setItem('appTheme', theme)
-  }
   const [collapsedCats, setCollapsedCats] = useState({})
   const [manualName, setManualName] = useState('')
   const [manualStatus, setManualStatus] = useState('fresh')
@@ -132,7 +137,11 @@ export default function PantryPal() {
   // Cart
   const [cart, setCart] = useState([]) // personal items only now
   const [householdCart, setHouseholdCart] = useState([])
-  const [sharedLists, setSharedLists] = useState([]) // [{id, friend_id, friend_name, items}]
+  const [sharedLists, setSharedLists] = useState([]) // [{id, friend_id, friend_name, items, color}]
+  const [personalListColor, setPersonalListColor] = useState('gray')
+  const [householdListColor, setHouseholdListColor] = useState('green')
+  const [isHouseholdOwner, setIsHouseholdOwner] = useState(false)
+  const [colorPickerFor, setColorPickerFor] = useState(null) // 'personal' | 'household' | shared_list_id | null
   const [openCartSections, setOpenCartSections] = useState({ household: true })
   const [showFriendListPicker, setShowFriendListPicker] = useState(false)
   const [sharedActionSheet, setSharedActionSheet] = useState(null)
@@ -1118,6 +1127,31 @@ export default function PantryPal() {
     showToast('Shopping lists refreshed')
   }
 
+  async function setListColor(listType, color, extra = {}) {
+    setColorPickerFor(null)
+    // Optimistic local update
+    if (listType === 'personal') setPersonalListColor(color)
+    else if (listType === 'household') setHouseholdListColor(color)
+    else if (listType === 'shared') setSharedLists(ls => ls.map(l => l.id === extra.shared_list_id ? { ...l, color } : l))
+
+    try {
+      const res = await fetch(`/api/cart?user_id=${user.id}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'set_color', list_type: listType, color, ...extra })
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        showToast(data.error || 'Failed to update color')
+        loadCart() // revert optimistic update by reloading real state
+        return
+      }
+    } catch (err) {
+      console.error('setListColor error:', err)
+      showToast('Something went wrong')
+      loadCart()
+    }
+  }
+
   async function loadCart() {
     if (!user) return
     setCartLoading(true)
@@ -1128,6 +1162,9 @@ export default function PantryPal() {
       setCart(data.personal || [])
       setHouseholdCart(data.household || [])
       setSharedLists(data.sharedLists || [])
+      setPersonalListColor(data.personalColor || 'gray')
+      setHouseholdListColor(data.householdColor || 'green')
+      setIsHouseholdOwner(!!data.isHouseholdOwner)
     } catch(e) { console.error('loadCart error:', e) }
     setCartLoading(false)
   }
@@ -1306,7 +1343,7 @@ export default function PantryPal() {
   if (!user) return <LandingPage onSignIn={signInWithGoogle} />
 
   return (
-    <div className={`${styles.app} ${appTheme!=='jade'?styles[`theme${appTheme.charAt(0).toUpperCase()}${appTheme.slice(1)}`]:''}`}>
+    <div className={styles.app}>
 
       {/* HEADER */}
       <header id="tour-header" className={styles.header}>
@@ -1365,7 +1402,6 @@ export default function PantryPal() {
                     🔔 Notifications {unreadCount > 0 && <span className={styles.menuBadge}>{unreadCount}</span>}
                   </button>
                   <button className={styles.profileMenuItem} onClick={() => { setProfilePanel('shares'); loadShares() }}>📬 Shared with me</button>
-                  <button className={styles.profileMenuItem} onClick={() => setProfilePanel('theme')}>🎨 Theme</button>
                   <div className={styles.profileMenuDivider} />
                   <Link href="/privacy" className={styles.profileMenuItem} style={{textDecoration:'none',display:'block'}}>🔒 Privacy Policy</Link>
                   <button className={styles.profileMenuItemDanger} onClick={() => { signOut(); setProfileOpen(false) }}>🚪 Sign out</button>
@@ -1610,37 +1646,6 @@ export default function PantryPal() {
                   )}
                 </div>
               )})()}
-
-              {/* Theme Panel */}
-              {profilePanel === 'theme' && (
-                <div className={styles.panelInner}>
-                  <button className={styles.panelBack} onClick={() => setProfilePanel(null)}>← Back</button>
-                  <div className={styles.panelTitle}>Choose a theme</div>
-                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:10}}>
-                    {[
-                      { key: 'jade', label: 'Jade green', grad: 'linear-gradient(135deg, #4db88a, #1f6b52)' },
-                      { key: 'blue', label: 'Ocean blue', grad: 'linear-gradient(135deg, #5b8def, #2c4ea0)' },
-                      { key: 'terracotta', label: 'Terracotta', grad: 'linear-gradient(135deg, #e2935a, #a8531f)' },
-                      { key: 'plum', label: 'Plum', grad: 'linear-gradient(135deg, #b07ad1, #6b3f96)' },
-                      { key: 'slate', label: 'Slate', grad: 'linear-gradient(135deg, #5a6a7d, #2a3744)' },
-                      { key: 'brick', label: 'Brick red', grad: 'linear-gradient(135deg, #e0574f, #a82e28)' },
-                    ].map(t => (
-                      <button
-                        key={t.key}
-                        onClick={()=>changeAppTheme(t.key)}
-                        style={{
-                          padding:'14px 10px', borderRadius:10, border: appTheme===t.key ? '2.5px solid #145040' : '1px solid transparent',
-                          background:t.grad, cursor:'pointer', textAlign:'left', position:'relative'
-                        }}
-                      >
-                        <div style={{fontSize:12,fontWeight:700,color:'#fff'}}>{t.label}</div>
-                        {appTheme===t.key && <div style={{position:'absolute',top:6,right:6,fontSize:12,color:'#fff'}}>✓</div>}
-                      </button>
-                    ))}
-                  </div>
-                  <div style={{fontSize:11,color:'#888',marginTop:12}}>Changes the header, bottom navigation, and scan button color throughout the app.</div>
-                </div>
-              )}
             </div>
           )}
         </div>
@@ -1675,7 +1680,7 @@ export default function PantryPal() {
               <div className={styles.scanHeroTitle}>Scan a Receipt</div>
               <div className={styles.scanHeroSub}>Your pantry fills automatically</div>
             </div>
-            <div style={{width:54,height:54,borderRadius:'50%',background:'linear-gradient(135deg, var(--theme-light), var(--theme-dark))',border:'3px solid var(--theme-mid)',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 14px rgba(0,0,0,0.3)',flexShrink:0}}>
+            <div style={{width:54,height:54,borderRadius:'50%',background:'linear-gradient(135deg, #4db88a, #1f6b52)',border:'3px solid #2d8a6b',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 14px rgba(0,0,0,0.3)',flexShrink:0}}>
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             </div>
           </div>
@@ -2301,18 +2306,28 @@ export default function PantryPal() {
 
               {/* Household section */}
               {household && (
-                <div className={styles.cartSection} style={{background:'#e8f5f0',border:'1.5px solid #4db88a'}}>
+                <div className={styles.cartSection} style={{background:LIST_COLORS[householdListColor].bg,border:`1.5px solid ${LIST_COLORS[householdListColor].border}`}}>
                   <div className={styles.cartSectionHdr} onClick={()=>setOpenCartSections(s=>({...s,household:!s.household}))}>
                     <div style={{display:'flex',alignItems:'center',gap:6}}>
                       <span style={{fontSize:14}}>🏠</span>
                       <span style={{fontSize:13,fontWeight:700,color:'#145040'}}>{household.name}</span>
                       <span style={{fontSize:11,color:'#5a7a6a'}}>{householdCart.filter(i=>i.checked).length}/{householdCart.length}</span>
+                      {isHouseholdOwner && (
+                        <button onClick={(e)=>{e.stopPropagation();setColorPickerFor(colorPickerFor==='household'?null:'household')}} title="Change list color" style={{width:14,height:14,borderRadius:'50%',background:LIST_COLORS[householdListColor].border,border:'1px solid rgba(0,0,0,0.15)',cursor:'pointer',padding:0}} />
+                      )}
                     </div>
                     <div style={{display:'flex',alignItems:'center',gap:10}}>
                       <button onClick={(e)=>{e.stopPropagation();setAddItemModal({target:'household',label:household.name})}} style={{display:'flex',alignItems:'center',gap:4,padding:'4px 10px',fontSize:11,fontWeight:600,color:'#fff',background:'#145040',border:'none',borderRadius:7,cursor:'pointer',fontFamily:'inherit'}}>+ Add</button>
                       <span style={{fontSize:13,color:'#4db88a',transform:openCartSections.household?'rotate(180deg)':'none',display:'inline-block',transition:'transform .15s'}}>▾</span>
                     </div>
                   </div>
+                  {colorPickerFor==='household' && (
+                    <div onClick={e=>e.stopPropagation()} style={{display:'flex',gap:6,padding:'8px 0 2px',flexWrap:'wrap'}}>
+                      {Object.entries(LIST_COLORS).map(([key,c])=>(
+                        <button key={key} onClick={()=>setListColor('household',key,{household_id:household.id})} title={c.label} style={{width:22,height:22,borderRadius:'50%',background:c.border,border:householdListColor===key?'2.5px solid #145040':'1px solid rgba(0,0,0,0.15)',cursor:'pointer',padding:0}} />
+                      ))}
+                    </div>
+                  )}
                   {openCartSections.household && (
                     <div className={styles.cartSectionBody}>
                       {householdCart.length===0
@@ -2334,19 +2349,29 @@ export default function PantryPal() {
               )}
 
               {/* Friend shared lists */}
-              {sharedLists.map(list => (
-                <div key={list.id} className={styles.cartSection} style={{background:'#e8f0ff',border:'1.5px solid #6090d0'}}>
+              {sharedLists.map(list => {
+                const listColor = list.color || 'blue'
+                return (
+                <div key={list.id} className={styles.cartSection} style={{background:LIST_COLORS[listColor].bg,border:`1.5px solid ${LIST_COLORS[listColor].border}`}}>
                   <div className={styles.cartSectionHdr} onClick={()=>setOpenCartSections(s=>({...s,[list.friend_id]:!s[list.friend_id]}))}>
                     <div style={{display:'flex',alignItems:'center',gap:6}}>
-                      <div style={{width:16,height:16,borderRadius:'50%',background:'#fff',border:'1.5px solid #6090d0',display:'flex',alignItems:'center',justifyContent:'center',fontSize:9,fontWeight:700,color:'#1a4a8a'}}>{(list.friend_name||'?').charAt(0).toUpperCase()}</div>
+                      <div style={{width:16,height:16,borderRadius:'50%',background:'#fff',border:`1.5px solid ${LIST_COLORS[listColor].border}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:9,fontWeight:700,color:'#1a4a8a'}}>{(list.friend_name||'?').charAt(0).toUpperCase()}</div>
                       <span style={{fontSize:13,fontWeight:700,color:'#1a4a8a'}}>With {list.friend_name}</span>
                       <span style={{fontSize:11,color:'#5a7aa0'}}>{list.items.filter(i=>i.checked).length}/{list.items.length}</span>
+                      <button onClick={(e)=>{e.stopPropagation();setColorPickerFor(colorPickerFor===list.id?null:list.id)}} title="Change list color" style={{width:14,height:14,borderRadius:'50%',background:LIST_COLORS[listColor].border,border:'1px solid rgba(0,0,0,0.15)',cursor:'pointer',padding:0}} />
                     </div>
                     <div style={{display:'flex',alignItems:'center',gap:10}}>
                       <button onClick={(e)=>{e.stopPropagation();setAddItemModal({target:list.friend_id,label:`With ${list.friend_name}`})}} style={{display:'flex',alignItems:'center',gap:4,padding:'4px 10px',fontSize:11,fontWeight:600,color:'#fff',background:'#145040',border:'none',borderRadius:7,cursor:'pointer',fontFamily:'inherit'}}>+ Add</button>
-                      <span style={{fontSize:13,color:'#6090d0',transform:openCartSections[list.friend_id]?'rotate(180deg)':'none',display:'inline-block',transition:'transform .15s'}}>▾</span>
+                      <span style={{fontSize:13,color:LIST_COLORS[listColor].border,transform:openCartSections[list.friend_id]?'rotate(180deg)':'none',display:'inline-block',transition:'transform .15s'}}>▾</span>
                     </div>
                   </div>
+                  {colorPickerFor===list.id && (
+                    <div onClick={e=>e.stopPropagation()} style={{display:'flex',gap:6,padding:'8px 0 2px',flexWrap:'wrap'}}>
+                      {Object.entries(LIST_COLORS).map(([key,c])=>(
+                        <button key={key} onClick={()=>setListColor('shared',key,{shared_list_id:list.id})} title={c.label} style={{width:22,height:22,borderRadius:'50%',background:c.border,border:listColor===key?'2.5px solid #145040':'1px solid rgba(0,0,0,0.15)',cursor:'pointer',padding:0}} />
+                      ))}
+                    </div>
+                  )}
                   {openCartSections[list.friend_id] && (
                     <div className={styles.cartSectionBody}>
                       {list.items.length===0
@@ -2365,21 +2390,29 @@ export default function PantryPal() {
                     </div>
                   )}
                 </div>
-              ))}
+              )})}
 
               {/* Personal section */}
-              <div className={styles.cartSection} style={{background:'#fff',border:'1.5px solid #e0e0e0'}}>
+              <div className={styles.cartSection} style={{background:LIST_COLORS[personalListColor].bg,border:`1.5px solid ${LIST_COLORS[personalListColor].border}`}}>
                 <div className={styles.cartSectionHdr} onClick={()=>setOpenCartSections(s=>({...s,personal:!s.personal}))}>
                   <div style={{display:'flex',alignItems:'center',gap:6}}>
                     <span style={{fontSize:14}}>👤</span>
                     <span style={{fontSize:13,fontWeight:700,color:'#333'}}>Personal</span>
                     <span style={{fontSize:11,color:'#999'}}>{cart.filter(i=>i.checked).length}/{cart.length}</span>
+                    <button onClick={(e)=>{e.stopPropagation();setColorPickerFor(colorPickerFor==='personal'?null:'personal')}} title="Change list color" style={{width:14,height:14,borderRadius:'50%',background:LIST_COLORS[personalListColor].border,border:'1px solid rgba(0,0,0,0.15)',cursor:'pointer',padding:0}} />
                   </div>
                   <div style={{display:'flex',alignItems:'center',gap:10}}>
                     <button onClick={(e)=>{e.stopPropagation();setAddItemModal({target:'personal',label:'Personal'})}} style={{display:'flex',alignItems:'center',gap:4,padding:'4px 10px',fontSize:11,fontWeight:600,color:'#fff',background:'#145040',border:'none',borderRadius:7,cursor:'pointer',fontFamily:'inherit'}}>+ Add</button>
                     <span style={{fontSize:13,color:'#999',transform:openCartSections.personal?'rotate(180deg)':'none',display:'inline-block',transition:'transform .15s'}}>▾</span>
                   </div>
                 </div>
+                {colorPickerFor==='personal' && (
+                  <div onClick={e=>e.stopPropagation()} style={{display:'flex',gap:6,padding:'8px 0 2px',flexWrap:'wrap'}}>
+                    {Object.entries(LIST_COLORS).map(([key,c])=>(
+                      <button key={key} onClick={()=>setListColor('personal',key)} title={c.label} style={{width:22,height:22,borderRadius:'50%',background:c.border,border:personalListColor===key?'2.5px solid #145040':'1px solid rgba(0,0,0,0.15)',cursor:'pointer',padding:0}} />
+                    ))}
+                  </div>
+                )}
                 {openCartSections.personal && (
                   <div className={styles.cartSectionBody}>
                     {cart.length===0
