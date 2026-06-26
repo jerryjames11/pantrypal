@@ -2288,8 +2288,8 @@ export default function PantryPal() {
       )}
 
       {sharedActionSheet && (
-        <div className={styles.confirmOverlay} style={{alignItems:'flex-end',padding:0}} onClick={()=>setSharedActionSheet(null)}>
-          <div className={styles.usernamePromptBox} style={{maxWidth:480,width:'100%',margin:'0 auto',borderRadius:'18px 18px 0 0',maxHeight:'80vh',boxSizing:'border-box'}} onClick={e=>e.stopPropagation()}>
+        <div className={styles.confirmOverlay} onClick={()=>setSharedActionSheet(null)}>
+          <div className={styles.usernamePromptBox} style={{maxWidth:360,maxHeight:'80vh'}} onClick={e=>e.stopPropagation()}>
             <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:14}}>
               <span style={{fontSize:22}}>{sharedActionSheet.type==='recipe'?'🍳':'🛒'}</span>
               <div>
