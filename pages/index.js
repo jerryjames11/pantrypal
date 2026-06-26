@@ -16,6 +16,44 @@ function PriceDelta({ delta }) {
 }
 function Spinner() { return <span className={styles.spinner} /> }
 
+// Small gear-triggered settings popover for a shopping list section header.
+// menuKey identifies which list this is for, so only one menu is open at a time.
+function GearMenu({ menuKey, gearMenuFor, setGearMenuFor, gearColorPickerFor, setGearColorPickerFor, currentColor, onSetColor, onClearChecked, onClearAll, onArchive, canChangeColor }) {
+  const isOpen = gearMenuFor === menuKey
+  const isColorOpen = gearColorPickerFor === menuKey
+  return (
+    <div style={{position:'relative'}} onClick={e=>e.stopPropagation()}>
+      <button onClick={()=>{setGearMenuFor(isOpen?null:menuKey);setGearColorPickerFor(null)}} title="List settings" style={{width:18,height:18,padding:0,border:'none',background:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'#7a6a52',opacity:0.75}}>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+      {isOpen && (
+        <div style={{position:'absolute',top:'100%',left:0,marginTop:4,background:'#fff',border:'1px solid #e0d8c8',borderRadius:8,boxShadow:'0 4px 12px rgba(0,0,0,0.12)',minWidth:160,zIndex:20,overflow:'hidden'}}>
+          {canChangeColor && !isColorOpen && (
+            <button onClick={()=>setGearColorPickerFor(menuKey)} style={{display:'block',width:'100%',textAlign:'left',padding:'9px 12px',fontSize:12,fontWeight:600,color:'#333',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit'}}>Change color</button>
+          )}
+          {isColorOpen && (
+            <div style={{padding:'9px 12px',display:'flex',gap:5,flexWrap:'wrap'}}>
+              {Object.entries(LIST_COLORS).map(([key,c])=>(
+                <button key={key} onClick={()=>onSetColor(key)} title={c.label} style={{width:20,height:20,borderRadius:'50%',background:c.border,border:currentColor===key?'2px solid #145040':'1px solid rgba(0,0,0,0.15)',cursor:'pointer',padding:0}} />
+              ))}
+            </div>
+          )}
+          {!isColorOpen && (
+            <>
+              <button onClick={onClearChecked} style={{display:'block',width:'100%',textAlign:'left',padding:'9px 12px',fontSize:12,fontWeight:600,color:'#333',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',borderTop:'0.5px solid #f0e6d0'}}>Clear checked items</button>
+              {onArchive ? (
+                <button onClick={onArchive} style={{display:'block',width:'100%',textAlign:'left',padding:'9px 12px',fontSize:12,fontWeight:600,color:'#c0392b',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',borderTop:'0.5px solid #f0e6d0'}}>Archive this list</button>
+              ) : (
+                <button onClick={onClearAll} style={{display:'block',width:'100%',textAlign:'left',padding:'9px 12px',fontSize:12,fontWeight:600,color:'#c0392b',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',borderTop:'0.5px solid #f0e6d0'}}>Clear entire list</button>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // Light pastel palette for per-list header backgrounds — matches the existing
 // soft tint style already used for household (green) and shared lists (blue).
 const LIST_COLORS = {
@@ -138,10 +176,13 @@ export default function PantryPal() {
   const [cart, setCart] = useState([]) // personal items only now
   const [householdCart, setHouseholdCart] = useState([])
   const [sharedLists, setSharedLists] = useState([]) // [{id, friend_id, friend_name, items, color}]
+  const [archivedLists, setArchivedLists] = useState([])
   const [personalListColor, setPersonalListColor] = useState('gray')
   const [householdListColor, setHouseholdListColor] = useState('green')
   const [isHouseholdOwner, setIsHouseholdOwner] = useState(false)
-  const [colorPickerFor, setColorPickerFor] = useState(null) // 'personal' | 'household' | shared_list_id | null
+  const [gearMenuFor, setGearMenuFor] = useState(null) // 'personal' | 'household' | shared_list_id | null
+  const [gearColorPickerFor, setGearColorPickerFor] = useState(null) // sub-state: which gear menu's color swatches are open
+  const [showArchivedLists, setShowArchivedLists] = useState(false)
   const [openCartSections, setOpenCartSections] = useState({ household: true })
   const [showFriendListPicker, setShowFriendListPicker] = useState(false)
   const [sharedActionSheet, setSharedActionSheet] = useState(null)
@@ -1128,7 +1169,8 @@ export default function PantryPal() {
   }
 
   async function setListColor(listType, color, extra = {}) {
-    setColorPickerFor(null)
+    setGearColorPickerFor(null)
+    setGearMenuFor(null)
     // Optimistic local update
     if (listType === 'personal') setPersonalListColor(color)
     else if (listType === 'household') setHouseholdListColor(color)
@@ -1152,6 +1194,35 @@ export default function PantryPal() {
     }
   }
 
+  async function clearListItems(listType, mode, extra = {}) {
+    // mode: 'checked' | 'all'
+    setGearMenuFor(null)
+    const body = mode === 'all' ? { clearAll: true } : { clearChecked: true }
+    if (listType === 'household') body.household_id = extra.household_id
+    if (listType === 'shared') body.shared_list_id = extra.shared_list_id
+    try {
+      await fetch(`/api/cart?user_id=${user.id}`, {
+        method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+      })
+      showToast(mode === 'all' ? 'List cleared' : 'Checked items removed')
+      loadCart()
+    } catch (err) { console.error('clearListItems error:', err); showToast('Something went wrong') }
+  }
+
+  async function archiveSharedList(sharedListId) {
+    setGearMenuFor(null)
+    try {
+      const res = await fetch(`/api/cart?user_id=${user.id}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'archive_list', shared_list_id: sharedListId })
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) { showToast(data.error || 'Failed to archive list'); return }
+      showToast('List archived')
+      loadCart()
+    } catch (err) { console.error('archiveSharedList error:', err); showToast('Something went wrong') }
+  }
+
   async function loadCart() {
     if (!user) return
     setCartLoading(true)
@@ -1162,6 +1233,7 @@ export default function PantryPal() {
       setCart(data.personal || [])
       setHouseholdCart(data.household || [])
       setSharedLists(data.sharedLists || [])
+      setArchivedLists(data.archivedLists || [])
       setPersonalListColor(data.personalColor || 'gray')
       setHouseholdListColor(data.householdColor || 'green')
       setIsHouseholdOwner(!!data.isHouseholdOwner)
@@ -2313,7 +2385,14 @@ export default function PantryPal() {
                       <span style={{fontSize:13,fontWeight:700,color:'#145040'}}>{household.name}</span>
                       <span style={{fontSize:11,color:'#5a7a6a'}}>{householdCart.filter(i=>i.checked).length}/{householdCart.length}</span>
                       {isHouseholdOwner && (
-                        <button onClick={(e)=>{e.stopPropagation();setColorPickerFor(colorPickerFor==='household'?null:'household')}} title="Change list color" style={{width:14,height:14,borderRadius:'50%',background:LIST_COLORS[householdListColor].border,border:'1px solid rgba(0,0,0,0.15)',cursor:'pointer',padding:0}} />
+                        <GearMenu
+                          menuKey="household" gearMenuFor={gearMenuFor} setGearMenuFor={setGearMenuFor}
+                          gearColorPickerFor={gearColorPickerFor} setGearColorPickerFor={setGearColorPickerFor}
+                          currentColor={householdListColor} canChangeColor={true}
+                          onSetColor={(color)=>setListColor('household',color,{household_id:household.id})}
+                          onClearChecked={()=>clearListItems('household','checked',{household_id:household.id})}
+                          onClearAll={()=>clearListItems('household','all',{household_id:household.id})}
+                        />
                       )}
                     </div>
                     <div style={{display:'flex',alignItems:'center',gap:10}}>
@@ -2321,13 +2400,6 @@ export default function PantryPal() {
                       <span style={{fontSize:13,color:'#4db88a',transform:openCartSections.household?'rotate(180deg)':'none',display:'inline-block',transition:'transform .15s'}}>▾</span>
                     </div>
                   </div>
-                  {colorPickerFor==='household' && (
-                    <div onClick={e=>e.stopPropagation()} style={{display:'flex',gap:6,padding:'8px 0 2px',flexWrap:'wrap'}}>
-                      {Object.entries(LIST_COLORS).map(([key,c])=>(
-                        <button key={key} onClick={()=>setListColor('household',key,{household_id:household.id})} title={c.label} style={{width:22,height:22,borderRadius:'50%',background:c.border,border:householdListColor===key?'2.5px solid #145040':'1px solid rgba(0,0,0,0.15)',cursor:'pointer',padding:0}} />
-                      ))}
-                    </div>
-                  )}
                   {openCartSections.household && (
                     <div className={styles.cartSectionBody}>
                       {householdCart.length===0
@@ -2358,20 +2430,20 @@ export default function PantryPal() {
                       <div style={{width:16,height:16,borderRadius:'50%',background:'#fff',border:`1.5px solid ${LIST_COLORS[listColor].border}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:9,fontWeight:700,color:'#1a4a8a'}}>{(list.friend_name||'?').charAt(0).toUpperCase()}</div>
                       <span style={{fontSize:13,fontWeight:700,color:'#1a4a8a'}}>With {list.friend_name}</span>
                       <span style={{fontSize:11,color:'#5a7aa0'}}>{list.items.filter(i=>i.checked).length}/{list.items.length}</span>
-                      <button onClick={(e)=>{e.stopPropagation();setColorPickerFor(colorPickerFor===list.id?null:list.id)}} title="Change list color" style={{width:14,height:14,borderRadius:'50%',background:LIST_COLORS[listColor].border,border:'1px solid rgba(0,0,0,0.15)',cursor:'pointer',padding:0}} />
+                      <GearMenu
+                        menuKey={list.id} gearMenuFor={gearMenuFor} setGearMenuFor={setGearMenuFor}
+                        gearColorPickerFor={gearColorPickerFor} setGearColorPickerFor={setGearColorPickerFor}
+                        currentColor={listColor} canChangeColor={true}
+                        onSetColor={(color)=>setListColor('shared',color,{shared_list_id:list.id})}
+                        onClearChecked={()=>clearListItems('shared','checked',{shared_list_id:list.id})}
+                        onArchive={()=>confirm(`Archive this list with ${list.friend_name}? It will move to Archived lists and you can start a new one if needed.`, ()=>archiveSharedList(list.id))}
+                      />
                     </div>
                     <div style={{display:'flex',alignItems:'center',gap:10}}>
                       <button onClick={(e)=>{e.stopPropagation();setAddItemModal({target:list.friend_id,label:`With ${list.friend_name}`})}} style={{display:'flex',alignItems:'center',gap:4,padding:'4px 10px',fontSize:11,fontWeight:600,color:'#fff',background:'#145040',border:'none',borderRadius:7,cursor:'pointer',fontFamily:'inherit'}}>+ Add</button>
                       <span style={{fontSize:13,color:LIST_COLORS[listColor].border,transform:openCartSections[list.friend_id]?'rotate(180deg)':'none',display:'inline-block',transition:'transform .15s'}}>▾</span>
                     </div>
                   </div>
-                  {colorPickerFor===list.id && (
-                    <div onClick={e=>e.stopPropagation()} style={{display:'flex',gap:6,padding:'8px 0 2px',flexWrap:'wrap'}}>
-                      {Object.entries(LIST_COLORS).map(([key,c])=>(
-                        <button key={key} onClick={()=>setListColor('shared',key,{shared_list_id:list.id})} title={c.label} style={{width:22,height:22,borderRadius:'50%',background:c.border,border:listColor===key?'2.5px solid #145040':'1px solid rgba(0,0,0,0.15)',cursor:'pointer',padding:0}} />
-                      ))}
-                    </div>
-                  )}
                   {openCartSections[list.friend_id] && (
                     <div className={styles.cartSectionBody}>
                       {list.items.length===0
@@ -2399,20 +2471,20 @@ export default function PantryPal() {
                     <span style={{fontSize:14}}>👤</span>
                     <span style={{fontSize:13,fontWeight:700,color:'#333'}}>Personal</span>
                     <span style={{fontSize:11,color:'#999'}}>{cart.filter(i=>i.checked).length}/{cart.length}</span>
-                    <button onClick={(e)=>{e.stopPropagation();setColorPickerFor(colorPickerFor==='personal'?null:'personal')}} title="Change list color" style={{width:14,height:14,borderRadius:'50%',background:LIST_COLORS[personalListColor].border,border:'1px solid rgba(0,0,0,0.15)',cursor:'pointer',padding:0}} />
+                    <GearMenu
+                      menuKey="personal" gearMenuFor={gearMenuFor} setGearMenuFor={setGearMenuFor}
+                      gearColorPickerFor={gearColorPickerFor} setGearColorPickerFor={setGearColorPickerFor}
+                      currentColor={personalListColor} canChangeColor={true}
+                      onSetColor={(color)=>setListColor('personal',color)}
+                      onClearChecked={()=>clearListItems('personal','checked')}
+                      onClearAll={()=>clearListItems('personal','all')}
+                    />
                   </div>
                   <div style={{display:'flex',alignItems:'center',gap:10}}>
                     <button onClick={(e)=>{e.stopPropagation();setAddItemModal({target:'personal',label:'Personal'})}} style={{display:'flex',alignItems:'center',gap:4,padding:'4px 10px',fontSize:11,fontWeight:600,color:'#fff',background:'#145040',border:'none',borderRadius:7,cursor:'pointer',fontFamily:'inherit'}}>+ Add</button>
                     <span style={{fontSize:13,color:'#999',transform:openCartSections.personal?'rotate(180deg)':'none',display:'inline-block',transition:'transform .15s'}}>▾</span>
                   </div>
                 </div>
-                {colorPickerFor==='personal' && (
-                  <div onClick={e=>e.stopPropagation()} style={{display:'flex',gap:6,padding:'8px 0 2px',flexWrap:'wrap'}}>
-                    {Object.entries(LIST_COLORS).map(([key,c])=>(
-                      <button key={key} onClick={()=>setListColor('personal',key)} title={c.label} style={{width:22,height:22,borderRadius:'50%',background:c.border,border:personalListColor===key?'2.5px solid #145040':'1px solid rgba(0,0,0,0.15)',cursor:'pointer',padding:0}} />
-                    ))}
-                  </div>
-                )}
                 {openCartSections.personal && (
                   <div className={styles.cartSectionBody}>
                     {cart.length===0
@@ -2440,6 +2512,28 @@ export default function PantryPal() {
                   </div>
                 )}
               </div>
+
+              {/* Archived lists */}
+              {archivedLists.length > 0 && (
+                <div className={styles.cartSection} style={{background:'#f5f3f0',border:'1px solid #d8d2c8'}}>
+                  <div className={styles.cartSectionHdr} onClick={()=>setShowArchivedLists(v=>!v)}>
+                    <div style={{display:'flex',alignItems:'center',gap:6}}>
+                      <span style={{fontSize:13,fontWeight:700,color:'#777'}}>Archived ({archivedLists.length})</span>
+                    </div>
+                    <span style={{fontSize:13,color:'#999',transform:showArchivedLists?'rotate(180deg)':'none',display:'inline-block',transition:'transform .15s'}}>▾</span>
+                  </div>
+                  {showArchivedLists && (
+                    <div className={styles.cartSectionBody}>
+                      {archivedLists.map(list => (
+                        <div key={list.id} style={{padding:'6px 0',borderBottom:'0.5px solid #e0dcd4'}}>
+                          <div style={{fontSize:12,fontWeight:600,color:'#666'}}>With {list.friend_name}</div>
+                          <div style={{fontSize:10,color:'#999'}}>{list.items.length} item{list.items.length!==1?'s':''} · archived {new Date(list.archived_at).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
             </div>
           )}

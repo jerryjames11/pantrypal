@@ -4,7 +4,9 @@ const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABA
 async function getOrCreateSharedList(userA, userB) {
   // Normalize order so (A,B) and (B,A) map to the same row
   const [a, b] = [userA, userB].sort()
-  const { data: existing } = await sb.from('shared_lists').select('*').eq('user_a', a).eq('user_b', b).maybeSingle()
+  // Only match an ACTIVE (non-archived) list — if the existing one was archived,
+  // this creates a brand new list with the same friend instead of reopening it.
+  const { data: existing } = await sb.from('shared_lists').select('*').eq('user_a', a).eq('user_b', b).is('archived_at', null).maybeSingle()
   if (existing) return existing
   const { data: created, error } = await sb.from('shared_lists').insert({ user_a: a, user_b: b }).select().single()
   if (error) throw error
@@ -51,6 +53,7 @@ export default async function handler(req, res) {
     const dismissedIds = new Set((dismissals || []).map(d => d.shared_list_id))
 
     const sharedLists = []
+    const archivedLists = []
     for (const list of (lists || [])) {
       const friendId = list.user_a === user_id ? list.user_b : list.user_a
       const myColor = list.user_a === user_id ? (list.color_a || 'blue') : (list.color_b || 'blue')
@@ -72,17 +75,21 @@ export default async function handler(req, res) {
         bought_by_name: nameMap[i.bought_by] || null
       }))
 
-      sharedLists.push({
+      const listObj = {
         id: list.id,
         friend_id: friendId,
         friend_name: friendProfile?.display_name || friendProfile?.username || 'Friend',
         items: enrichedItems,
         dismissed_from_home: dismissedIds.has(list.id),
-        color: myColor
-      })
+        color: myColor,
+        archived_at: list.archived_at
+      }
+
+      if (list.archived_at) archivedLists.push(listObj)
+      else sharedLists.push(listObj)
     }
 
-    return res.status(200).json({ personal, household, sharedLists, personalColor, householdColor, isHouseholdOwner })
+    return res.status(200).json({ personal, household, sharedLists, archivedLists, personalColor, householdColor, isHouseholdOwner })
   }
 
   if (req.method === 'POST') {
@@ -132,6 +139,20 @@ export default async function handler(req, res) {
       }
 
       return res.status(400).json({ error: 'Invalid list_type' })
+    }
+
+    if (action === 'archive_list') {
+      const { shared_list_id } = req.body
+      if (!shared_list_id) return res.status(400).json({ error: 'shared_list_id required' })
+      const { data: list } = await sb.from('shared_lists').select('user_a,user_b').eq('id', shared_list_id).single()
+      if (!list) return res.status(404).json({ error: 'List not found' })
+      if (list.user_a !== user_id && list.user_b !== user_id) return res.status(403).json({ error: 'Not a member of this list' })
+      const { error } = await sb.from('shared_lists').update({ archived_at: new Date().toISOString() }).eq('id', shared_list_id)
+      if (error) {
+        console.error('Archive list error:', error)
+        return res.status(500).json({ error: error.message })
+      }
+      return res.status(200).json({ ok: true })
     }
 
     const { items, household_id, shared_list_id, friend_id } = req.body
@@ -185,9 +206,10 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'DELETE') {
-    const { id, clearChecked, household_id, shared_list_id } = req.body
-    if (clearChecked) {
-      let q = sb.from('cart_items').delete().eq('checked', true)
+    const { id, clearChecked, clearAll, household_id, shared_list_id } = req.body
+    if (clearChecked || clearAll) {
+      let q = sb.from('cart_items').delete()
+      if (clearChecked) q = q.eq('checked', true) // clearAll skips this filter — deletes everything
       if (shared_list_id) q = q.eq('shared_list_id', shared_list_id)
       else if (household_id) q = q.eq('household_id', household_id)
       else q = q.eq('user_id', user_id).is('household_id', null).is('shared_list_id', null)
