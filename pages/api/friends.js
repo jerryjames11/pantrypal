@@ -68,7 +68,7 @@ export default async function handler(req, res) {
       const { error: notifError } = await sb.from('notifications').insert({
         user_id: friend_id, type: 'friend_request',
         title: 'New friend request',
-        body: `${senderProfile?.display_name || 'Someone'} wants to be your friend on PantryPal`,
+        body: `${senderProfile?.display_name || senderProfile?.username || 'Someone'} wants to be your friend on PantryPal`,
         data: { from_user: user_id }
       })
       if (notifError) console.error('Friend request notification error:', notifError)
@@ -90,11 +90,11 @@ export default async function handler(req, res) {
         return res.status(404).json({ error: 'Friend request not found' })
       }
       console.log('Friend request accepted:', updated)
-      const { data: accepterProfile } = await sb.from('profiles').select('display_name').eq('id', user_id).single()
+      const { data: accepterProfile } = await sb.from('profiles').select('display_name,username').eq('id', user_id).single()
       const { error: notifError } = await sb.from('notifications').insert({
         user_id: friend_id, type: 'friend_accepted',
         title: 'Friend request accepted',
-        body: `${accepterProfile?.display_name || 'Someone'} accepted your friend request`,
+        body: `${accepterProfile?.display_name || accepterProfile?.username || 'Someone'} accepted your friend request`,
         data: { from_user: user_id }
       })
       return res.status(200).json({ ok: true })

@@ -101,11 +101,11 @@ export default async function handler(req, res) {
       }
       console.log('Invite upsert result:', upsertResult)
 
-      const { data: inviterProfile } = await sb.from('profiles').select('display_name').eq('id', user_id).single()
+      const { data: inviterProfile } = await sb.from('profiles').select('display_name,username').eq('id', user_id).single()
       const { error: notifError } = await sb.from('notifications').insert({
         user_id: invitee_id, type: 'household_invite',
         title: 'Household invitation',
-        body: `${inviterProfile?.display_name || 'Someone'} invited you to join "${hh.name}"`,
+        body: `${inviterProfile?.display_name || inviterProfile?.username || 'Someone'} invited you to join "${hh.name}"`,
         data: { household_id, household_name: hh.name, from_user: user_id }
       })
       if (notifError) {
@@ -127,7 +127,7 @@ export default async function handler(req, res) {
       await sb.from('notifications').insert({
         user_id: hh.owner_id, type: 'household_join_request',
         title: 'Household join request',
-        body: `${requesterProfile?.display_name || 'Someone'} wants to join "${hh.name}"`,
+        body: `${requesterProfile?.display_name || requesterProfile?.username || 'Someone'} wants to join "${hh.name}"`,
         data: { household_id, household_name: hh.name, from_user: user_id }
       })
       return res.status(200).json({ ok: true })
